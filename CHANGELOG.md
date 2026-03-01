@@ -7,10 +7,18 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- `remnote_read_note` now accepts `includeContent: "structured"` in MCP input validation and tool schemas, aligning
+  server contracts with bridge/CLI structured read traversal.
+- `remnote_read_note` output schema now documents optional `contentStructured` for structured mode.
+
 ### Fixed
 
 - Stabilized logger coverage runs in CI by enabling automatic directory creation for file logger destinations and
   hardening logger tests against async transport timing races.
+- Added/updated unit and integration coverage for `remnote_read_note` structured mode schema validation and request
+  pass-through.
 
 ### Documentation
 

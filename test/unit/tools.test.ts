@@ -125,6 +125,18 @@ describe('Tool Definitions', () => {
     expect(READ_NOTE_TOOL.inputSchema.required).toContain('remId');
   });
 
+  it('should advertise structured read content mode and contentStructured output', () => {
+    const includeContent = (
+      READ_NOTE_TOOL.inputSchema.properties.includeContent as {
+        enum?: string[];
+      }
+    ).enum;
+    const readProps = (READ_NOTE_TOOL.outputSchema.properties ?? {}) as Record<string, unknown>;
+
+    expect(includeContent).toContain('structured');
+    expect(readProps.contentStructured).toBeDefined();
+  });
+
   it('should have correct name for UPDATE_NOTE_TOOL', () => {
     expect(UPDATE_NOTE_TOOL.name).toBe('remnote_update_note');
   });
@@ -384,6 +396,23 @@ describe('Tool Handlers - read_note', () => {
       includeContent: 'markdown', // default
       childLimit: 100, // default
       maxContentLength: 100000, // default
+    });
+  });
+
+  it('should pass through includeContent structured', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_read_note',
+        arguments: { remId: 'rem-123', includeContent: 'structured', depth: 2 },
+      },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('read_note', {
+      remId: 'rem-123',
+      depth: 2,
+      includeContent: 'structured',
+      childLimit: 100,
+      maxContentLength: 100000,
     });
   });
 });

@@ -203,7 +203,7 @@ export const SEARCH_BY_TAG_TOOL = {
 export const READ_NOTE_TOOL = {
   name: 'remnote_read_note',
   description:
-    'Read a specific note from RemNote by its Rem ID. Returns metadata and rendered markdown content of the child subtree. Use includeContent: "none" to skip content rendering.',
+    'Read a specific note from RemNote by its Rem ID. Returns metadata plus child content in markdown or structured form. Use includeContent: "none" to skip content rendering.',
   inputSchema: {
     type: 'object' as const,
     properties: {
@@ -214,9 +214,9 @@ export const READ_NOTE_TOOL = {
       },
       includeContent: {
         type: 'string',
-        enum: ['none', 'markdown'],
+        enum: ['none', 'markdown', 'structured'],
         description:
-          'Content rendering mode: "markdown" renders child subtree (default), "none" omits content',
+          'Content rendering mode: "markdown" renders child subtree (default), "structured" returns nested child objects with remIds, "none" omits content',
       },
       childLimit: {
         type: 'number',
@@ -266,6 +266,43 @@ export const READ_NOTE_TOOL = {
         type: 'string',
         description:
           'Rendered markdown content of child subtree (when includeContent="markdown", which is the default)',
+      },
+      contentStructured: {
+        type: 'array',
+        description:
+          'Structured child subtree with nested remIds and metadata (only when includeContent="structured")',
+        items: {
+          type: 'object',
+          properties: {
+            remId: { type: 'string', description: 'Child Rem ID' },
+            title: { type: 'string', description: 'Rendered child title' },
+            headline: {
+              type: 'string',
+              description: 'Display-oriented child line with type-aware delimiter',
+            },
+            aliases: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Alternate names for the child Rem (omitted if none)',
+            },
+            remType: {
+              type: 'string',
+              description:
+                'Child Rem classification: document, dailyDocument, concept, descriptor, portal, or text',
+            },
+            cardDirection: {
+              type: 'string',
+              description:
+                'Child flashcard direction: forward, reverse, or bidirectional (omitted if not a flashcard)',
+            },
+            children: {
+              type: 'array',
+              description: 'Nested child nodes (same shape recursively)',
+              items: { type: 'object' },
+            },
+          },
+          required: ['remId', 'title', 'headline', 'remType', 'children'],
+        },
       },
       contentProperties: {
         type: 'object',

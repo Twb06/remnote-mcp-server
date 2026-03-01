@@ -14,6 +14,7 @@ function summarizeReadResult(result: Record<string, unknown>): Record<string, un
     title: result.title,
     keys: Object.keys(result),
     hasContent: 'content' in result,
+    hasContentStructured: 'contentStructured' in result,
     hasContentProperties: 'contentProperties' in result,
     contentLength: typeof result.content === 'string' ? result.content.length : undefined,
     contentProperties: result.contentProperties,
@@ -79,8 +80,8 @@ export async function readUpdateWorkflow(
     }
   }
 
-  // Step 2-3: Read rich note includeContent modes
-  for (const mode of ['markdown', 'none'] as const) {
+  // Step 2-4: Read rich note includeContent modes
+  for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();
     const label = `Read rich note includeContent=${mode} returns expected shape`;
     let debugResult: Record<string, unknown> | null = null;
@@ -120,8 +121,21 @@ export async function readUpdateWorkflow(
         );
         assertTruthy(typeof props.childrenTotal === 'number', 'childrenTotal should be number');
         assertTruthy((props.childrenTotal as number) > 0, 'childrenTotal should be > 0');
+      } else if (mode === 'structured') {
+        assertHasField(result, 'contentStructured', 'read rich note structured content');
+        assertTruthy(
+          Array.isArray(result.contentStructured),
+          'contentStructured should be an array in structured mode'
+        );
+        assertTruthy(
+          Array.isArray(result.contentStructured) && result.contentStructured.length > 0,
+          'contentStructured should contain nested child nodes in structured mode'
+        );
+        assertTruthy(!('content' in result), 'structured mode should omit markdown content');
+        assertTruthy(!('contentProperties' in result), 'structured mode should omit contentProperties');
       } else {
         assertTruthy(!('content' in result), 'none mode should omit content');
+        assertTruthy(!('contentStructured' in result), 'none mode should omit structured content');
         assertTruthy(!('contentProperties' in result), 'none mode should omit contentProperties');
       }
       steps.push({

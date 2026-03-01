@@ -200,7 +200,7 @@ Read a specific note by its Rem ID, including child content.
 |-----------|------|----------|-------------|
 | `remId` | string | Yes | The Rem ID to read |
 | `depth` | number | No | Depth of children to include in rendered content (0-10, default: 5) |
-| `includeContent` | string | No | Content mode: `markdown` (default) or `none` |
+| `includeContent` | string | No | Content mode: `markdown` (default), `structured`, or `none` |
 
 ### Usage
 
@@ -240,10 +240,14 @@ Returns note metadata plus optional rendered child content:
 }
 ```
 
+In `includeContent: "structured"` mode, the response includes `contentStructured` (nested child nodes with `remId`s)
+instead of markdown `content`.
+
 ### Tips
 
 - Use `depth: 0` for just the note title (no children)
 - Use `includeContent: "none"` when you only need metadata and parent context.
+- Use `includeContent: "structured"` when you need nested child `remId`s for deterministic follow-up navigation.
 - Use `depth: 1-3` for common hierarchies
 - Use `depth: 4-10` for deep nested structures
 - Higher depth may be slower for large hierarchies

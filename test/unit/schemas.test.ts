@@ -107,6 +107,7 @@ describe('ReadNoteSchema', () => {
     const result = ReadNoteSchema.parse({ remId: 'rem-123' });
     expect(result.remId).toBe('rem-123');
     expect(result.depth).toBe(5); // default
+    expect(result.includeContent).toBe('markdown'); // default
   });
 
   it('should apply default depth of 5', () => {
@@ -127,6 +128,16 @@ describe('ReadNoteSchema', () => {
   it('should validate depth of 10', () => {
     const result = ReadNoteSchema.parse({ remId: 'rem-123', depth: 10 });
     expect(result.depth).toBe(10);
+  });
+
+  it('should validate includeContent structured mode', () => {
+    const result = ReadNoteSchema.parse({
+      remId: 'rem-123',
+      includeContent: 'structured',
+      depth: 2,
+    });
+    expect(result.includeContent).toBe('structured');
+    expect(result.depth).toBe(2);
   });
 
   it('should reject depth less than 0', () => {

@@ -75,9 +75,11 @@ export const ReadNoteSchema = z.object({
   remId: z.string().describe('The Rem ID to read'),
   depth: z.number().int().min(0).max(10).default(5).describe('Depth of child hierarchy to render'),
   includeContent: z
-    .enum(['none', 'markdown'])
+    .enum(['none', 'markdown', 'structured'])
     .default('markdown')
-    .describe('Content rendering mode: "none" omits content, "markdown" renders child subtree'),
+    .describe(
+      'Content rendering mode: "none" omits content, "markdown" renders child subtree, "structured" returns nested child objects with remIds'
+    ),
   childLimit: z
     .number()
     .int()
