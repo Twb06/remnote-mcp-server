@@ -10,9 +10,16 @@ import { AppendJournalSchema } from '../schemas/remnote-schemas.js';
 import { checkVersionCompatibility } from '../version-compat.js';
 import type { Logger } from '../logger.js';
 
+const NAVIGATION_PRESET = {
+  includeContent: 'structured',
+  depth: 1,
+  childLimit: 500,
+} as const;
+
 export const CREATE_NOTE_TOOL = {
   name: 'remnote_create_note',
-  description: 'Create a new note in RemNote with optional content, parent, and tags',
+  description:
+    'Create a new note in RemNote with optional content, parent, and tags. Recommended preflight once per session: remnote_status.',
   inputSchema: {
     type: 'object' as const,
     properties: {
@@ -23,12 +30,20 @@ export const CREATE_NOTE_TOOL = {
     },
     required: ['title'],
   },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      remId: { type: 'string', description: 'Created note Rem ID' },
+      title: { type: 'string', description: 'Created note title' },
+    },
+    required: ['remId', 'title'],
+  },
 };
 
 export const SEARCH_TOOL = {
   name: 'remnote_search',
   description:
-    'Search the RemNote knowledge base. Results are sorted by type: documents first, then concepts, descriptors, portals, and plain text. Use includeContent: "markdown" for indented markdown previews or "structured" for nested child objects with remIds.',
+    'Search the RemNote knowledge base. For whole-KB orientation, prefer includeContent="structured" with depth=1 and childLimit=500, then follow remIds with remnote_read_note. Use includeContent="markdown" for human-readable summaries.',
   inputSchema: {
     type: 'object' as const,
     properties: {
@@ -203,7 +218,7 @@ export const SEARCH_BY_TAG_TOOL = {
 export const READ_NOTE_TOOL = {
   name: 'remnote_read_note',
   description:
-    'Read a specific note from RemNote by its Rem ID. Returns metadata plus child content in markdown or structured form. Use includeContent: "none" to skip content rendering.',
+    'Read a specific note from RemNote by its Rem ID. For hierarchy traversal, prefer includeContent="structured" and start shallow (depth=1, childLimit=500), then deepen only selected branches. Use includeContent="markdown" for summarization.',
   inputSchema: {
     type: 'object' as const,
     properties: {
@@ -329,7 +344,7 @@ export const READ_NOTE_TOOL = {
 export const UPDATE_NOTE_TOOL = {
   name: 'remnote_update_note',
   description:
-    'Update an existing note in RemNote (change title, append content, replace content, or modify tags)',
+    'Update an existing note in RemNote (change title, append content, replace content, or modify tags). Recommended preflight once per session: remnote_status. appendContent and replaceContent are mutually exclusive. replaceContent may be blocked by bridge policy.',
   inputSchema: {
     type: 'object' as const,
     properties: {
@@ -345,11 +360,20 @@ export const UPDATE_NOTE_TOOL = {
     },
     required: ['remId'],
   },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      success: { type: 'boolean', description: 'Whether the update succeeded' },
+      remId: { type: 'string', description: 'Updated note Rem ID' },
+    },
+    required: ['success', 'remId'],
+  },
 };
 
 export const APPEND_JOURNAL_TOOL = {
   name: 'remnote_append_journal',
-  description: "Append content to today's daily document in RemNote",
+  description:
+    "Append content to today's daily document in RemNote. Recommended preflight once per session: remnote_status.",
   inputSchema: {
     type: 'object' as const,
     properties: {
@@ -358,19 +382,145 @@ export const APPEND_JOURNAL_TOOL = {
     },
     required: ['content'],
   },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      remId: { type: 'string', description: 'Created journal entry Rem ID' },
+      content: { type: 'string', description: 'Final journal entry text written to RemNote' },
+    },
+    required: ['remId', 'content'],
+  },
 };
 
 export const STATUS_TOOL = {
   name: 'remnote_status',
-  description: 'Check the connection status and statistics of the RemNote MCP bridge',
+  description:
+    'Check bridge connection health, compatibility warnings, and write-policy capabilities. Recommended once per session before write operations.',
   inputSchema: {
     type: 'object' as const,
     properties: {},
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      connected: { type: 'boolean', description: 'Whether bridge plugin is currently connected' },
+      serverVersion: { type: 'string', description: 'MCP server version' },
+      pluginVersion: { type: 'string', description: 'Connected bridge plugin version' },
+      version_warning: {
+        type: 'string',
+        description: 'Compatibility warning when server/bridge versions differ',
+      },
+      acceptWriteOperations: {
+        type: 'boolean',
+        description: 'Whether bridge allows write actions (create/update/journal)',
+      },
+      acceptReplaceOperation: {
+        type: 'boolean',
+        description: 'Whether bridge allows update replaceContent operations',
+      },
+      message: {
+        type: 'string',
+        description: 'Connection status message (for disconnected states)',
+      },
+    },
+    required: ['connected', 'serverVersion'],
+  },
+};
+
+export const PLAYBOOK_TOOL = {
+  name: 'remnote_get_playbook',
+  description:
+    'Get an operations playbook for MCP agents: status-first recommendation, navigation presets, content-mode guidance, and write-safety decision tree.',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {},
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      playbookVersion: { type: 'string' },
+      summary: { type: 'string' },
+      recommendedStatusCheck: {
+        type: 'object',
+        properties: {
+          tool: { type: 'string' },
+          cadence: { type: 'string' },
+          rationale: { type: 'string' },
+        },
+      },
+      decisionTree: {
+        type: 'array',
+        items: { type: 'string' },
+      },
+      navigationPresets: {
+        type: 'object',
+        properties: {
+          orientation: {
+            type: 'object',
+            properties: {
+              includeContent: { type: 'string' },
+              depth: { type: 'number' },
+              childLimit: { type: 'number' },
+            },
+          },
+        },
+      },
+      contentModes: {
+        type: 'object',
+        properties: {
+          structured: { type: 'string' },
+          markdown: { type: 'string' },
+          none: { type: 'string' },
+        },
+      },
+      writePolicy: {
+        type: 'object',
+        properties: {
+          statusTool: { type: 'string' },
+          requiredFields: { type: 'array', items: { type: 'string' } },
+          guidance: { type: 'array', items: { type: 'string' } },
+        },
+      },
+      currentStatus: {
+        type: 'object',
+        description: 'Current remnote_status snapshot when available',
+      },
+    },
+    required: ['playbookVersion', 'summary', 'decisionTree', 'navigationPresets', 'contentModes'],
   },
 };
 
 export function registerAllTools(server: Server, wsServer: WebSocketServer, logger: Logger) {
   const toolLogger = logger.child({ context: 'tools' });
+
+  async function buildStatusResult(): Promise<Record<string, unknown>> {
+    const connected = wsServer.isConnected();
+    const serverVersion = wsServer.getServerVersion();
+    const bridgeVersion = wsServer.getBridgeVersion();
+
+    if (!connected) {
+      return { connected: false, serverVersion, message: 'RemNote plugin not connected' };
+    }
+
+    const statusResult = await wsServer.sendRequest('get_status', {});
+    const statusObj =
+      typeof statusResult === 'object' && statusResult !== null
+        ? (statusResult as Record<string, unknown>)
+        : {};
+    const fallbackBridgeVersion =
+      typeof statusObj.pluginVersion === 'string' ? statusObj.pluginVersion : null;
+    const effectiveBridgeVersion = bridgeVersion ?? fallbackBridgeVersion;
+    const versionWarning = effectiveBridgeVersion
+      ? checkVersionCompatibility(serverVersion, effectiveBridgeVersion)
+      : null;
+
+    return {
+      connected: true,
+      serverVersion,
+      ...statusObj,
+      ...(versionWarning ? { version_warning: versionWarning } : {}),
+    };
+  }
 
   // Single CallTool handler for all tools
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -419,32 +569,62 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           break;
         }
 
-        case 'remnote_status': {
-          const connected = wsServer.isConnected();
-          const serverVersion = wsServer.getServerVersion();
-          const bridgeVersion = wsServer.getBridgeVersion();
-
-          if (!connected) {
-            result = { connected: false, serverVersion, message: 'RemNote plugin not connected' };
-          } else {
-            const statusResult = await wsServer.sendRequest('get_status', {});
-            const statusObj =
-              typeof statusResult === 'object' && statusResult !== null
-                ? (statusResult as Record<string, unknown>)
-                : {};
-            const fallbackBridgeVersion =
-              typeof statusObj.pluginVersion === 'string' ? statusObj.pluginVersion : null;
-            const effectiveBridgeVersion = bridgeVersion ?? fallbackBridgeVersion;
-            const versionWarning = effectiveBridgeVersion
-              ? checkVersionCompatibility(serverVersion, effectiveBridgeVersion)
-              : null;
-            result = {
-              connected: true,
-              serverVersion,
-              ...statusObj,
-              ...(versionWarning ? { version_warning: versionWarning } : {}),
+        case 'remnote_get_playbook': {
+          let currentStatus: Record<string, unknown>;
+          try {
+            currentStatus = await buildStatusResult();
+          } catch (statusError) {
+            currentStatus = {
+              connected: false,
+              statusProbeError:
+                statusError instanceof Error ? statusError.message : String(statusError),
             };
           }
+
+          result = {
+            playbookVersion: '1.0.0',
+            summary:
+              'Use this playbook to navigate RemNote efficiently via remIds, and to apply write-safety checks before mutations.',
+            recommendedStatusCheck: {
+              tool: 'remnote_status',
+              cadence: 'recommended once per session and before risky writes',
+              rationale:
+                'status exposes connection health, version compatibility warnings, and write-policy gates',
+            },
+            decisionTree: [
+              'Need connection/capability context? Call remnote_status first.',
+              'Need to orient across the KB? Use remnote_search with includeContent="structured", depth=1, childLimit=500.',
+              'Need to traverse a specific branch? Use remnote_read_note on a chosen remId with includeContent="structured", depth=1, childLimit=500, then recurse by child remIds.',
+              'Need a human-readable summary? Switch to includeContent="markdown" on search/read results.',
+              'Need to modify content? Check remnote_status: if acceptWriteOperations is false, stop; if using replaceContent, ensure acceptReplaceOperation is true.',
+            ],
+            navigationPresets: {
+              orientation: NAVIGATION_PRESET,
+              branchTraversal: NAVIGATION_PRESET,
+            },
+            contentModes: {
+              structured:
+                'ID-first traversal mode. Returns contentStructured with child remIds for deterministic follow-up reads.',
+              markdown:
+                'Summary mode. Returns rendered markdown content for human-facing synthesis, not deterministic child ID traversal.',
+              none: 'Metadata-only mode when content is not needed.',
+            },
+            writePolicy: {
+              statusTool: 'remnote_status',
+              requiredFields: ['acceptWriteOperations', 'acceptReplaceOperation'],
+              guidance: [
+                'Create/update/journal require acceptWriteOperations=true.',
+                'replaceContent updates require acceptReplaceOperation=true.',
+                'appendContent and replaceContent cannot be used in the same remnote_update_note call.',
+              ],
+            },
+            currentStatus,
+          };
+          break;
+        }
+
+        case 'remnote_status': {
+          result = await buildStatusResult();
           break;
         }
 
@@ -496,6 +676,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
         READ_NOTE_TOOL,
         UPDATE_NOTE_TOOL,
         APPEND_JOURNAL_TOOL,
+        PLAYBOOK_TOOL,
         STATUS_TOOL,
       ],
     };

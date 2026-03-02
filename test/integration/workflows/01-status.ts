@@ -117,5 +117,37 @@ export async function statusWorkflow(
     }
   }
 
+  // Step 5: remnote_get_playbook exposes navigation guidance
+  {
+    const start = Date.now();
+    try {
+      const result = await ctx.client.callTool('remnote_get_playbook');
+      assertHasField(result, 'playbookVersion', 'playbook response');
+      assertHasField(result, 'decisionTree', 'playbook response');
+      assertHasField(result, 'navigationPresets', 'playbook response');
+      assertTruthy(Array.isArray(result.decisionTree), 'decisionTree should be an array');
+      const presets = result.navigationPresets as Record<string, unknown>;
+      const orientation = presets.orientation as Record<string, unknown>;
+      assertTruthy(
+        orientation?.includeContent === 'structured',
+        'orientation includeContent should be structured'
+      );
+      assertTruthy(orientation?.depth === 1, 'orientation depth should be 1');
+      assertTruthy(orientation?.childLimit === 500, 'orientation childLimit should be 500');
+      steps.push({
+        label: 'remnote_get_playbook returns traversal guidance',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'remnote_get_playbook returns traversal guidance',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
   return { name: 'Status Check', steps, skipped: false };
 }

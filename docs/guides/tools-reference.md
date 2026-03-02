@@ -4,7 +4,7 @@ Complete reference for all RemNote MCP tools available through the server.
 
 ## Overview
 
-The RemNote MCP Server exposes 7 tools that allow AI agents to interact with your RemNote knowledge base. Tools are
+The RemNote MCP Server exposes 8 tools that allow AI agents to interact with your RemNote knowledge base. Tools are
 automatically available in any connected MCP client.
 
 ## Tool Summary
@@ -17,6 +17,7 @@ automatically available in any connected MCP client.
 | `remnote_read_note` | Read note content | Retrieving details, reading hierarchies |
 | `remnote_update_note` | Modify existing notes | Appending content, adding tags, renaming |
 | `remnote_append_journal` | Add to daily document | Journaling, logging, daily notes |
+| `remnote_get_playbook` | Get operating playbook | Session preflight, traversal defaults, write safety guidance |
 | `remnote_status` | Check connection health | Verifying setup, debugging |
 
 ## remnote_create_note
@@ -155,6 +156,7 @@ Returns array of matching notes:
 - Use `includeContent: "none"` (default) for faster searches when you only need titles
 - Use `includeContent: "markdown"` when you need rendered child context
 - Use `includeContent: "structured"` when you need nested child `remId`s for follow-up reads/navigation
+- For whole-KB orientation, start with `includeContent: "structured"`, `depth: 1`, `childLimit: 500`
 - Use `parentRemId` and `parentTitle` to show where a result sits in your hierarchy.
 
 ## remnote_search_by_tag
@@ -248,6 +250,7 @@ instead of markdown `content`.
 - Use `depth: 0` for just the note title (no children)
 - Use `includeContent: "none"` when you only need metadata and parent context.
 - Use `includeContent: "structured"` when you need nested child `remId`s for deterministic follow-up navigation.
+- Start traversal with `includeContent: "structured"`, `depth: 1`, `childLimit: 500`, then deepen selected branches.
 - Use `depth: 1-3` for common hierarchies
 - Use `depth: 4-10` for deep nested structures
 - Higher depth may be slower for large hierarchies
@@ -385,9 +388,53 @@ Returns confirmation:
 - Use `timestamp: false` for plain entries
 - Great for logging daily activities, thoughts, or progress notes
 
+## remnote_get_playbook
+
+Return a compact operational playbook for MCP agents.
+
+Use this tool when an agent needs built-in guidance for:
+
+- status-first session preflight recommendations,
+- hierarchy traversal presets for whole-KB navigation,
+- `markdown` vs `structured` content-mode decisions,
+- write/replace safety checks.
+
+### Parameters
+
+None.
+
+### Usage
+
+```text
+Get the RemNote MCP playbook
+```
+
+Or:
+
+```text
+Call remnote_get_playbook and follow its navigation defaults
+```
+
+### Response
+
+Returns a structured playbook object, including:
+
+- `decisionTree` - short natural-language operating decisions.
+- `navigationPresets.orientation` - recommended traversal defaults (`structured`, `depth: 1`, `childLimit: 500`).
+- `contentModes` - when to use `structured` vs `markdown` vs `none`.
+- `writePolicy` - how to interpret `acceptWriteOperations` / `acceptReplaceOperation`.
+- `currentStatus` - live `remnote_status` snapshot when available.
+
+### Tips
+
+- Treat this as guidance, not rigid policy.
+- Call `remnote_status` once per session (recommended) and before high-risk writes.
+- For whole-KB orientation, start shallow and ID-first:
+  - `structured` mode, `depth: 1`, `childLimit: 500`.
+
 ## remnote_status
 
-Check the connection status and statistics of the RemNote Bridge.
+Check connection status, compatibility warnings, and write-policy capabilities.
 
 ### Parameters
 
@@ -406,12 +453,15 @@ Use remnote_status to verify the bridge is working
 
 ### Response
 
-Returns connection health and statistics:
+Returns connection health and policy capabilities:
 
 ```json
 {
   "connected": true,
+  "serverVersion": "0.8.0",
   "pluginVersion": "0.3.2",
+  "acceptWriteOperations": true,
+  "acceptReplaceOperation": false,
   "statistics": {
     "requestsSent": 142,
     "responsesReceived": 141,
@@ -432,8 +482,10 @@ Returns connection health and statistics:
 ### Tips
 
 - Use this to verify your setup after installation
+- Call once per session before normal operations (recommended)
 - Check after configuration changes
-- Useful for debugging connection issues
+- Check before write operations when safety/capability matters
+- Useful for debugging connection and compatibility issues
 - See [Troubleshooting Guide](troubleshooting.md) if status shows disconnected
 
 ## Conversational Usage
@@ -452,6 +504,7 @@ names.
 | "Show me note abc123" | `remnote_read_note` |
 | "Add Z to note def456" | `remnote_update_note` |
 | "Log today's progress" | `remnote_append_journal` |
+| "How should I navigate this KB?" | `remnote_get_playbook` |
 | "Is RemNote connected?" | `remnote_status` |
 
 ### Complex Workflows

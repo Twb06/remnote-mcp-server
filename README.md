@@ -58,8 +58,9 @@ connection always stays local for security. See [Remote Access Guide](docs/guide
 - **Create Notes** - Create new notes with optional parent hierarchy and tags
 - **Search Knowledge Base** - Full-text search with configurable result limits
 - **Read Notes** - Retrieve note content with configurable child depth
-- **Update Notes** - Modify titles, append content, add/remove tags
+- **Update Notes** - Modify titles, append/replace content, add/remove tags
 - **Journal Entries** - Append timestamped entries to daily documents
+- **Agent Playbook** - Return built-in navigation and safety guidance for MCP clients
 - **Connection Status** - Check server and plugin connection health
 
 ## Quick Start
@@ -115,7 +116,7 @@ Keep this terminal running.
 ### Usage
 
 - **[CLI Options Reference](docs/guides/cli-options.md)** - Command-line options and environment variables
-- **[MCP Tools Reference](docs/guides/tools-reference.md)** - Detailed reference for all 6 RemNote tools
+- **[MCP Tools Reference](docs/guides/tools-reference.md)** - Detailed reference for all 8 RemNote tools
 - **[Remote Access Setup](docs/guides/remote-access.md)** - Expose server for Claude Cowork (ngrok, etc.)
 
 ### Help & Advanced
@@ -137,8 +138,9 @@ Keep this terminal running.
 | `remnote_search`          | Search knowledge base with full-text search    |
 | `remnote_search_by_tag`   | Search by tag with ancestor-context resolution |
 | `remnote_read_note`       | Read note by ID with configurable depth        |
-| `remnote_update_note`     | Update title, append content, or modify tags   |
+| `remnote_update_note`     | Update title, append/replace content, or modify tags |
 | `remnote_append_journal`  | Append to today's daily document               |
+| `remnote_get_playbook`    | Get recommended MCP usage/navigation playbook  |
 | `remnote_status`          | Check connection status and statistics         |
 
 See the [Tools Reference](docs/guides/tools-reference.md) for detailed usage and examples.

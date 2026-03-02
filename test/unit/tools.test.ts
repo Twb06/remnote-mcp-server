@@ -12,6 +12,7 @@ import {
   READ_NOTE_TOOL,
   UPDATE_NOTE_TOOL,
   APPEND_JOURNAL_TOOL,
+  PLAYBOOK_TOOL,
   STATUS_TOOL,
 } from '../../src/tools/index.js';
 import { WebSocketServer } from '../../src/websocket-server.js';
@@ -166,6 +167,14 @@ describe('Tool Definitions', () => {
   it('should have no required fields for STATUS_TOOL', () => {
     expect(STATUS_TOOL.inputSchema.required || []).toHaveLength(0);
   });
+
+  it('should have correct name for PLAYBOOK_TOOL', () => {
+    expect(PLAYBOOK_TOOL.name).toBe('remnote_get_playbook');
+  });
+
+  it('should have no required fields for PLAYBOOK_TOOL', () => {
+    expect(PLAYBOOK_TOOL.inputSchema.required || []).toHaveLength(0);
+  });
 });
 
 describe('Tool Registration', () => {
@@ -187,14 +196,14 @@ describe('Tool Registration', () => {
     expect(mockServer.hasHandler(ListToolsRequestSchema)).toBe(true);
   });
 
-  it('should return all 7 tools in list', async () => {
+  it('should return all 8 tools in list', async () => {
     registerAllTools(mockServer as never, mockWsServer as never, createMockLogger());
 
     const result = (await mockServer.callHandler(ListToolsRequestSchema, {})) as {
       tools: unknown[];
     };
 
-    expect(result.tools).toHaveLength(7);
+    expect(result.tools).toHaveLength(8);
   });
 
   it('should include all tool names in list', async () => {
@@ -211,6 +220,7 @@ describe('Tool Registration', () => {
     expect(names).toContain('remnote_read_note');
     expect(names).toContain('remnote_update_note');
     expect(names).toContain('remnote_append_journal');
+    expect(names).toContain('remnote_get_playbook');
     expect(names).toContain('remnote_status');
   });
 });
@@ -625,6 +635,52 @@ describe('Tool Handlers - status', () => {
 
     const parsed = JSON.parse(result.content[0].text);
     expect(parsed.version_warning).toContain('Version mismatch');
+  });
+});
+
+describe('Tool Handlers - get_playbook', () => {
+  let mockServer: MockMCPServer;
+  let mockWsServer: {
+    sendRequest: ReturnType<typeof vi.fn>;
+    isConnected: ReturnType<typeof vi.fn>;
+    getServerVersion: ReturnType<typeof vi.fn>;
+    getBridgeVersion: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(() => {
+    mockServer = new MockMCPServer();
+    mockWsServer = {
+      sendRequest: vi.fn().mockResolvedValue(sampleStatusResult),
+      isConnected: vi.fn().mockReturnValue(true),
+      getServerVersion: vi.fn().mockReturnValue('0.8.0'),
+      getBridgeVersion: vi.fn().mockReturnValue('0.8.0'),
+    };
+    registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never);
+  });
+
+  it('should return playbook with decisionTree and navigation presets', async () => {
+    const result = (await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_get_playbook', arguments: {} },
+    })) as { content: { text: string }[] };
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.playbookVersion).toBe('1.0.0');
+    expect(Array.isArray(parsed.decisionTree)).toBe(true);
+    expect(parsed.decisionTree.length).toBeGreaterThan(0);
+    expect(parsed.navigationPresets.orientation.includeContent).toBe('structured');
+    expect(parsed.navigationPresets.orientation.depth).toBe(1);
+    expect(parsed.navigationPresets.orientation.childLimit).toBe(500);
+    expect(parsed.contentModes.structured).toContain('contentStructured');
+  });
+
+  it('should include currentStatus snapshot', async () => {
+    const result = (await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_get_playbook', arguments: {} },
+    })) as { content: { text: string }[] };
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.currentStatus.connected).toBe(true);
+    expect(parsed.currentStatus.serverVersion).toBe('0.8.0');
   });
 });
 
