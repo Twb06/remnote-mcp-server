@@ -62,3 +62,7 @@ Use a follow-up prompt requesting differences/contradictions against current int
 Verify ChatGPT returns a concise contradiction/mismatch list with clear takeaways.
 
 ![ChatGPT Notes vs Internet Diff](../images/remnote-mcp-server-demo-chatgpt-notes-vs-internet-diff.jpg)
+
+PS: I first treated the "take melatonin ~7 hours before sleep" claim as a model error/hallucination. In the next
+answer, ChatGPT quoted my actual note and context ("Take melatonin 9 hours after wake and 7 before sleep, eg 5 PM" for
+delayed phase sleep disorder), so this was still a distortion, but not fully made up.

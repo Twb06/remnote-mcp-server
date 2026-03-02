@@ -32,6 +32,10 @@ The user asks for a short comparison of notes vs. current internet knowledge, fo
 
 ChatGPT returns a concise mismatch list, preserving note-grounded context while highlighting conflicts.
 
+PS: I first treated the "take melatonin ~7 hours before sleep" claim as a model error/hallucination. In the next
+answer, ChatGPT quoted my actual note and context ("Take melatonin 9 hours after wake and 7 before sleep, eg 5 PM" for
+delayed phase sleep disorder), so this was still a distortion, but not fully made up.
+
 ## Claude Cowork
 
 Cloud-based integration through web interface.
