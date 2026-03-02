@@ -8,9 +8,29 @@ Web-based integration using ChatGPT Apps with a custom MCP server.
 
 **Setup:** [ChatGPT Configuration Guide](guides/configuration-chatgpt.md)
 
-![RemNote Search (ChatGPT)](images/remnote-mcp-server-demo-chatgpt-6.jpg)
+### 1) MCP status preflight
 
-ChatGPT calling `remnote_search` against RemNote and returning matching notes for "AI assisted coding".
+![ChatGPT MCP Status Check](images/remnote-mcp-server-demo-chatgpt-status-check.jpg)
+
+ChatGPT calls `remnote_status` and reports connection, version alignment, and write/replace policy flags.
+
+### 2) Notes-only synthesis
+
+![ChatGPT Notes Summary](images/remnote-mcp-server-demo-chatgpt-notes-summary.jpg)
+
+ChatGPT summarizes circadian-rhythm notes using MCP-retrieved RemNote content (notes-first synthesis).
+
+### 3) Follow-up contradiction request
+
+![ChatGPT Follow-up Diff Request](images/remnote-mcp-server-demo-chatgpt-followup-diff-request.jpg)
+
+The user asks for a short comparison of notes vs. current internet knowledge, focused on differences/contradictions.
+
+### 4) Notes vs internet diff output
+
+![ChatGPT Notes vs Internet Diff](images/remnote-mcp-server-demo-chatgpt-notes-vs-internet-diff.jpg)
+
+ChatGPT returns a concise mismatch list, preserving note-grounded context while highlighting conflicts.
 
 ## Claude Cowork
 

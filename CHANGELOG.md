@@ -25,6 +25,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Updated `remnote_search`/`remnote_read_note`/`remnote_status` tool descriptions to make status-first preflight and
   ID-first traversal recommendations explicit for non-skill MCP clients.
 - Updated integration workflow sources to validate `remnote_get_playbook` availability and baseline traversal presets.
+- Refreshed ChatGPT docs screenshots and flow in `docs/demo.md` and
+  `docs/guides/configuration-chatgpt.md` with a status-check + synthesis + diff sequence.
 
 ## [0.7.0] - 2026-03-01
 

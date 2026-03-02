@@ -39,8 +39,26 @@ Ask ChatGPT to run discovery and verify it can list and call RemNote tools (incl
 
 ![ChatGPT Tool Discovery](../images/remnote-mcp-server-demo-chatgpt-5.jpg)
 
-## Step 6: Test a real RemNote query
+## Step 6: Run a status preflight
 
-Run a real search prompt and confirm ChatGPT returns results from your RemNote knowledge base.
+Ask ChatGPT to check the MCP bridge status and verify connection plus capability flags.
 
-![ChatGPT RemNote Search](../images/remnote-mcp-server-demo-chatgpt-6.jpg)
+![ChatGPT MCP Status Check](../images/remnote-mcp-server-demo-chatgpt-status-check.jpg)
+
+## Step 7: Run a notes-only synthesis
+
+Prompt ChatGPT for a focused summary grounded in your RemNote notes.
+
+![ChatGPT Notes Summary](../images/remnote-mcp-server-demo-chatgpt-notes-summary.jpg)
+
+## Step 8: Ask for a targeted follow-up comparison
+
+Use a follow-up prompt requesting differences/contradictions against current internet knowledge.
+
+![ChatGPT Follow-up Diff Request](../images/remnote-mcp-server-demo-chatgpt-followup-diff-request.jpg)
+
+## Step 9: Confirm diff-style output
+
+Verify ChatGPT returns a concise contradiction/mismatch list with clear takeaways.
+
+![ChatGPT Notes vs Internet Diff](../images/remnote-mcp-server-demo-chatgpt-notes-vs-internet-diff.jpg)
