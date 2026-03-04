@@ -7,12 +7,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-03-04
+
 ### Added
 
 - Added `replaceContent` support for `remnote_update_note` in MCP input validation and tool schemas.
 - Added schema-level validation that rejects `appendContent` + `replaceContent` in one update request.
-- Added/updated unit and integration coverage for replace pass-through, append/replace conflict validation, and
-  replace-gate behavior.
 - Added `remnote_get_playbook`, a read-only MCP tool that returns navigation defaults, content-mode guidance, and a
   short decision tree for MCP agents.
 - Added `outputSchema` metadata for `remnote_create_note`, `remnote_update_note`, `remnote_append_journal`,
@@ -24,7 +24,6 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   behavior, and bridge write/replace policy gates.
 - Updated `remnote_search`/`remnote_read_note`/`remnote_status` tool descriptions to make status-first preflight and
   ID-first traversal recommendations explicit for non-skill MCP clients.
-- Updated integration workflow sources to validate `remnote_get_playbook` availability and baseline traversal presets.
 - Refreshed ChatGPT docs screenshots and flow in `docs/demo.md` and
   `docs/guides/configuration-chatgpt.md` with a status-check + synthesis + diff sequence.
 
