@@ -19,7 +19,7 @@ const NAVIGATION_PRESET = {
 export const CREATE_NOTE_TOOL = {
   name: 'remnote_create_note',
   description:
-    'Create a new note (or flashcard) in RemNote with optional content, parent, tags, and card type (:: or ;;). Recommended preflight once per session: remnote_status.',
+    'Create a new note (or flashcard if provided with backText) in RemNote with optional content, parent, tags, backText, and card type (default with concept card). Recommended preflight once per session: remnote_status.',
   inputSchema: {
     type: 'object' as const,
     properties: {
@@ -28,8 +28,8 @@ export const CREATE_NOTE_TOOL = {
       parentId: { type: 'string', description: 'Parent Rem ID' },
       tags: { type: 'array', items: { type: 'string' }, description: 'Tags to apply' },
       backText: { type: 'string', description: 'Optional back text to create a flashcard' },
-      isConcept: { type: 'boolean', description: 'Whether to explicitly create a Concept card (::)' },
-      isDescriptor: { type: 'boolean', description: 'Whether to explicitly create a Descriptor card (;;)' },
+      isConcept: { type: 'boolean', description: 'Whether to explicitly create a Concept card' },
+      isDescriptor: { type: 'boolean', description: 'Whether to explicitly create a Descriptor card' },
     },
     required: ['title'],
   },

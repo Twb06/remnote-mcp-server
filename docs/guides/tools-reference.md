@@ -65,7 +65,6 @@ Create a note "Important Meeting" with tags "work" and "urgent"
 **Create a flashcard:**
 ```
 Create a Concept card titled "Photosynthesis" with back text "Process by which plants make food"
-Created a flashcard "<title>" "<backText>"
 ```
 
 ### Response
