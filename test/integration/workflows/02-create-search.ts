@@ -161,34 +161,6 @@ export async function createSearchWorkflow(
   if (!state.searchByTagTag) {
     state.searchByTagTag = `mcp-test-tag-${ctx.runId.replace(/[^a-zA-Z0-9]/g, '-')}`;
   }
-  // Step 0: Verify error on empty create (bridge-side validation)
-  {
-    const start = Date.now();
-    try {
-      try {
-        await ctx.client.callTool('remnote_create_note', {});
-        throw new Error('Should have failed on empty input');
-      } catch (e: any) {
-        // Success case: bridge should throw 'create_note requires either title or content'
-        const msg = e.message || String(e);
-        if (msg.includes('Should have failed')) {
-          throw e;
-        }
-      }
-      steps.push({
-        label: 'Verify error on empty create',
-        passed: true,
-        durationMs: Date.now() - start,
-      });
-    } catch (e) {
-      steps.push({
-        label: 'Verify error on empty create',
-        passed: false,
-        durationMs: Date.now() - start,
-        error: (e as Error).message,
-      });
-    }
-  }
   // Step 1: Create simple note
   {
     const start = Date.now();

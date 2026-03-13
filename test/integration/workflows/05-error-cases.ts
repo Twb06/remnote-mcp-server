@@ -15,7 +15,36 @@ export async function errorCasesWorkflow(
 ): Promise<WorkflowResult> {
   const steps: StepResult[] = [];
 
-  // Step 1: Read nonexistent note returns error
+  // Step 1: Verify error on empty create (bridge-side validation)
+  {
+    const start = Date.now();
+    try {
+      try {
+        await ctx.client.callTool('remnote_create_note', {});
+        throw new Error('Should have failed on empty input');
+      } catch (e: any) {
+        // Success case: bridge should throw 'create_note requires either title or content'
+        const msg = e.message || String(e);
+        if (msg.includes('Should have failed')) {
+          throw e;
+        }
+      }
+      steps.push({
+        label: 'Verify error on empty create',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Verify error on empty create',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
+  // Step 2: Read nonexistent note returns error
   {
     const start = Date.now();
     try {
@@ -47,7 +76,7 @@ export async function errorCasesWorkflow(
     }
   }
 
-  // Step 2: Update nonexistent note returns error
+  // Step 3: Update nonexistent note returns error
   {
     const start = Date.now();
     try {
@@ -71,35 +100,6 @@ export async function errorCasesWorkflow(
       } else {
         steps.push({
           label: 'Update nonexistent note returns error',
-          passed: false,
-          durationMs: Date.now() - start,
-          error: (e as Error).message,
-        });
-      }
-    }
-  }
-
-  // Step 3: Create without title returns validation error
-  {
-    const start = Date.now();
-    try {
-      const errorText = await ctx.client.callToolExpectError('remnote_create_note', {});
-      assertTruthy(errorText, 'should return validation error for missing title');
-      steps.push({
-        label: 'Create without title returns validation error',
-        passed: true,
-        durationMs: Date.now() - start,
-      });
-    } catch (e) {
-      if (e instanceof ToolError) {
-        steps.push({
-          label: 'Create without title returns validation error',
-          passed: true,
-          durationMs: Date.now() - start,
-        });
-      } else {
-        steps.push({
-          label: 'Create without title returns validation error',
           passed: false,
           durationMs: Date.now() - start,
           error: (e as Error).message,
