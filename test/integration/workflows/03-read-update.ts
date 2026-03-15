@@ -5,7 +5,7 @@
  * and re-reads to verify the changes persisted.
  */
 
-import { assertTruthy, assertHasField, assertContains, assertEqual } from '../assertions.js';
+import { assertTruthy, assertHasField, assertContains, assertEqual, assertIsArray } from '../assertions.js';
 import type { WorkflowContext, WorkflowResult, SharedState, StepResult } from '../types.js';
 
 function summarizeReadResult(result: Record<string, unknown>): Record<string, unknown> {
@@ -164,11 +164,12 @@ export async function readUpdateWorkflow(
   {
     const start = Date.now();
     try {
-      const result = await ctx.client.callTool('remnote_update_note', {
+      const result = (await ctx.client.callTool('remnote_update_note', {
         remId: state.noteAId,
         title: `[MCP-TEST] Updated Note ${ctx.runId}`,
-      });
-      assertTruthy(result.success, 'update title should succeed');
+      })) as { remIds: string[] };
+      assertHasField(result, 'remIds', 'update title should succeed');
+      assertIsArray(result.remIds, 'update title remIds');
       steps.push({ label: 'Update title', passed: true, durationMs: Date.now() - start });
     } catch (e) {
       steps.push({
@@ -184,11 +185,12 @@ export async function readUpdateWorkflow(
   {
     const start = Date.now();
     try {
-      const result = await ctx.client.callTool('remnote_update_note', {
+      const result = (await ctx.client.callTool('remnote_update_note', {
         remId: state.noteAId,
         appendContent: 'Appended via integration test',
-      });
-      assertTruthy(result.success, 'append content should succeed');
+      })) as { remIds: string[] };
+      assertHasField(result, 'remIds', 'append content should succeed');
+      assertIsArray(result.remIds, 'append content remIds');
       steps.push({ label: 'Append content', passed: true, durationMs: Date.now() - start });
     } catch (e) {
       steps.push({
@@ -206,11 +208,12 @@ export async function readUpdateWorkflow(
     try {
       if (acceptReplaceOperation) {
         const replaceBody = `[MCP-TEST] Replaced via integration test ${ctx.runId}`;
-        const result = await ctx.client.callTool('remnote_update_note', {
+        const result = (await ctx.client.callTool('remnote_update_note', {
           remId: state.noteAId,
           replaceContent: replaceBody,
-        });
-        assertTruthy(result.success, 'replace content should succeed when enabled');
+        })) as { remIds: string[] };
+        assertHasField(result, 'remIds', 'replace content should succeed when enabled');
+        assertIsArray(result.remIds, 'replace content remIds');
 
         const reread = await ctx.client.callTool('remnote_read_note', {
           remId: state.noteAId,
@@ -254,11 +257,12 @@ export async function readUpdateWorkflow(
   if (acceptReplaceOperation) {
     const start = Date.now();
     try {
-      const result = await ctx.client.callTool('remnote_update_note', {
+      const result = (await ctx.client.callTool('remnote_update_note', {
         remId: state.noteAId,
         replaceContent: '',
-      });
-      assertTruthy(result.success, 'empty replace should succeed');
+      })) as { remIds: string[] };
+      assertHasField(result, 'remIds', 'empty replace should succeed');
+      assertIsArray(result.remIds, 'empty replace remIds');
 
       const reread = await ctx.client.callTool('remnote_read_note', {
         remId: state.noteAId,
@@ -289,11 +293,12 @@ export async function readUpdateWorkflow(
   {
     const start = Date.now();
     try {
-      const result = await ctx.client.callTool('remnote_update_note', {
+      const result = (await ctx.client.callTool('remnote_update_note', {
         remId: state.noteAId,
         addTags: ['mcp-integration-verified'],
-      });
-      assertTruthy(result.success, 'add tag should succeed');
+      })) as { remIds: string[] };
+      assertHasField(result, 'remIds', 'add tag should succeed');
+      assertIsArray(result.remIds, 'add tag remIds');
       steps.push({ label: 'Add tag', passed: true, durationMs: Date.now() - start });
     } catch (e) {
       steps.push({
@@ -309,11 +314,12 @@ export async function readUpdateWorkflow(
   {
     const start = Date.now();
     try {
-      const result = await ctx.client.callTool('remnote_update_note', {
+      const result = (await ctx.client.callTool('remnote_update_note', {
         remId: state.noteAId,
         removeTags: ['mcp-integration-verified'],
-      });
-      assertTruthy(result.success, 'remove tag should succeed');
+      })) as { remIds: string[] };
+      assertHasField(result, 'remIds', 'remove tag should succeed');
+      assertIsArray(result.remIds, 'remove tag remIds');
       steps.push({ label: 'Remove tag', passed: true, durationMs: Date.now() - start });
     } catch (e) {
       steps.push({
@@ -343,6 +349,34 @@ export async function readUpdateWorkflow(
     } catch (e) {
       steps.push({
         label: 'Re-read verifies changes',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
+  // Step 10: Update with markdown tree
+  {
+    const start = Date.now();
+    try {
+      const markdownTree = `[MCP-TEST] Markdown Tree ${ctx.runId}\n- Branch 1\n  - Leaf 1\n- Branch 2`;
+      const result = (await ctx.client.callTool('remnote_update_note', {
+        remId: state.noteAId,
+        appendContent: markdownTree,
+      })) as { remIds: string[] };
+      assertHasField(result, 'remIds', 'update with markdown tree');
+      assertIsArray(result.remIds, 'markdown tree remIds');
+      assertTruthy(result.remIds.length >= 4, 'should create multiple rems for tree');
+
+      steps.push({
+        label: 'Update with markdown tree',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Update with markdown tree',
         passed: false,
         durationMs: Date.now() - start,
         error: (e as Error).message,

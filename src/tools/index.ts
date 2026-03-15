@@ -351,10 +351,10 @@ export const UPDATE_NOTE_TOOL = {
     properties: {
       remId: { type: 'string', description: 'The Rem ID to update' },
       title: { type: 'string', description: 'New title' },
-      appendContent: { type: 'string', description: 'Content to append as children' },
+      appendContent: { type: 'string', description: 'Content to append as children (markdown supported)' },
       replaceContent: {
         type: 'string',
-        description: 'Content to replace direct children (empty string clears children)',
+        description: 'Content to replace direct children (markdown supported, empty string clears children)',
       },
       addTags: { type: 'array', items: { type: 'string' }, description: 'Tags to add' },
       removeTags: { type: 'array', items: { type: 'string' }, description: 'Tags to remove' },
@@ -364,10 +364,10 @@ export const UPDATE_NOTE_TOOL = {
   outputSchema: {
     type: 'object' as const,
     properties: {
-      success: { type: 'boolean', description: 'Whether the update succeeded' },
-      remId: { type: 'string', description: 'Updated note Rem ID' },
+      remIds: { type: 'array', items: { type: 'string' }, description: 'IDs of updated/affected Rems' },
+      titles: { type: 'array', items: { type: 'string' }, description: 'Extracted text for updated Rems' },
     },
-    required: ['success', 'remId'],
+    required: ['remIds', 'titles'],
   },
 };
 
@@ -378,7 +378,7 @@ export const APPEND_JOURNAL_TOOL = {
   inputSchema: {
     type: 'object' as const,
     properties: {
-      content: { type: 'string', description: "Content to append to today's daily document" },
+      content: { type: 'string', description: "Content to append to today's daily document (markdown supported)" },
       timestamp: { type: 'boolean', description: 'Include timestamp (default: true)' },
     },
     required: ['content'],
@@ -386,10 +386,10 @@ export const APPEND_JOURNAL_TOOL = {
   outputSchema: {
     type: 'object' as const,
     properties: {
-      remId: { type: 'string', description: 'Created journal entry Rem ID' },
-      content: { type: 'string', description: 'Final journal entry text written to RemNote' },
+      remIds: { type: 'array', items: { type: 'string' }, description: 'IDs of created journal Rems' },
+      titles: { type: 'array', items: { type: 'string' }, description: 'Extracted text for created Rems' },
     },
-    required: ['remId', 'content'],
+    required: ['remIds', 'titles'],
   },
 };
 

@@ -25,6 +25,7 @@ import {
   validUpdateNoteInput,
   validUpdateReplaceInput,
   validAppendJournalInput,
+  sampleMutatingResult,
   sampleNoteResult,
   sampleSearchResults,
   sampleStatusResult,
@@ -153,12 +154,24 @@ describe('Tool Definitions', () => {
     expect(properties.replaceContent).toBeDefined();
   });
 
+  it('should have plural remIds and titles in UPDATE_NOTE_TOOL output schema', () => {
+    const properties = UPDATE_NOTE_TOOL.outputSchema.properties as Record<string, any>;
+    expect(properties.remIds).toBeDefined();
+    expect(properties.titles).toBeDefined();
+  });
+
   it('should have correct name for APPEND_JOURNAL_TOOL', () => {
     expect(APPEND_JOURNAL_TOOL.name).toBe('remnote_append_journal');
   });
 
   it('should have required content field for APPEND_JOURNAL_TOOL', () => {
     expect(APPEND_JOURNAL_TOOL.inputSchema.required).toContain('content');
+  });
+
+  it('should have plural remIds and titles in APPEND_JOURNAL_TOOL output schema', () => {
+    const properties = APPEND_JOURNAL_TOOL.outputSchema.properties as Record<string, any>;
+    expect(properties.remIds).toBeDefined();
+    expect(properties.titles).toBeDefined();
   });
 
   it('should have correct name for STATUS_TOOL', () => {
@@ -441,7 +454,7 @@ describe('Tool Handlers - update_note', () => {
   beforeEach(() => {
     mockServer = new MockMCPServer();
     mockWsServer = {
-      sendRequest: vi.fn().mockResolvedValue({ success: true }),
+      sendRequest: vi.fn().mockResolvedValue(sampleMutatingResult),
     };
     registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never);
   });
@@ -470,6 +483,15 @@ describe('Tool Handlers - update_note', () => {
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('update_note', validUpdateReplaceInput);
   });
 
+  it('should return formatted JSON result with plural fields', async () => {
+    const result = (await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_update_note', arguments: validUpdateNoteInput },
+    })) as { content: { type: string; text: string }[] };
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed).toEqual(sampleMutatingResult);
+  });
+
   it('should reject update requests that include both appendContent and replaceContent', async () => {
     const result = (await mockServer.callHandler(CallToolRequestSchema, {
       params: {
@@ -496,7 +518,7 @@ describe('Tool Handlers - append_journal', () => {
   beforeEach(() => {
     mockServer = new MockMCPServer();
     mockWsServer = {
-      sendRequest: vi.fn().mockResolvedValue({ success: true }),
+      sendRequest: vi.fn().mockResolvedValue(sampleMutatingResult),
     };
     registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never);
   });
@@ -521,6 +543,15 @@ describe('Tool Handlers - append_journal', () => {
       content: 'test',
       timestamp: true, // default
     });
+  });
+
+  it('should return formatted JSON result with plural fields', async () => {
+    const result = (await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_append_journal', arguments: validAppendJournalInput },
+    })) as { content: { type: string; text: string }[] };
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed).toEqual(sampleMutatingResult);
   });
 });
 
@@ -737,7 +768,7 @@ describe('Tool Logging', () => {
   beforeEach(() => {
     mockServer = new MockMCPServer();
     mockWsServer = {
-      sendRequest: vi.fn().mockResolvedValue({ success: true }),
+      sendRequest: vi.fn().mockResolvedValue(sampleMutatingResult),
     };
     mockLogger = createMockLogger();
     registerAllTools(mockServer as never, mockWsServer as never, mockLogger);

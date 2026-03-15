@@ -67,11 +67,13 @@ export const createBridgeResponse = (
   error,
 });
 
-// Sample RemNote API responses
-export const sampleNoteResult = {
+// Sample RemNote API responses for mutating actions (create, update, journal)
+export const sampleMutatingResult = {
   remIds: ['rem-id-123', 'child-1-id', 'child-2-id'],
   titles: ['Sample Note', 'Child 1', 'Child 2'],
 };
+
+export const sampleNoteResult = sampleMutatingResult;
 
 export const sampleSearchResults = {
   results: [
