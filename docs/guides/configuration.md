@@ -10,6 +10,7 @@ The RemNote MCP Server uses Streamable HTTP transport, which means:
 - Clients connect via HTTP to `http://localhost:3001/mcp` (default)
 - Multiple clients can connect simultaneously
 - Each client gets its own MCP session
+- MCP clients use HTTP only for this project; `stdio` transport is not supported on current versions
 
 ## Quick Start
 
@@ -19,7 +20,13 @@ The RemNote MCP Server uses Streamable HTTP transport, which means:
 remnote-mcp-server
 ```
 
-**2. Configure your AI client:**
+**2. Open RemNote and connect the bridge plugin:**
+
+- Open the Automation Bridge panel in RemNote's right sidebar
+- Confirm the plugin connects to `ws://127.0.0.1:3002`
+- If RemNote was already open before the server started, click **Reconnect** if the bridge exhausted its retries
+
+**3. Configure your AI client:**
 
 Choose your AI client and follow its configuration guide:
 
@@ -107,7 +114,9 @@ The RemNote Automation Bridge plugin must be configured to match the server's We
 **Settings:**
 
 - **WebSocket URL:** `ws://127.0.0.1:3002` (default, or your custom port)
-- **Auto-reconnect:** Enabled (recommended)
+
+On current bridge builds, the plugin starts its WebSocket connection attempts when the Automation Bridge sidebar panel
+is opened. If the server was started after those retries were exhausted, use the panel's **Reconnect** button.
 
 ### Verifying Plugin Connection
 
@@ -118,11 +127,21 @@ The plugin control panel should show:
 - Connection timestamp
 - Statistics (requests sent/received)
 
+Recommended order:
+
+1. Start `remnote-mcp-server`
+2. Open RemNote and open the Automation Bridge sidebar panel
+3. Wait for the panel to show **Connected**
+4. Then connect your MCP client to `http://localhost:3001/mcp`
+
 If the status shows "Disconnected," see the [Troubleshooting Guide](troubleshooting.md#plugin-wont-connect).
 
 ## Common Configuration Mistakes
 
 ### Wrong Transport Type
+
+This project uses HTTP transport for MCP clients. Do not configure Claude Code or other MCP clients to spawn
+`remnote-mcp-server` via `stdio`.
 
 ❌ **Incorrect (old stdio transport):**
 ```json
@@ -174,6 +193,8 @@ If not running, start the server:
 ```bash
 remnote-mcp-server
 ```
+
+Then open the RemNote Automation Bridge panel and confirm the plugin is connected before retrying the MCP client.
 
 ### Wrong Port in Configuration
 

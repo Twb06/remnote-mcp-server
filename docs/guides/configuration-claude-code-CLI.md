@@ -12,7 +12,8 @@ git workflows directly from the terminal.
 
 - RemNote MCP Server installed and running
 - Claude Code CLI installed
-- RemNote app running with RemNote Automation Bridge plugin installed and connected
+- RemNote app running with RemNote Automation Bridge plugin installed
+- Automation Bridge sidebar panel opened in RemNote so the bridge runtime is mounted and connected
 
 ## Quick Start
 
@@ -22,7 +23,13 @@ git workflows directly from the terminal.
 remnote-mcp-server
 ```
 
-**2. Add the MCP server:**
+**2. Open RemNote and connect the bridge plugin:**
+
+- Open the Automation Bridge panel in RemNote's right sidebar
+- Confirm it shows **Connected**
+- If RemNote was already open before the server started, click **Reconnect** if needed
+
+**3. Add the MCP server:**
 
 ```bash
 # Navigate to your project directory
@@ -32,7 +39,7 @@ cd /Users/username/Projects/your-project
 claude mcp add remnote --transport http http://localhost:3001/mcp
 ```
 
-**3. Verify connection:**
+**4. Verify connection:**
 
 ```bash
 claude mcp list
@@ -43,7 +50,7 @@ Expected output:
 remnote: http://localhost:3001/mcp (HTTP) - ✓ Connected
 ```
 
-**4. Start using RemNote:**
+**5. Start using RemNote:**
 
 ```bash
 claude
@@ -175,6 +182,8 @@ claude mcp list
 
 ### Wrong Transport Type
 
+Claude Code must use HTTP transport for this project. Do not use `stdio` to spawn `remnote-mcp-server`.
+
 ❌ **Incorrect (old stdio transport):**
 ```json
 {
@@ -190,6 +199,9 @@ claude mcp list
   "url": "http://localhost:3001/mcp"
 }
 ```
+
+The RemNote plugin connects separately over WebSocket to `ws://127.0.0.1:3002`; that connection must already be up
+before Claude tool calls can succeed.
 
 ### Missing /mcp Path
 

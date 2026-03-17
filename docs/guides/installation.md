@@ -74,9 +74,9 @@ The server requires the RemNote Automation Bridge plugin to communicate with Rem
 
 Once installed, configure the plugin:
 
-1. Open the plugin control panel in RemNote
+1. Open the Automation Bridge panel in RemNote's right sidebar
 2. Verify the WebSocket URL: `ws://127.0.0.1:3002` (default)
-3. Enable **Auto-reconnect** (recommended)
+3. Keep that panel open while you verify the connection
 
 ## Starting the Server
 
@@ -113,6 +113,17 @@ remnote-mcp-server --log-file /tmp/remnote-mcp.log --log-level-file debug
 
 For more CLI options, see [CLI Options Reference](cli-options.md).
 
+### Recommended Startup Order
+
+1. Start `remnote-mcp-server`
+2. Open RemNote
+3. Open the Automation Bridge panel in the right sidebar
+4. Wait for the panel to show **Connected**
+5. Only then connect your MCP client to `http://localhost:3001/mcp`
+
+If RemNote was already open before the server started, the bridge may need a manual **Reconnect** click after its
+automatic retries stop.
+
 ## Verification
 
 ### 1. Check Server is Running
@@ -131,12 +142,16 @@ You should see the `node` process listening on both ports.
 
 ### 2. Check RemNote Plugin Connection
 
-Open RemNote with the RemNote Automation Bridge plugin installed. The plugin control panel should show:
+Open RemNote with the RemNote Automation Bridge plugin installed, then open the Automation Bridge panel in the right
+sidebar. The panel should show:
 
 - **Status:** "Connected" (green indicator)
 - **Server:** ws://127.0.0.1:3002
 - Connection timestamp
 - Statistics (requests sent/received)
+
+If it still shows **Disconnected**, click **Reconnect** after confirming the server is already listening on port
+`3002`.
 
 ### 3. Test MCP Connection
 
@@ -224,6 +239,13 @@ export PATH="$(npm config get prefix)/bin:$PATH"
 **Symptom:** Server starts but plugin shows "Disconnected"
 
 **Solution:** See [Troubleshooting Guide](troubleshooting.md#plugin-wont-connect)
+
+### MCP Client Configured with `stdio`
+
+**Symptom:** The MCP client starts `remnote-mcp-server` as a child process or times out during initialization
+
+**Solution:** This project uses HTTP transport for MCP clients. Configure the client to connect to
+`http://localhost:3001/mcp`, not `"type": "stdio"`. See [Configuration Guide](configuration.md#wrong-transport-type).
 
 ### Bridge / Server Version Mismatch (0.x)
 

@@ -7,6 +7,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Documentation
+
+- Clarified across setup guides that MCP clients must use HTTP transport (`http://localhost:3001/mcp`), not `stdio`.
+- Added the recommended startup order: start the server, open RemNote, open the Automation Bridge sidebar panel,
+  confirm bridge connection, then use the MCP client.
+- Replaced misleading plugin auto-reconnect wording with the current retry-plus-manual-`Reconnect` behavior.
+
 ## [0.8.0] - 2026-03-04
 
 ### Added
