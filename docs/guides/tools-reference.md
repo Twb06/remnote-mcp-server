@@ -103,7 +103,8 @@ Returns an array of remIds containing the title (if provided) and each generated
 - Structure content with bullets (`-` or `•`) for RemNote hierarchy
 - Use `parentId` to organize notes within existing hierarchies
 - Tags can be existing or new - new tags are created automatically
-- Provide `backText` to turn the note into a flashcard
+- Flashcards are created via markdown syntax in `content`, not separate create-note fields
+- Tags apply to the created root Rem when `title` is provided, or to top-level created Rems when `title` is omitted
 
 
 ## remnote_search

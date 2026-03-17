@@ -62,7 +62,6 @@ describe('Tool Definitions', () => {
     expect(CREATE_NOTE_TOOL.inputSchema.required).not.toContain('title');
   });
 
-
   it('should have correct name for SEARCH_TOOL', () => {
     expect(SEARCH_TOOL.name).toBe('remnote_search');
   });

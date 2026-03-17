@@ -5,7 +5,13 @@
  * and re-reads to verify the changes persisted.
  */
 
-import { assertTruthy, assertHasField, assertContains, assertEqual, assertIsArray } from '../assertions.js';
+import {
+  assertTruthy,
+  assertHasField,
+  assertContains,
+  assertEqual,
+  assertIsArray,
+} from '../assertions.js';
 import type { WorkflowContext, WorkflowResult, SharedState, StepResult } from '../types.js';
 
 function summarizeReadResult(result: Record<string, unknown>): Record<string, unknown> {

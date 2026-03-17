@@ -40,7 +40,9 @@ describe('CreateNoteSchema', () => {
   });
 
   it('should reject empty object', () => {
-    expect(() => CreateNoteSchema.parse({})).toThrow('create_note requires either title or content');
+    expect(() => CreateNoteSchema.parse({})).toThrow(
+      'create_note requires either title or content'
+    );
   });
 
   it('should reject non-string title', () => {
@@ -51,7 +53,6 @@ describe('CreateNoteSchema', () => {
     expect(() => CreateNoteSchema.parse({ title: 'Test', tags: 'not-array' })).toThrow();
   });
 });
-
 
 describe('SearchSchema', () => {
   it('should validate with only required query field', () => {

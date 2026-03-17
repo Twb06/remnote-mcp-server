@@ -23,8 +23,14 @@ export const CREATE_NOTE_TOOL = {
   inputSchema: {
     type: 'object' as const,
     properties: {
-      title: { type: 'string', description: 'The title of the note (optional if content is provided)' },
-      content: { type: 'string', description: 'Content as plain text, child bullets or hierarchical markdown' },
+      title: {
+        type: 'string',
+        description: 'The title of the note (optional if content is provided)',
+      },
+      content: {
+        type: 'string',
+        description: 'Content as plain text, child bullets or hierarchical markdown',
+      },
       parentId: { type: 'string', description: 'Parent Rem ID' },
       tags: { type: 'array', items: { type: 'string' }, description: 'Tags to apply' },
     },
@@ -33,13 +39,20 @@ export const CREATE_NOTE_TOOL = {
   outputSchema: {
     type: 'object' as const,
     properties: {
-      remIds: { type: 'array', items: { type: 'string' }, description: 'IDs of created Rems (title at index 0, top-to-bottom)' },
-      titles: { type: 'array', items: { type: 'string' }, description: 'Extracted text for each created Rem (title Rem ID at index 0, top-to-bottom)' },
+      remIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'IDs of created Rems (title at index 0, top-to-bottom)',
+      },
+      titles: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Extracted text for each created Rem (title Rem ID at index 0, top-to-bottom)',
+      },
     },
     required: ['remIds', 'titles'],
   },
 };
-
 
 export const SEARCH_TOOL = {
   name: 'remnote_search',
@@ -351,10 +364,14 @@ export const UPDATE_NOTE_TOOL = {
     properties: {
       remId: { type: 'string', description: 'The Rem ID to update' },
       title: { type: 'string', description: 'New title' },
-      appendContent: { type: 'string', description: 'Content to append as children (markdown supported)' },
+      appendContent: {
+        type: 'string',
+        description: 'Content to append as children (markdown supported)',
+      },
       replaceContent: {
         type: 'string',
-        description: 'Content to replace direct children (markdown supported, empty string clears children)',
+        description:
+          'Content to replace direct children (markdown supported, empty string clears children)',
       },
       addTags: { type: 'array', items: { type: 'string' }, description: 'Tags to add' },
       removeTags: { type: 'array', items: { type: 'string' }, description: 'Tags to remove' },
@@ -364,8 +381,16 @@ export const UPDATE_NOTE_TOOL = {
   outputSchema: {
     type: 'object' as const,
     properties: {
-      remIds: { type: 'array', items: { type: 'string' }, description: 'IDs of updated/affected Rems' },
-      titles: { type: 'array', items: { type: 'string' }, description: 'Extracted text for updated Rems' },
+      remIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'IDs of updated/affected Rems',
+      },
+      titles: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Extracted text for updated Rems',
+      },
     },
     required: ['remIds', 'titles'],
   },
@@ -378,7 +403,10 @@ export const APPEND_JOURNAL_TOOL = {
   inputSchema: {
     type: 'object' as const,
     properties: {
-      content: { type: 'string', description: "Content to append to today's daily document (markdown supported)" },
+      content: {
+        type: 'string',
+        description: "Content to append to today's daily document (markdown supported)",
+      },
       timestamp: { type: 'boolean', description: 'Include timestamp (default: true)' },
     },
     required: ['content'],
@@ -386,8 +414,16 @@ export const APPEND_JOURNAL_TOOL = {
   outputSchema: {
     type: 'object' as const,
     properties: {
-      remIds: { type: 'array', items: { type: 'string' }, description: 'IDs of created journal Rems' },
-      titles: { type: 'array', items: { type: 'string' }, description: 'Extracted text for created Rems' },
+      remIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'IDs of created journal Rems',
+      },
+      titles: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Extracted text for created Rems',
+      },
     },
     required: ['remIds', 'titles'],
   },

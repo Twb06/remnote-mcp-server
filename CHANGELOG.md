@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.0] - 2026-03-17
 
 ### Added
 - Enhanced `remnote_create_note` with direct hierarchical tree creation and flashcards via RemNote native markdown syntax.
@@ -14,6 +14,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Updated `remnote_create_note` input schema:
   - Made `title` optional (at least one of `title` or `content` must be provided).
 - Updated `remnote_create_note` output schema to return plural `remIds` and `titles` arrays.
+- Clarified unified create-note docs and added integration coverage for markdown-tree retrieval.
 
 ## [0.8.0] - 2026-03-04
 
