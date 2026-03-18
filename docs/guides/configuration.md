@@ -26,6 +26,9 @@ remnote-mcp-server
 - The bridge now starts automatically on plugin activation and should connect to `ws://127.0.0.1:3002` in the background
 - Open the Automation Bridge panel only if you want to confirm status or trigger an immediate manual **Reconnect**
 
+For the detailed bridge connection lifecycle, retry phases, and wake-up triggers, see the canonical bridge guide:
+[Connection Lifecycle Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/connection-lifecycle.md).
+
 **3. Configure your AI client:**
 
 Choose your AI client and follow its configuration guide:
@@ -117,6 +120,9 @@ The RemNote Automation Bridge plugin must be configured to match the server's We
 
 On current bridge builds, the plugin starts its WebSocket connection attempts automatically on plugin activation. The
 Automation Bridge sidebar panel is optional and exists for status, logs, and manual reconnect.
+
+For the detailed bridge retry and wake-up behavior, see the canonical bridge guide:
+[Connection Lifecycle Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/connection-lifecycle.md).
 
 ### Verifying Plugin Connection
 

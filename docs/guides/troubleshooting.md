@@ -182,6 +182,9 @@ RemNote MCP Server v0.2.1 listening { wsPort: 3002, httpPort: 3001 }
    - Open RemNote Developer Tools: `Cmd+Option+I` (macOS) or `Ctrl+Shift+I` (Windows/Linux)
    - Look for error messages in Console tab
 
+For the detailed bridge retry phases and wake-up behavior, see the canonical bridge guide:
+[Connection Lifecycle Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/connection-lifecycle.md).
+
 ### Plugin Connects Then Disconnects
 
 **Symptom:** Plugin shows "Connected" briefly, then "Disconnected"
@@ -208,7 +211,8 @@ RemNote MCP Server v0.2.1 listening { wsPort: 3002, httpPort: 3001 }
   ```
 
 - Check logs for error messages
-- Enable plugin auto-reconnect
+- Then compare the observed behavior against the bridge lifecycle guide:
+  [Connection Lifecycle Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/connection-lifecycle.md)
 
 ### Bridge / Server Version Mismatch After Upgrade
 

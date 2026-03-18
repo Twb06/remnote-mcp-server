@@ -15,6 +15,9 @@ git workflows directly from the terminal.
 - RemNote app running with RemNote Automation Bridge plugin installed
 - RemNote bridge allowed enough time to auto-connect in the background, or the Automation Bridge panel opened to verify status
 
+For the detailed bridge connection lifecycle, retry phases, and wake-up triggers, see the canonical bridge guide:
+[Connection Lifecycle Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/connection-lifecycle.md).
+
 ## Quick Start
 
 **1. Start the server:**
@@ -202,6 +205,9 @@ Claude Code must use HTTP transport for this project. Do not use `stdio` to spaw
 
 The RemNote plugin connects separately over WebSocket to `ws://127.0.0.1:3002`; that connection must already be up
 before Claude tool calls can succeed.
+
+For the exact bridge retry and wake-up behavior, see the canonical bridge guide:
+[Connection Lifecycle Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/connection-lifecycle.md).
 
 ### Missing /mcp Path
 

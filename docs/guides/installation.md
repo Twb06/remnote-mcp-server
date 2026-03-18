@@ -123,6 +123,9 @@ For more CLI options, see [CLI Options Reference](cli-options.md).
 If RemNote was already open before the server started, the bridge should still connect automatically after background
 retry. The panel's **Reconnect** button remains available as a faster manual retry.
 
+For the detailed bridge connection lifecycle, retry phases, and wake-up triggers, see the canonical bridge guide:
+[Connection Lifecycle Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/connection-lifecycle.md).
+
 ## Verification
 
 ### 1. Check Server is Running

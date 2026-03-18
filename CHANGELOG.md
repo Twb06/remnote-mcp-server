@@ -10,6 +10,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ### Documentation
 
 - Updated `README.md` capability and MCP tool summaries to reflect hierarchical markdown and flashcard creation.
+- Pointed server setup/troubleshooting docs to the bridge repo's connection lifecycle guide as the canonical connection reference.
 
 ## [0.9.0] - 2026-03-17
 

@@ -34,6 +34,9 @@ This system consists of **two separate components** that work together:
 
 **Both components are required** for AI integration with RemNote.
 
+For the detailed bridge connection lifecycle, retry phases, and wake-up triggers, use the bridge repo as the source of
+truth: [Connection Lifecycle Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/connection-lifecycle.md).
+
 ### How It Works
 
 ```text
@@ -110,6 +113,7 @@ Keep this terminal running.
 - **[Bridge / Consumer Version Compatibility
   Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/bridge-consumer-version-compatibility.md)**
   \- Match server version to installed bridge plugin version (`0.x` semver)
+- **[Bridge Connection Lifecycle](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/connection-lifecycle.md)** - Canonical bridge connect/retry behavior
 - **[Configuration Guide](docs/guides/configuration.md)** - Configure Claude Code CLI, Accomplish, and other clients
 - **[ChatGPT Configuration Guide](docs/guides/configuration-chatgpt.md)** - Set up ChatGPT Apps with your MCP server
 - **[Demo & Screenshots](docs/demo.md)** - See the server in action with different AI clients
