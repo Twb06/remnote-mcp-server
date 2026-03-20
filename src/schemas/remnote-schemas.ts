@@ -121,3 +121,10 @@ export const AppendJournalSchema = z.object({
   content: z.string().describe("Content to append to today's daily document"),
   timestamp: z.boolean().default(true).describe('Include timestamp'),
 });
+
+export const ReadTableSchema = z.object({
+  tableNameOrId: z.string().min(1).describe('Table Rem ID or tag name'),
+  limit: z.number().int().min(1).max(150).default(50).describe('Maximum rows to return'),
+  offset: z.number().int().min(0).default(0).describe('0-based row offset for pagination'),
+  propertyFilter: z.array(z.string()).optional().describe('Only return these property names'),
+});

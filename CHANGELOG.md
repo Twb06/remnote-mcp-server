@@ -7,6 +7,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- New `remnote_read_table` tool for reading Advanced Table data (columns, rows, cell values)
+- `ReadTableSchema` Zod validation schema with pagination (limit/offset) and propertyFilter support
+- Playbook decision tree updated with table-reading guidance
+
 ## [0.10.0] - 2026-03-18
 
 ### Documentation

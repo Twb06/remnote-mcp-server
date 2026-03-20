@@ -11,6 +11,7 @@ import {
   ReadNoteSchema,
   UpdateNoteSchema,
   AppendJournalSchema,
+  ReadTableSchema,
 } from '../../src/schemas/remnote-schemas.js';
 
 describe('CreateNoteSchema', () => {
@@ -278,5 +279,70 @@ describe('AppendJournalSchema', () => {
 
   it('should reject non-boolean timestamp', () => {
     expect(() => AppendJournalSchema.parse({ content: 'Test', timestamp: 'yes' })).toThrow();
+  });
+});
+
+describe('ReadTableSchema', () => {
+  it('should validate with only required tableNameOrId field', () => {
+    const result = ReadTableSchema.parse({ tableNameOrId: 'abc123' });
+    expect(result.tableNameOrId).toBe('abc123');
+  });
+
+  it('should apply default limit of 50', () => {
+    const result = ReadTableSchema.parse({ tableNameOrId: 'abc123' });
+    expect(result.limit).toBe(50);
+  });
+
+  it('should apply default offset of 0', () => {
+    const result = ReadTableSchema.parse({ tableNameOrId: 'abc123' });
+    expect(result.offset).toBe(0);
+  });
+
+  it('should validate with explicit limit', () => {
+    const result = ReadTableSchema.parse({ tableNameOrId: 'x', limit: 100 });
+    expect(result.limit).toBe(100);
+  });
+
+  it('should reject limit less than 1', () => {
+    expect(() => ReadTableSchema.parse({ tableNameOrId: 'x', limit: 0 })).toThrow();
+  });
+
+  it('should reject limit greater than 150', () => {
+    expect(() => ReadTableSchema.parse({ tableNameOrId: 'x', limit: 151 })).toThrow();
+  });
+
+  it('should accept limit of 150', () => {
+    const result = ReadTableSchema.parse({ tableNameOrId: 'x', limit: 150 });
+    expect(result.limit).toBe(150);
+  });
+
+  it('should reject negative offset', () => {
+    expect(() => ReadTableSchema.parse({ tableNameOrId: 'x', offset: -1 })).toThrow();
+  });
+
+  it('should accept offset of 0', () => {
+    const result = ReadTableSchema.parse({ tableNameOrId: 'x', offset: 0 });
+    expect(result.offset).toBe(0);
+  });
+
+  it('should accept propertyFilter array', () => {
+    const result = ReadTableSchema.parse({
+      tableNameOrId: 'x',
+      propertyFilter: ['Status', 'Priority'],
+    });
+    expect(result.propertyFilter).toEqual(['Status', 'Priority']);
+  });
+
+  it('should accept empty propertyFilter array', () => {
+    const result = ReadTableSchema.parse({ tableNameOrId: 'x', propertyFilter: [] });
+    expect(result.propertyFilter).toEqual([]);
+  });
+
+  it('should reject missing tableNameOrId', () => {
+    expect(() => ReadTableSchema.parse({ limit: 50 })).toThrow();
+  });
+
+  it('should reject empty tableNameOrId', () => {
+    expect(() => ReadTableSchema.parse({ tableNameOrId: '' })).toThrow();
   });
 });
