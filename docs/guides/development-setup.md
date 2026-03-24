@@ -4,7 +4,7 @@ Instructions for contributors who want to modify, test, or develop the RemNote M
 
 ## Prerequisites
 
-- **Node.js** >= 18.0.0 (preferably via nvm)
+- **Node.js** >= 20.19.0 for local development and code-quality commands (preferably via nvm)
 - **git** - Version control
 - **RemNote app** with RemNote Automation Bridge plugin (for testing)
 - **Claude Code CLI** or another MCP client (for integration testing)
@@ -78,7 +78,8 @@ npm run dev -- -h
 
 ### Using node-check.sh Script
 
-For development, the project includes `node-check.sh` to activate nvm and ensure the correct Node.js environment:
+For development, the project includes `node-check.sh` to activate nvm and ensure a Node version meeting the repo's
+`.nvmrc` floor is active:
 
 ```bash
 # Activate environment and run commands
@@ -87,7 +88,8 @@ source ./node-check.sh && npm test
 source ./node-check.sh && npm run dev
 ```
 
-This script ensures the correct Node.js version is available via nvm.
+This script ensures a Node.js version compatible with the local development toolchain is available via nvm, and will
+accept newer installed Node versions when they still satisfy the repo floor.
 
 ### Type Checking
 
