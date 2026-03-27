@@ -12,14 +12,26 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - `ReadTableSchema` Zod validation schema with pagination (limit/offset) and propertyFilter support
 - Playbook decision tree updated with table-reading guidance
 
+### Documentation
+- Updated README and integration docs to document `remnote_read_table` and the strict table test config.
+- Added a README note pointing contributors to the shared bridge pull request guide for cross-repo parity and linked PR expectations.
+- Replaced the placeholder pull request template with a shorter repo-specific template that links to the shared bridge PR guide.
+- Expanded the integration testing guide into the canonical shared workflow for updating, running, and cleaning up MCP server + CLI live integration coverage, including screenshots and source-test links.
+
+### Changed
+- Moved GitHub Actions CI to the shared reusable workflow in `robert7/workflows`, keeping local `main` push and pull
+  request triggers while centralizing the job definition.
+- Upgraded the lint toolchain to ESLint 9.x and `typescript-eslint` 8.x while keeping the existing `.eslintrc` flow
+  enabled for current scripts.
+- Migrated the repo to `eslint.config.mjs` flat config and aligned runtime and local tooling on Node 20.19.0 via
+  package metadata, `.nvmrc`, and `node-check.sh`.
+- Pinned the shared GitHub Actions CI workflow to `robert7/workflows/.github/workflows/node-ci.yml@v0.2.0`.
+
 ### Fixed
 - Fixed read-table integration config loading to use only
   `~/.remnote-mcp-bridge/remnote-mcp-bridge.json`.
 - Tightened read-table integration coverage to validate filtering, deterministic error handling, and Rem-ID
   lookup.
-
-### Documentation
-- Updated README and integration docs to document `remnote_read_table` and the strict table test config.
 
 ## [0.10.0] - 2026-03-18
 

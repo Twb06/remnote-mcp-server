@@ -53,15 +53,15 @@ remnote-mcp-server --version
    npm config get prefix
    ```
 
-2. **Node.js version too old**
+2. **Node.js version too old for local development**
    ```bash
    # Check version
    node --version
-   # Requires >= 18.0.0
+   # Development tooling requires >= 20.19.0
 
    # Update Node.js
-   nvm install 18
-   nvm use 18
+   nvm install 20.19.0
+   nvm use 20.19.0
    ```
 
 3. **Missing dependencies**
