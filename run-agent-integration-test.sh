@@ -12,9 +12,12 @@ CLI_REPO="${SCRIPT_DIR}/../remnote-cli"
 CLI_DAEMON_LOG="${REMNOTE_AGENT_DAEMON_LOG:-${HOME}/.remnote-cli/daemon.log}"
 
 started_server=0
+server_pid=""
 deadline=$((SECONDS + WAIT_TIMEOUT_SECONDS))
 built_server=0
 built_cli=0
+test_exit_code=0
+cleanup_ran=0
 
 ensure_built_server() {
   if (( built_server == 1 )); then
@@ -86,9 +89,31 @@ start_server() {
   ensure_built_server
   echo "MCP server not reachable. Building and starting a background server..."
   nohup npm run start -- --log-level warn --log-file "${LOG_FILE}" >"${LOG_FILE}" 2>&1 &
+  server_pid="$!"
   started_server=1
   echo "Background MCP server started. Log: ${LOG_FILE}"
 }
+
+cleanup() {
+  if (( cleanup_ran == 1 )); then
+    return
+  fi
+  cleanup_ran=1
+
+  if (( started_server == 0 )) || [[ -z "${server_pid}" ]]; then
+    return
+  fi
+
+  if ! kill -0 "${server_pid}" 2>/dev/null; then
+    return
+  fi
+
+  echo "Stopping MCP server started by agent wrapper..."
+  kill "${server_pid}" 2>/dev/null || true
+  wait "${server_pid}" 2>/dev/null || true
+}
+
+trap cleanup EXIT INT TERM
 
 stop_cli_daemon_if_running
 
@@ -96,7 +121,11 @@ while (( SECONDS < deadline )); do
   if output="$(status_output)"; then
     if grep -q '"connected": true' <<<"${output}"; then
       echo "Bridge connected. Running integration tests..."
-      exec "${SCRIPT_DIR}/run-integration-test.sh" "$@"
+      set +e
+      "${SCRIPT_DIR}/run-integration-test.sh" "$@"
+      test_exit_code=$?
+      set -e
+      exit "${test_exit_code}"
     fi
 
     echo "MCP server is up, but the RemNote bridge is not connected yet. Waiting..."

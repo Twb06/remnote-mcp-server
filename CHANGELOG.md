@@ -37,6 +37,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Hardened `run-agent-integration-test.sh` to build the MCP server before startup, stop the CLI daemon before MCP
   startup, and reuse server-log context on timeouts.
+- Updated `run-agent-integration-test.sh` to stop the MCP server it started after agent-assisted integration runs,
+  including successful, failed, and interrupted runs.
 
 ### Attribution
 

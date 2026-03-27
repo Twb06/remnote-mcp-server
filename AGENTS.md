@@ -93,6 +93,8 @@ wrapper.
   daemon is stopped before starting the MCP server.
 - The wrapper may build and start the local MCP server if it is not already running, then waits for
   `remnote_status.connected === true` before launching the suite.
+- After each agent-assisted integration run, whether it passes, fails, or is interrupted, the agent must stop the MCP
+  server if and only if the wrapper started it for that run.
 - If the bridge never connects, the wrapper must stop and tell the human collaborator to verify the RemNote bridge
   session.
 - Use unit/static checks for routine agent-side verification when explicit live validation is not requested.
