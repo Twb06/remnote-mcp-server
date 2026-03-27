@@ -67,7 +67,7 @@ export async function readTableWorkflow(
     const start = Date.now();
     try {
       const result = (await ctx.client.callTool('remnote_read_table', {
-        tableNameOrId: tableName,
+        tableTitle: tableName,
       })) as ReadTableResponse;
 
       assertHasField(result, 'columns', 'read_table response');
@@ -118,12 +118,20 @@ export async function readTableWorkflow(
     const start = Date.now();
     try {
       const result = (await ctx.client.callTool('remnote_read_table', {
-        tableNameOrId: tableRemId,
+        tableRemId,
       })) as ReadTableResponse;
 
-      assertTruthy(baseline, 'baseline response should exist before ID lookup validation');
-      assertEqual(result.tableId, baseline!.tableId, 'ID lookup should resolve the same table');
-      assertEqual(result.tableName, baseline!.tableName, 'ID lookup should preserve table name');
+      assertHasField(result, 'tableId', 'read_table ID lookup response');
+      assertHasField(result, 'tableName', 'read_table ID lookup response');
+      assertHasField(result, 'columns', 'read_table ID lookup response');
+      assertHasField(result, 'rows', 'read_table ID lookup response');
+      assertEqual(result.tableId, tableRemId, 'ID lookup should resolve the requested table ID');
+      assertTruthy(result.tableName, 'tableName should not be empty for ID lookup');
+
+      if (baseline) {
+        assertEqual(result.tableId, baseline.tableId, 'ID lookup should resolve the same table');
+        assertEqual(result.tableName, baseline.tableName, 'ID lookup should preserve table name');
+      }
 
       steps.push({
         label: 'Read table by remId',
@@ -146,7 +154,7 @@ export async function readTableWorkflow(
     try {
       const selectedColumn = baseline.columns[0];
       const result = (await ctx.client.callTool('remnote_read_table', {
-        tableNameOrId: tableName,
+        tableTitle: tableName,
         propertyFilter: [selectedColumn.name],
       })) as ReadTableResponse;
 
@@ -184,7 +192,7 @@ export async function readTableWorkflow(
     const start = Date.now();
     try {
       const result = (await ctx.client.callTool('remnote_read_table', {
-        tableNameOrId: tableName,
+        tableTitle: tableName,
         limit: 1,
       })) as ReadTableResponse;
 
@@ -214,7 +222,7 @@ export async function readTableWorkflow(
     const start = Date.now();
     try {
       const result = (await ctx.client.callTool('remnote_read_table', {
-        tableNameOrId: tableName,
+        tableTitle: tableName,
         offset: 1,
       })) as ReadTableResponse;
 
@@ -251,7 +259,7 @@ export async function readTableWorkflow(
     const start = Date.now();
     try {
       const errorText = await ctx.client.callToolExpectError('remnote_read_table', {
-        tableNameOrId: 'invalid-table-name-xyz-12345',
+        tableTitle: 'invalid-table-name-xyz-12345',
       });
       assertContains(
         errorText,

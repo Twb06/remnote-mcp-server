@@ -26,12 +26,15 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Migrated the repo to `eslint.config.mjs` flat config and aligned runtime and local tooling on Node 20.19.0 via
   package metadata, `.nvmrc`, and `node-check.sh`.
 - Pinned the shared GitHub Actions CI workflow to `robert7/workflows/.github/workflows/node-ci.yml@v0.2.0`.
+- Changed `remnote_read_table` input validation to require exactly one explicit identifier: `tableRemId` or
+  `tableTitle`.
 
 ### Fixed
 - Fixed read-table integration config loading to use only
   `~/.remnote-mcp-bridge/remnote-mcp-bridge.json`.
 - Tightened read-table integration coverage to validate filtering, deterministic error handling, and Rem-ID
   lookup.
+- Improved read-table integration diagnostics so Rem-ID validation reports independently from name-lookup failures.
 
 ## [0.10.0] - 2026-03-18
 

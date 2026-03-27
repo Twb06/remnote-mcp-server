@@ -48,7 +48,7 @@ export const validAppendJournalInput = {
 };
 
 export const validReadTableInput = {
-  tableNameOrId: 'table-rem-id-123',
+  tableRemId: 'table-rem-id-123',
   limit: 50,
   offset: 0,
 };

@@ -196,8 +196,9 @@ describe('Tool Definitions', () => {
     expect(READ_TABLE_TOOL.name).toBe('remnote_read_table');
   });
 
-  it('should have required tableNameOrId field for READ_TABLE_TOOL', () => {
-    expect(READ_TABLE_TOOL.inputSchema.required).toContain('tableNameOrId');
+  it('should document explicit identifier fields for READ_TABLE_TOOL', () => {
+    expect(READ_TABLE_TOOL.inputSchema.properties.tableRemId).toBeDefined();
+    expect(READ_TABLE_TOOL.inputSchema.properties.tableTitle).toBeDefined();
   });
 
   it('should have correct output schema for READ_TABLE_TOOL', () => {
@@ -602,11 +603,11 @@ describe('Tool Handlers - read_table', () => {
 
   it('should apply default values from schema', async () => {
     await mockServer.callHandler(CallToolRequestSchema, {
-      params: { name: 'remnote_read_table', arguments: { tableNameOrId: 'my-table' } },
+      params: { name: 'remnote_read_table', arguments: { tableTitle: 'My Table' } },
     });
 
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('read_table', {
-      tableNameOrId: 'my-table',
+      tableTitle: 'My Table',
       limit: 50, // default
       offset: 0, // default
     });
@@ -625,12 +626,12 @@ describe('Tool Handlers - read_table', () => {
     await mockServer.callHandler(CallToolRequestSchema, {
       params: {
         name: 'remnote_read_table',
-        arguments: { tableNameOrId: 'my-table', propertyFilter: ['Name', 'Status'] },
+        arguments: { tableTitle: 'My Table', propertyFilter: ['Name', 'Status'] },
       },
     });
 
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('read_table', {
-      tableNameOrId: 'my-table',
+      tableTitle: 'My Table',
       limit: 50,
       offset: 0,
       propertyFilter: ['Name', 'Status'],

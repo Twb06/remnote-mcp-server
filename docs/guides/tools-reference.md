@@ -421,16 +421,19 @@ Returns confirmation:
 
 ## remnote_read_table
 
-Read an Advanced Table by table name or Rem ID and return structured column and row data.
+Read an Advanced Table by exact title or Rem ID and return structured column and row data.
 
 ### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `tableNameOrId` | string | Yes | Table name or table Rem ID |
+| `tableTitle` | string | Conditionally | Exact Advanced Table title |
+| `tableRemId` | string | Conditionally | Table Rem ID |
 | `limit` | number | No | Maximum rows to return (1-150, default: 50) |
 | `offset` | number | No | Zero-based row offset for pagination (default: 0) |
 | `propertyFilter` | string[] | No | Only include these property/column names |
+
+Provide exactly one of `tableTitle` or `tableRemId`.
 
 ### Usage
 
@@ -441,7 +444,7 @@ Read the RemNote table "Projects"
 
 **Read a table by Rem ID:**
 ```
-Use remnote_read_table with tableNameOrId "abc123def"
+Use remnote_read_table with tableRemId "abc123def"
 ```
 
 **Limit rows for a large table:**

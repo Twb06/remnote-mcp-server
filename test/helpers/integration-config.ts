@@ -64,7 +64,7 @@ export function getIntegrationTestConfig(): IntegrationTestConfig | null {
 }
 
 /**
- * Check if integration test config exists and has a tableNameOrId.
+ * Check if integration test config exists and has both tableName and tableRemId.
  */
 export function hasTableConfig(): boolean {
   const config = getIntegrationTestConfig();

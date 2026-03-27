@@ -468,13 +468,17 @@ export const STATUS_TOOL = {
 export const READ_TABLE_TOOL = {
   name: 'remnote_read_table',
   description:
-    'Read an Advanced Table from RemNote by table name or Rem ID. Returns the table schema (columns with property types) and row data (cell values). Use this when you need structured tabular data. For simple tag-based queries without table structure, prefer remnote_search_by_tag.',
+    'Read an Advanced Table from RemNote by exact title or Rem ID. Returns the table schema (columns with property types) and row data (cell values). Use this when you need structured tabular data. For simple tag-based queries without table structure, prefer remnote_search_by_tag.',
   inputSchema: {
     type: 'object' as const,
     properties: {
-      tableNameOrId: {
+      tableRemId: {
         type: 'string',
-        description: 'Table Rem ID or tag name powering the table',
+        description: 'Table Rem ID',
+      },
+      tableTitle: {
+        type: 'string',
+        description: 'Exact Advanced Table title',
       },
       limit: {
         type: 'number',
@@ -490,7 +494,7 @@ export const READ_TABLE_TOOL = {
         description: 'Only return these property/column names (all if omitted)',
       },
     },
-    required: ['tableNameOrId'],
+    description: 'Provide exactly one of tableRemId or tableTitle.',
   },
   outputSchema: {
     type: 'object' as const,
@@ -706,7 +710,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
               'Need connection/capability context? Call remnote_status first.',
               'Need to orient across the KB? Use remnote_search with includeContent="structured", depth=1, childLimit=500.',
               'Need to traverse a specific branch? Use remnote_read_note on a chosen remId with includeContent="structured", depth=1, childLimit=500, then recurse by child remIds.',
-              'Need tabular/structured data from an Advanced Table? Use remnote_read_table with the table name or ID. Use propertyFilter to limit columns for large tables.',
+              'Need tabular/structured data from an Advanced Table? Use remnote_read_table with either tableTitle or tableRemId. Use propertyFilter to limit columns for large tables.',
               'Need a human-readable summary? Switch to includeContent="markdown" on search/read results.',
               'Need to modify content? Check remnote_status: if acceptWriteOperations is false, stop; if using replaceContent, ensure acceptReplaceOperation is true.',
             ],
