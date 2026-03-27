@@ -4,7 +4,7 @@ Complete reference for all RemNote MCP tools available through the server.
 
 ## Overview
 
-The RemNote MCP Server exposes 9 tools that allow AI agents to interact with your RemNote knowledge base. Tools are
+The RemNote MCP Server exposes tools that allow AI agents to interact with your RemNote knowledge base. Tools are
 automatically available in any connected MCP client.
 
 ## Tool Summary

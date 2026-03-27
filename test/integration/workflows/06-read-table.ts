@@ -6,7 +6,7 @@
  *
  * Prerequisites:
  * - Config file must exist at $HOME/.remnote-mcp-bridge/remnote-mcp-bridge.json
- * - Must contain integrationTest.tableName and/or integrationTest.tableRemId
+ * - Must contain both integrationTest.tableName and integrationTest.tableRemId
  */
 
 import {
@@ -49,11 +49,10 @@ export async function readTableWorkflow(
   }
 
   const config = getIntegrationTestConfig()!;
-  const tableName = config.tableName ?? config.tableNameOrId;
+  const tableName = config.tableName;
   const tableRemId = config.tableRemId;
-  const primaryIdentifier = tableName ?? tableRemId ?? config.tableNameOrId;
 
-  if (!primaryIdentifier) {
+  if (!tableName || !tableRemId) {
     return {
       name: 'Read Table',
       steps: [{ label: getTableConfigWarning(), passed: true, durationMs: 0 }],
@@ -68,7 +67,7 @@ export async function readTableWorkflow(
     const start = Date.now();
     try {
       const result = (await ctx.client.callTool('remnote_read_table', {
-        tableNameOrId: primaryIdentifier,
+        tableNameOrId: tableName,
       })) as ReadTableResponse;
 
       assertHasField(result, 'columns', 'read_table response');
@@ -147,7 +146,7 @@ export async function readTableWorkflow(
     try {
       const selectedColumn = baseline.columns[0];
       const result = (await ctx.client.callTool('remnote_read_table', {
-        tableNameOrId: primaryIdentifier,
+        tableNameOrId: tableName,
         propertyFilter: [selectedColumn.name],
       })) as ReadTableResponse;
 
@@ -185,7 +184,7 @@ export async function readTableWorkflow(
     const start = Date.now();
     try {
       const result = (await ctx.client.callTool('remnote_read_table', {
-        tableNameOrId: primaryIdentifier,
+        tableNameOrId: tableName,
         limit: 1,
       })) as ReadTableResponse;
 
@@ -215,7 +214,7 @@ export async function readTableWorkflow(
     const start = Date.now();
     try {
       const result = (await ctx.client.callTool('remnote_read_table', {
-        tableNameOrId: primaryIdentifier,
+        tableNameOrId: tableName,
         offset: 1,
       })) as ReadTableResponse;
 

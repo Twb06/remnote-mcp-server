@@ -14,7 +14,6 @@ import * as path from 'node:path';
 
 const CONFIG_DIR = '.remnote-mcp-bridge';
 const CONFIG_FILE = 'remnote-mcp-bridge.json';
-const LEGACY_CONFIG_FILE = '.remnote-mcp-bridge.json';
 
 /** Config structure for integration tests. */
 export interface IntegrationTestConfig {
@@ -22,8 +21,6 @@ export interface IntegrationTestConfig {
   tableRemId?: string;
   /** Preferred table name for read_table name-lookup coverage. */
   tableName?: string;
-  /** Backward-compatible fallback: table Rem ID or tag name for read_table tests. */
-  tableNameOrId?: string;
 }
 
 /** Root config structure matching the JSON file schema. */
@@ -43,22 +40,18 @@ export function getConfigPath(): string {
  * Returns null if the file doesn't exist or is invalid JSON.
  */
 export function loadConfig(): RemnoteMcpBridgeConfig | null {
-  const candidatePaths = [getConfigPath(), path.join(os.homedir(), LEGACY_CONFIG_FILE)];
+  const configPath = getConfigPath();
 
-  for (const configPath of candidatePaths) {
-    if (!fs.existsSync(configPath)) {
-      continue;
-    }
-
-    try {
-      const content = fs.readFileSync(configPath, 'utf-8');
-      return JSON.parse(content) as RemnoteMcpBridgeConfig;
-    } catch {
-      // Keep trying other known config locations before giving up.
-    }
+  if (!fs.existsSync(configPath)) {
+    return null;
   }
 
-  return null;
+  try {
+    const content = fs.readFileSync(configPath, 'utf-8');
+    return JSON.parse(content) as RemnoteMcpBridgeConfig;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -75,12 +68,12 @@ export function getIntegrationTestConfig(): IntegrationTestConfig | null {
  */
 export function hasTableConfig(): boolean {
   const config = getIntegrationTestConfig();
-  return Boolean(config?.tableRemId || config?.tableName || config?.tableNameOrId);
+  return Boolean(config?.tableRemId && config?.tableName);
 }
 
 /**
  * Get a warning message for when table config is missing.
  */
 export function getTableConfigWarning(): string {
-  return `Integration test table not configured. Set integrationTest.tableName and/or integrationTest.tableRemId in ${getConfigPath()}`;
+  return `Integration test table not configured. Set both integrationTest.tableName and integrationTest.tableRemId in ${getConfigPath()}`;
 }

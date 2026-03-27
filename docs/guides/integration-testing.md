@@ -43,7 +43,7 @@ The suite runs six sequential workflows:
 4. **Journal** — Appends entries to today's daily document with and without timestamps.
 5. **Error Cases** — Sends invalid inputs (nonexistent IDs, missing required fields) and verifies the server handles
    them gracefully.
-6. **Read Table** — Reads a pre-configured Advanced Table by name and/or Rem ID, then validates pagination, filtering,
+6. **Read Table** — Reads a pre-configured Advanced Table by name and Rem ID, then validates pagination, filtering,
    and not-found behavior.
 
 ## Test Artifacts
@@ -81,7 +81,7 @@ testing the table reading functionality without needing write operations.
 ### Setup
 
 1. Create an Advanced Table in RemNote with some data (at least one column and one row)
-2. Find the table's exact name and, if possible, its `remId` (for deterministic ID-lookup coverage)
+2. Find the table's exact name and its `remId`
 3. Create or edit the config file at:
 
    **Windows:** `C:\Users\<your-username>\.remnote-mcp-bridge\remnote-mcp-bridge.json`
@@ -99,9 +99,6 @@ testing the table reading functionality without needing write operations.
 }
 ```
 
-`tableNameOrId` is still accepted as a backward-compatible fallback, but `tableName` + `tableRemId` gives the best
-coverage.
-
 ### Running
 
 After setting up the config, run the integration tests as usual:
@@ -110,4 +107,4 @@ After setting up the config, run the integration tests as usual:
 npm run test:integration
 ```
 
-The read_table workflow is skipped when the table config is missing or invalid.
+The read_table workflow is skipped when either field is missing or the config is invalid.
