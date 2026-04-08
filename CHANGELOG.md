@@ -16,6 +16,10 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Returned `structuredContent` for tools with `outputSchema`, so strict MCP clients accept successful tool results.
 
+### Changed
+- Updated Node dependency baselines to the latest non-breaking set used by this release line, including
+  `@modelcontextprotocol/sdk` 1.29.0, `ws` 8.20.0, and the matching `@types/node` / `typescript-eslint` dev tooling.
+
 ### Documentation
 - Updated `docs/architecture.md` to document the OAuth 2.1 auto-approve security model and why bearer tokens are not
   enforced at the MCP layer.
