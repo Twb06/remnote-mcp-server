@@ -8,6 +8,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- Added weekly Dependabot updates for npm dependencies and GitHub Actions workflow references.
 - Added OAuth 2.1 support (`LocalhostOAuthProvider`) so MCP clients that proactively initiate OAuth (Claude Code with
   MCP SDK ≥ 1.26) can connect successfully. The provider auto-approves all client registrations and authorization
   requests without user interaction; the local machine remains the security boundary. Tokens are in-memory and reset on
