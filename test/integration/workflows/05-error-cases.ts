@@ -22,9 +22,9 @@ export async function errorCasesWorkflow(
       try {
         await ctx.client.callTool('remnote_create_note', {});
         throw new Error('Should have failed on empty input');
-      } catch (e: any) {
+      } catch (e: unknown) {
         // Success case: bridge should throw 'create_note requires either title or content'
-        const msg = e.message || String(e);
+        const msg = e instanceof Error ? e.message : String(e);
         if (msg.includes('Should have failed')) {
           throw e;
         }

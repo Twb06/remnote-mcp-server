@@ -171,7 +171,7 @@ describe('Tool Definitions', () => {
   });
 
   it('should have plural remIds and titles in UPDATE_NOTE_TOOL output schema', () => {
-    const properties = UPDATE_NOTE_TOOL.outputSchema.properties as Record<string, any>;
+    const properties = UPDATE_NOTE_TOOL.outputSchema.properties as Record<string, unknown>;
     expect(properties.remIds).toBeDefined();
     expect(properties.titles).toBeDefined();
   });
@@ -185,7 +185,7 @@ describe('Tool Definitions', () => {
   });
 
   it('should have plural remIds and titles in APPEND_JOURNAL_TOOL output schema', () => {
-    const properties = APPEND_JOURNAL_TOOL.outputSchema.properties as Record<string, any>;
+    const properties = APPEND_JOURNAL_TOOL.outputSchema.properties as Record<string, unknown>;
     expect(properties.remIds).toBeDefined();
     expect(properties.titles).toBeDefined();
   });

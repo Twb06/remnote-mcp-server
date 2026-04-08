@@ -24,7 +24,11 @@ describe('LocalhostOAuthProvider', () => {
 
   describe('clientsStore', () => {
     it('registers a new client and returns it with a generated client_id', async () => {
-      const { client_id, client_id_issued_at, ...metadata } = TEST_CLIENT;
+      const {
+        client_id: _clientId,
+        client_id_issued_at: _clientIdIssuedAt,
+        ...metadata
+      } = TEST_CLIENT;
       const registered = await provider.clientsStore.registerClient!(metadata);
 
       expect(registered.client_id).toBeDefined();
@@ -34,7 +38,11 @@ describe('LocalhostOAuthProvider', () => {
     });
 
     it('retrieves a registered client by id', async () => {
-      const { client_id, client_id_issued_at, ...metadata } = TEST_CLIENT;
+      const {
+        client_id: _clientId,
+        client_id_issued_at: _clientIdIssuedAt,
+        ...metadata
+      } = TEST_CLIENT;
       const registered = await provider.clientsStore.registerClient!(metadata);
       const fetched = await provider.clientsStore.getClient(registered.client_id);
 
@@ -125,24 +133,24 @@ describe('LocalhostOAuthProvider', () => {
       const code = await issueCode();
       await provider.exchangeAuthorizationCode(TEST_CLIENT, code);
 
-      await expect(
-        provider.exchangeAuthorizationCode(TEST_CLIENT, code)
-      ).rejects.toThrow('Invalid authorization code');
+      await expect(provider.exchangeAuthorizationCode(TEST_CLIENT, code)).rejects.toThrow(
+        'Invalid authorization code'
+      );
     });
 
     it('throws for an invalid code', async () => {
-      await expect(
-        provider.exchangeAuthorizationCode(TEST_CLIENT, 'bogus-code')
-      ).rejects.toThrow('Invalid authorization code');
+      await expect(provider.exchangeAuthorizationCode(TEST_CLIENT, 'bogus-code')).rejects.toThrow(
+        'Invalid authorization code'
+      );
     });
 
     it('throws when the code was issued to a different client', async () => {
       const code = await issueCode();
       const otherClient = { ...TEST_CLIENT, client_id: 'other-client' };
 
-      await expect(
-        provider.exchangeAuthorizationCode(otherClient, code)
-      ).rejects.toThrow('not issued to this client');
+      await expect(provider.exchangeAuthorizationCode(otherClient, code)).rejects.toThrow(
+        'not issued to this client'
+      );
     });
   });
 
@@ -193,9 +201,7 @@ describe('LocalhostOAuthProvider', () => {
 
   describe('exchangeRefreshToken', () => {
     it('always throws (not supported)', async () => {
-      await expect(provider.exchangeRefreshToken()).rejects.toThrow(
-        'Refresh tokens not supported'
-      );
+      await expect(provider.exchangeRefreshToken()).rejects.toThrow('Refresh tokens not supported');
     });
   });
 });

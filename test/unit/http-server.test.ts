@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { getOAuthProtectedResourceMetadataUrl } from '@modelcontextprotocol/sdk/server/auth/router.js';
 import { HttpMcpServer } from '../../src/http-server.js';
 import { WebSocketServer } from '../../src/websocket-server.js';
 import { createMockLogger } from '../setup.js';
@@ -563,13 +564,14 @@ describe('HttpMcpServer', () => {
       await httpServer.start();
       await waitForHttpServer(port);
 
-      const response = await fetch(
-        `http://127.0.0.1:${port}/.well-known/oauth-protected-resource`
-      );
+      const metadataPath = new URL(
+        getOAuthProtectedResourceMetadataUrl(new URL(`http://localhost:${port}/mcp`))
+      ).pathname;
+      const response = await fetch(`http://127.0.0.1:${port}${metadataPath}`);
 
       expect(response.status).toBe(200);
       const metadata = await response.json();
-      expect(metadata.resource).toBeDefined();
+      expect(metadata.resource).toBe(`http://localhost:${port}/mcp`);
       expect(metadata.authorization_servers).toBeInstanceOf(Array);
       expect(metadata.authorization_servers.length).toBeGreaterThan(0);
     });
