@@ -25,7 +25,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   steps, and renamed it to Claude Desktop / Cowork configuration and moved it to `docs/guides/configuration-claude-desktop-cowork.md`.
 
 ### Attribution
-- Thanks to @gasteigerjo for PR #7.
+- Thanks to @gasteigerjo for PR #7 (`structuredContent` for tools with `outputSchema`).
 
 ## [0.11.0] - 2026-03-27
 
