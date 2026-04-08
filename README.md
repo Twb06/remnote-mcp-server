@@ -149,6 +149,10 @@ Keep this terminal running.
 | `remnote_get_playbook`    | Get recommended MCP usage/navigation playbook  |
 | `remnote_status`          | Check connection status and statistics         |
 
+Tools that declare an `outputSchema` return MCP `structuredContent` plus a JSON `content` text block for compatibility.
+See the [MCP tools specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools) for the
+protocol contract.
+
 See the [Tools Reference](docs/guides/tools-reference.md) for detailed usage and examples.
 
 ## Supported AI Clients
