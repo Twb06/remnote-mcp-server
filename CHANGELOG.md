@@ -7,34 +7,20 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-04-09
+
 ### Added
-- Added weekly Dependabot updates for npm dependencies and GitHub Actions workflow references.
-- Added OAuth 2.1 support (`LocalhostOAuthProvider`) so MCP clients that proactively initiate OAuth (Claude Code with
-  MCP SDK ≥ 1.26) can connect successfully. The provider auto-approves all client registrations and authorization
-  requests without user interaction; the local machine remains the security boundary. Tokens are in-memory and reset on
-  server restart; clients re-authenticate automatically.
+- Added OAuth 2.1 support (`LocalhostOAuthProvider`) so MCP clients that proactively initiate OAuth, including
+  Claude Code with MCP SDK 1.26 and newer, can connect successfully.
+- OAuth client registrations and authorization requests are auto-approved locally, tokens stay in memory only, and
+  clients re-authenticate automatically after server restart.
+
+### Changed
+- Expanded the Claude Desktop / Cowork configuration guide with remote connector setup steps and aligned the docs
+  with the current OAuth flow.
 
 ### Fixed
 - Returned `structuredContent` for tools with `outputSchema`, so strict MCP clients accept successful tool results.
-
-### Changed
-- Updated the Node dependency/tooling stack to newer release lines, including `@modelcontextprotocol/sdk` 1.29.0,
-  `ws` 8.20.0, `commander` 14, `pino` 10, `pino-pretty` 13, `eslint` 10, `typescript` 6, and `vitest` 4 with the
-  matching `@types/node`, `typescript-eslint`, and Vitest companion packages.
-
-### Documentation
-- Removed the README beta status badge.
-- Removed the README's "still experimental" wording and kept the issue-reporting link.
-- Added an npm version badge to README install docs so the published package page is one click away.
-- Updated `docs/architecture.md` to document the OAuth 2.1 auto-approve security model and why bearer tokens are not
-  enforced at the MCP layer.
-- Documented the MCP `structuredContent` result contract in the README and tools reference, with a link to the
-  November 25, 2025 MCP tools specification.
-- Expanded the Claude configuration guide to cover Claude Desktop remote connectors, added screenshot-backed setup
-  steps, and renamed it to Claude Desktop / Cowork configuration and moved it to `docs/guides/configuration-claude-desktop-cowork.md`.
-
-### Attribution
-- Thanks to @gasteigerjo for PR #7 (`structuredContent` for tools with `outputSchema`).
 
 ## [0.11.0] - 2026-03-27
 
