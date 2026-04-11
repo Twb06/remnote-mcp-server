@@ -8,6 +8,11 @@ Claude Code CLI is Anthropic's command-line interface tool that integrates with 
 coding, allowing developers to automate tasks such as reading codebases, editing files, running commands, and handling
 git workflows directly from the terminal.
 
+> **Zero-config alternative:** If you want to use RemNote from Claude Code (or any other coding harness) without
+> running a full MCP server, use `remnote-cli` directly — just paste a single prompt that loads the skill file. No
+> config needed. See
+> [Use RemNote from Any Coding Harness](https://github.com/robert7/remnote-cli/blob/main/docs/demo.md#use-remnote-from-any-coding-harness).
+
 **Prerequisites:**
 
 - RemNote MCP Server installed and running
