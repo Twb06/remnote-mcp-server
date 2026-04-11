@@ -86,3 +86,8 @@ Local CLI-based integration showing search and connection logs.
 
 The screenshot shows Claude Code CLI searching RemNote for "AI assisted coding" through the terminal, with RemNote Bridge
 connection logs visible in the background.
+
+> **Using a coding harness?** Claude Code, GitHub Copilot CLI, Codex CLI, and similar tools can use `remnote-cli`
+> directly with **zero MCP config** — just paste a single prompt that loads the skill file. See
+> [Use RemNote from Any Coding Harness](https://github.com/robert7/remnote-cli/blob/main/docs/demo.md#use-remnote-from-any-coding-harness)
+> in the `remnote-cli` demo.

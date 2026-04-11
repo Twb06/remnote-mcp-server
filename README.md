@@ -19,6 +19,9 @@ conversational commands.
 
 For some agentic workflows or CLI-first automation, the companion app
 **[remnote-cli](https://github.com/robert7/remnote-cli)** may be a better fit than running a full MCP server.
+In particular, **coding harnesses** (Claude Code, GitHub Copilot CLI, Codex CLI, etc.) can use `remnote-cli` with
+**zero config** — paste one prompt that loads the skill file and the agent handles the rest. See
+[Use RemNote from Any Coding Harness](https://github.com/robert7/remnote-cli/blob/main/docs/demo.md#use-remnote-from-any-coding-harness).
 
 ## Demo
 
