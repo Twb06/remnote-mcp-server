@@ -36,6 +36,21 @@ function findMatchingSearchResult(
   return match as Record<string, unknown>;
 }
 
+function assertTagNamesInclude(
+  note: Record<string, unknown>,
+  expectedTagNames: string[],
+  label: string
+): void {
+  assertIsArray(note.tags, `${label}: tags should be an array`);
+  const tags = note.tags as string[];
+  for (const expectedTagName of expectedTagNames) {
+    assertTruthy(
+      tags.includes(expectedTagName),
+      `${label}: tags should include ${expectedTagName}`
+    );
+  }
+}
+
 async function resolveExpectedSearchByTagTarget(
   ctx: WorkflowContext,
   taggedRemId: string
@@ -163,6 +178,11 @@ export async function readUpdateWorkflow(
         result.parentTitle as string,
         state.integrationParentTitle as string,
         'read rich note parentTitle should match integration parent'
+      );
+      assertTagNamesInclude(
+        result,
+        [state.searchByTagTag as string],
+        `read rich note includeContent=${mode}`
       );
       if (mode === 'markdown') {
         assertHasField(result, 'content', 'read rich note markdown');

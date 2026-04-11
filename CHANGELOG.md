@@ -7,6 +7,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Added optional `tags` metadata to `remnote_search`, `remnote_search_by_tag`, and `remnote_read_note` output
+  schemas, including structured child nodes.
+
+### Documentation
+- Updated MCP tool docs and examples to show readable tag metadata on note retrieval responses.
+
 ## [0.12.0] - 2026-04-09
 
 ### Added

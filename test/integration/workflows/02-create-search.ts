@@ -73,6 +73,21 @@ function assertSearchContentModeShape(
   assertTruthy(!('contentStructured' in note), 'none mode should omit structured content');
 }
 
+function assertTagNamesInclude(
+  note: Record<string, unknown>,
+  expectedTagNames: string[],
+  label: string
+): void {
+  assertIsArray(note.tags, `${label}: tags should be an array`);
+  const tags = note.tags as string[];
+  for (const expectedTagName of expectedTagNames) {
+    assertTruthy(
+      tags.includes(expectedTagName),
+      `${label}: tags should include ${expectedTagName}`
+    );
+  }
+}
+
 interface ExpectedTagTarget {
   remId: string;
   remType: string;
@@ -343,6 +358,11 @@ export async function createSearchWorkflow(
       const match = findMatchingSearchResult(results, state.noteBId as string);
       assertSearchContentModeShape(match, mode);
       assertParentContext(match, state, `search ${mode} parent context`);
+      assertTagNamesInclude(
+        match,
+        [state.searchByTagTag as string],
+        `search ${mode} rich note tags`
+      );
       steps.push({
         label,
         passed: true,
