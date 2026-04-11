@@ -12,7 +12,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   schemas, including structured child nodes.
 
 ### Documentation
-- Updated MCP tool docs and examples to show readable tag metadata on note retrieval responses.
+- Updated MCP tool docs to describe readable `tags` on note retrieval as optional/best-effort, link to the bridge
+  limitation note, and explain why the live integration suite no longer asserts tags on plain search/read results.
 
 ## [0.12.0] - 2026-04-09
 

@@ -36,21 +36,6 @@ function findMatchingSearchResult(
   return match as Record<string, unknown>;
 }
 
-function assertTagNamesInclude(
-  note: Record<string, unknown>,
-  expectedTagNames: string[],
-  label: string
-): void {
-  assertIsArray(note.tags, `${label}: tags should be an array`);
-  const tags = note.tags as string[];
-  for (const expectedTagName of expectedTagNames) {
-    assertTruthy(
-      tags.includes(expectedTagName),
-      `${label}: tags should include ${expectedTagName}`
-    );
-  }
-}
-
 async function resolveExpectedSearchByTagTarget(
   ctx: WorkflowContext,
   taggedRemId: string
@@ -179,11 +164,9 @@ export async function readUpdateWorkflow(
         state.integrationParentTitle as string,
         'read rich note parentTitle should match integration parent'
       );
-      assertTagNamesInclude(
-        result,
-        [state.searchByTagTag as string],
-        `read rich note includeContent=${mode}`
-      );
+      // Live RemNote currently lacks reliable reverse note -> tags lookup for plain search/read.
+      // Keep write + search_by_tag coverage, but do not fail the live suite on omitted read tags:
+      // https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/tag-readback-limitations.md
       if (mode === 'markdown') {
         assertHasField(result, 'content', 'read rich note markdown');
         assertTruthy(typeof result.content === 'string', 'content should be a string');
