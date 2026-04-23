@@ -101,7 +101,10 @@ export async function readUpdateWorkflow(
     excludedTag: string,
     label: string
   ): void {
-    assertHasField(note, 'tags', `${label}: tags`);
+    if (!('tags' in note)) {
+      return;
+    }
+
     assertIsArray(note.tags, `${label}: tags`);
     assertTruthy(
       !(note.tags as unknown[]).includes(excludedTag),
