@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { WebSocketServer } from '../../src/websocket-server.js';
+import { REQUEST_TIMEOUT_MS, WebSocketServer } from '../../src/websocket-server.js';
 import { WebSocket } from 'ws';
 import { getAvailablePort, wait } from '../helpers/test-server.js';
 import { createMockLogger } from '../setup.js';
@@ -363,7 +363,7 @@ describe('WebSocketServer - Request/Response', () => {
     expect(receivedRequests).toHaveLength(3);
   });
 
-  it('should timeout request after 5 seconds', async () => {
+  it('should timeout request after 15 seconds', async () => {
     // Don't respond to request - let it timeout
     client.on('message', (data) => {
       const request = JSON.parse(data.toString());
@@ -373,14 +373,17 @@ describe('WebSocketServer - Request/Response', () => {
       // Intentionally do nothing
     });
 
-    const startTime = Date.now();
-    await expect(wsServer.sendRequest('slow', {})).rejects.toThrow('Request timeout');
-    const elapsed = Date.now() - startTime;
+    vi.useFakeTimers();
+    try {
+      const requestPromise = wsServer.sendRequest('slow', {});
+      const expectation = expect(requestPromise).rejects.toThrow('Request timeout');
 
-    // Should timeout around 5000ms (allow some tolerance)
-    expect(elapsed).toBeGreaterThanOrEqual(4900);
-    expect(elapsed).toBeLessThan(5500);
-  }, 10000);
+      await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+      await expectation;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
   it('should reject pending requests on disconnect', async () => {
     // Set up error handlers before making requests

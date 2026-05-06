@@ -18,8 +18,8 @@ The multi-layer architecture was designed with several performance constraints:
 
 - **Single client connection model:** Prevents resource contention and simplifies state management. Only one RemNote
   plugin connection is allowed at a time, with additional connection attempts rejected with WebSocket close code 1008.
-- **5-second request timeout:** Prevents indefinite hanging of pending promises. Each request sent to the RemNote plugin
-  must complete within 5 seconds, after which the promise is rejected. This ensures the MCP server remains responsive
+- **15-second request timeout:** Prevents indefinite hanging of pending promises. Each request sent to the RemNote plugin
+  must complete within 15 seconds, after which the promise is rejected. This ensures the MCP server remains responsive
   even if the RemNote plugin becomes unresponsive.
 - **UUID-based request correlation:** Enables efficient request/response matching with multiple in-flight requests. Each
   request gets a unique UUID that the RemNote plugin echoes back in its response, allowing the server to match responses
@@ -55,7 +55,7 @@ Error handling is implemented at three layers, each with specific responsibiliti
 
 - **No client connected:** Returns descriptive error "RemNote plugin not connected. Please ensure the plugin is
   installed and running."
-- **Request timeout (5s):** Rejects the pending promise with a timeout error
+- **Request timeout (15s):** Rejects the pending promise with a timeout error
 - **Connection lost mid-request:** All pending requests are immediately rejected with "Connection lost" error
 - **Malformed messages:** Logged to stderr, response discarded or request rejected
 

@@ -4,6 +4,8 @@ import { BridgeRequest, BridgeResponse, BridgeMessage } from './types/bridge.js'
 import { checkVersionCompatibility } from './version-compat.js';
 import type { Logger } from './logger.js';
 
+export const REQUEST_TIMEOUT_MS = 15000;
+
 export class WebSocketServer {
   private wss: WSServer | null = null;
   private client: WebSocket | null = null;
@@ -149,7 +151,7 @@ export class WebSocketServer {
       const timeout = setTimeout(() => {
         this.pendingRequests.delete(id);
         reject(new Error(`Request timeout: ${action}`));
-      }, 5000);
+      }, REQUEST_TIMEOUT_MS);
 
       this.pendingRequests.set(id, {
         resolve: (result) => {
