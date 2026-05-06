@@ -90,6 +90,7 @@ npm run dev
 npm run build
 npm run typecheck
 npm run test:integration
+npm run test:integration:mcp
 npm run test:integration:cli
 npm test
 npm run test:coverage
@@ -102,12 +103,12 @@ AI agents may run live integration tests in this repo only on explicit human req
 wrapper.
 
 - Default: do not run `npm run test:integration` or `./run-integration-test.sh` directly.
-- Allowed paths for AI agents: `./run-agent-integration-test.sh [--yes]` for MCP tools and
-  `./run-agent-cli-integration-test.sh [--yes]` for the bundled CLI.
+- Allowed path for AI agents: `./run-agent-integration-test.sh [--yes]`, which validates both the direct MCP tools
+  path and the bundled CLI path by default. Use `--suite mcp` or `--suite cli` only for targeted reruns.
 - Before invoking the wrapper, the agent must ask the human collaborator to start the bridge in RemNote.
 - If bridge code changed after the currently running RemNote bridge session started, the agent must ask the human
   collaborator to restart the bridge before rerunning the suite.
-- The wrappers may build and start the local MCP server if it is not already running, then wait for
+- The wrapper may build and start the local MCP server if it is not already running, then wait for
   `remnote_status.connected === true` before launching the suite.
 - After each agent-assisted integration run, whether it passes, fails, or is interrupted, the agent must stop the MCP
   server if and only if the wrapper started it for that run.

@@ -109,7 +109,7 @@ describe('run-agent-integration-test.sh', () => {
 
     expect(result.status).toBe(0);
     expect(commandLog).toContain('run start -- --log-level warn --log-file');
-    expect(commandLog).toContain('integration:--yes');
+    expect(commandLog).toContain('integration:--yes --suite all');
     expect(isProcessAlive(serverPid)).toBe(false);
   });
 
@@ -125,6 +125,23 @@ describe('run-agent-integration-test.sh', () => {
     const serverPid = Number.parseInt(readFileSync(sandbox.serverPidPath, 'utf-8').trim(), 10);
 
     expect(result.status).toBe(9);
+    expect(isProcessAlive(serverPid)).toBe(false);
+  });
+
+  it('passes a selected suite through to the unified integration wrapper', () => {
+    const sandbox = setupServerWrapperSandbox(0);
+
+    const result = spawnSync('bash', [sandbox.scriptPath, '--suite', 'cli'], {
+      cwd: resolve(process.cwd()),
+      encoding: 'utf-8',
+      env: sandbox.env,
+    });
+
+    const commandLog = readFileSync(sandbox.commandLogPath, 'utf-8');
+    const serverPid = Number.parseInt(readFileSync(sandbox.serverPidPath, 'utf-8').trim(), 10);
+
+    expect(result.status).toBe(0);
+    expect(commandLog).toContain('integration:--yes --suite cli');
     expect(isProcessAlive(serverPid)).toBe(false);
   });
 });

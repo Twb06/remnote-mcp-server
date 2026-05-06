@@ -5,8 +5,8 @@
  * Creates real content in RemNote — all prefixed with [MCP-TEST] for easy cleanup.
  *
  * Usage:
- *   npm run test:integration          # Interactive — prompts for confirmation
- *   npm run test:integration -- --yes # Skip confirmation prompt
+ *   npm run test:integration:mcp          # Interactive — prompts for confirmation
+ *   npm run test:integration:mcp -- --yes # Skip confirmation prompt
  *
  * Environment variables:
  *   REMNOTE_MCP_URL  — MCP server URL (default: http://127.0.0.1:3001)

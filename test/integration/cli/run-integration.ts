@@ -5,8 +5,8 @@
  * Creates real content in RemNote — all prefixed with [CLI-TEST] for easy cleanup.
  *
  * Usage:
- *   npm run test:integration          # Interactive — prompts for confirmation
- *   npm run test:integration -- --yes # Skip confirmation prompt
+ *   npm run test:integration:cli          # Interactive — prompts for confirmation
+ *   npm run test:integration:cli -- --yes # Skip confirmation prompt
  *
  * Environment variables:
  *   REMNOTE_MCP_URL  — MCP server URL (default: http://127.0.0.1:3001/mcp)
@@ -251,7 +251,8 @@ async function ensureIntegrationParentNote(
 
 async function main(): Promise<void> {
   const skipConfirm = process.argv.includes('--yes');
-  const mcpUrl = process.env.REMNOTE_MCP_URL ?? 'http://127.0.0.1:3001/mcp';
+  const baseUrl = process.env.REMNOTE_MCP_URL ?? 'http://127.0.0.1:3001';
+  const mcpUrl = baseUrl.endsWith('/mcp') ? baseUrl : `${baseUrl.replace(/\/$/, '')}/mcp`;
   const runId = new Date().toISOString();
 
   printBanner();

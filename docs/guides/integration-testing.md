@@ -39,42 +39,40 @@ Bridge as connected.
 
 ## Running The Suites
 
-### MCP Server Suite
+### Full Suite
 
 ```bash
-# Interactive — prompts before creating content
-npm run test:integration
+# Manual — prompts once before creating content, then runs direct MCP and bundled CLI suites
+./run-integration-test.sh
 
 # Non-interactive — skips confirmation
-npm run test:integration -- --yes
+./run-integration-test.sh --yes
 
-# Fast connection check only (no test data creation)
-./run-status-check.sh
-
-# Agent-assisted — starts the server if needed, waits for bridge connection, then runs the suite
+# Agent-assisted — starts the server if needed, waits for bridge connection, then runs both suites
 ./run-agent-integration-test.sh
 ./run-agent-integration-test.sh --yes
 ```
 
-### CLI Suite
+`npm run test:integration` delegates to `./run-integration-test.sh`, so it also runs both suites by default.
+
+### Targeted Reruns
 
 ```bash
-# Run the live CLI integration suite against the MCP server
-npm run test:integration:cli
-npm run test:integration:cli -- --yes
+# Direct MCP path only
+./run-integration-test.sh --suite mcp
+./run-agent-integration-test.sh --suite mcp --yes
 
-# Convenience wrapper
-./run-integration-cli-test.sh
-./run-integration-cli-test.sh --yes
+# Bundled remnote-cli path only
+./run-integration-test.sh --suite cli
+./run-agent-integration-test.sh --suite cli --yes
 
-# Agent-assisted — starts/reuses the MCP server, waits for bridge connection, then runs the suite
-./run-agent-cli-integration-test.sh
-./run-agent-cli-integration-test.sh --yes
+# Fast connection check only (no test data creation)
+./run-status-check.sh
 ```
 
 The CLI suite uses the same MCP server endpoint as MCP clients. It does not start or require a separate CLI server.
-The agent-assisted wrappers are the only approved live-test entrypoint for AI agents; they time out with a clear
-message when the RemNote bridge never connects.
+The agent-assisted wrapper is the only approved live-test entrypoint for AI agents; it times out with a clear message
+when the RemNote bridge never connects.
 Agent-assisted flow still has one manual gate: the agent should ask the human collaborator to start the bridge first,
 and must ask for a bridge restart before reruns if bridge code changed since the current RemNote bridge session
 started.
@@ -96,9 +94,11 @@ The CLI suite uses the same variables.
 
 If a pull request changes shared external behavior, update both integration surfaces where the feature can be exercised.
 
-- MCP server entrypoint: [`test/integration/run-integration.ts`](../../test/integration/run-integration.ts)
+- Combined shell entrypoint: [`run-integration-test.sh`](../../run-integration-test.sh)
+- Agent-safe shell entrypoint: [`run-agent-integration-test.sh`](../../run-agent-integration-test.sh)
+- MCP runner: [`test/integration/run-integration.ts`](../../test/integration/run-integration.ts)
 - MCP server workflows: [`test/integration/workflows/`](../../test/integration/workflows/)
-- CLI entrypoint: [`test/integration/cli/run-integration.ts`](../../test/integration/cli/run-integration.ts)
+- CLI runner: [`test/integration/cli/run-integration.ts`](../../test/integration/cli/run-integration.ts)
 - CLI workflows: [`test/integration/cli/workflows/`](../../test/integration/cli/workflows/)
 
 The usual rule is simple: if users can reach the new behavior through both MCP tools and `remnote-cli`, both
@@ -177,7 +177,7 @@ still validating the shared bridge-consumer contract.
 Run the integration suite as usual:
 
 ```bash
-npm run test:integration
+./run-integration-test.sh
 ```
 
 The `read_table` workflow is skipped when either field is missing or the config is invalid.

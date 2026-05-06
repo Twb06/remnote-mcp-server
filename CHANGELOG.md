@@ -21,6 +21,9 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   `remnote-cli` package is now treated as a legacy migration path.
 - Updated agent-assisted integration docs and wrapper behavior for the unified MCP-server path; the wrapper no longer
   checks for or stops a separate CLI daemon before starting the MCP server.
+- Consolidated live integration shell entrypoints to `run-integration-test.sh` for manual runs and
+  `run-agent-integration-test.sh` for agent-assisted runs. Both validate the direct MCP and bundled CLI paths by
+  default, with `--suite mcp|cli|all` for targeted reruns.
 
 ## [0.13.1] - 2026-05-06
 
