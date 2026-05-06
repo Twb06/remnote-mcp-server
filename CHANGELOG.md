@@ -7,10 +7,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-05-06
+
 ### Changed
 
 - Increased the RemNote bridge request timeout from 5 seconds to 15 seconds.
-- Reduced Dependabot version-update checks to monthly runs on the 15th.
 
 ## [0.13.0] - 2026-04-24
 
