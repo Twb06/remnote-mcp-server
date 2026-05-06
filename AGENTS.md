@@ -89,8 +89,6 @@ wrapper.
 - Before invoking the wrapper, the agent must ask the human collaborator to start the bridge in RemNote.
 - If bridge code changed after the currently running RemNote bridge session started, the agent must ask the human
   collaborator to restart the bridge before rerunning the suite.
-- When switching from CLI live integration tests to MCP server live integration tests, the agent must ensure the CLI
-  daemon is stopped before starting the MCP server.
 - The wrapper may build and start the local MCP server if it is not already running, then waits for
   `remnote_status.connected === true` before launching the suite.
 - After each agent-assisted integration run, whether it passes, fails, or is interrupted, the agent must stop the MCP

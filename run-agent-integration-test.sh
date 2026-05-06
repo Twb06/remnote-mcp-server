@@ -8,14 +8,11 @@ source "${SCRIPT_DIR}/node-check.sh" || exit 1
 WAIT_TIMEOUT_SECONDS="${REMNOTE_AGENT_WAIT_TIMEOUT:-45}"
 POLL_INTERVAL_SECONDS="${REMNOTE_AGENT_POLL_INTERVAL:-2}"
 LOG_FILE="${REMNOTE_AGENT_SERVER_LOG:-${TMPDIR:-/tmp}/remnote-mcp-server-agent.log}"
-CLI_REPO="${SCRIPT_DIR}/../remnote-cli"
-CLI_DAEMON_LOG="${REMNOTE_AGENT_DAEMON_LOG:-${HOME}/.remnote-cli/daemon.log}"
 
 started_server=0
 server_pid=""
 deadline=$((SECONDS + WAIT_TIMEOUT_SECONDS))
 built_server=0
-built_cli=0
 test_exit_code=0
 cleanup_ran=0
 
@@ -29,60 +26,8 @@ ensure_built_server() {
   built_server=1
 }
 
-ensure_built_cli() {
-  if (( built_cli == 1 )); then
-    return
-  fi
-
-  if [[ ! -d "${CLI_REPO}" ]]; then
-    return
-  fi
-
-  echo "Building CLI before daemon shutdown checks..."
-  (
-    cd "${CLI_REPO}"
-    source "${CLI_REPO}/node-check.sh" || exit 1
-    npm run build
-  )
-  built_cli=1
-}
-
 status_output() {
   "${SCRIPT_DIR}/run-status-check.sh" 2>&1
-}
-
-cli_daemon_status() {
-  if [[ ! -d "${CLI_REPO}" ]]; then
-    return 1
-  fi
-
-  ensure_built_cli
-  (
-    cd "${CLI_REPO}"
-    npm run start -- --text daemon status 2>&1
-  )
-}
-
-stop_cli_daemon_if_running() {
-  local output
-
-  if ! output="$(cli_daemon_status)"; then
-    return
-  fi
-
-  if ! grep -q 'Status: running' <<<"${output}"; then
-    return
-  fi
-
-  echo "CLI daemon is running. Stopping it before starting the MCP server..."
-  (
-    cd "${CLI_REPO}"
-    npm run start -- daemon stop
-  )
-
-  if [[ -f "${CLI_DAEMON_LOG}" ]]; then
-    echo "Stopped CLI daemon. Log: ${CLI_DAEMON_LOG}"
-  fi
 }
 
 start_server() {
@@ -114,8 +59,6 @@ cleanup() {
 }
 
 trap cleanup EXIT INT TERM
-
-stop_cli_daemon_if_running
 
 while (( SECONDS < deadline )); do
   if output="$(status_output)"; then

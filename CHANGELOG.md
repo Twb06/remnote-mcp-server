@@ -7,6 +7,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Updated agent-assisted integration docs and wrapper behavior for the unified MCP-server path; the wrapper no longer
+  checks for or stops a separate CLI daemon before starting the MCP server.
+
 ## [0.13.1] - 2026-05-06
 
 ### Changed

@@ -32,7 +32,6 @@ RemNote's bridge surface does not expose delete operations, so cleanup stays man
 2. MCP server available, either already running (`npm run dev`, `npm start`, or `remnote-mcp-server`) or started by
    the agent wrapper
 3. Bridge connected to the WebSocket server
-4. CLI daemon running as well when you want to run the CLI integration suite
 
 If the bridge is connected correctly, the server logs show the plugin connection and RemNote shows the Automation
 Bridge as connected.
@@ -63,26 +62,21 @@ npm run test:integration -- --yes
 From the `remnote-cli` repo:
 
 ```bash
-# Start or keep the daemon running first
-./run-daemon-in-foreground.sh
-
-# Run the live CLI integration suite
+# Run the live CLI integration suite against the MCP server
 ./run-integration-test.sh
 ./run-integration-test.sh --yes
 
-# Agent-assisted — starts the daemon if needed, waits for bridge connection, then runs the suite
+# Agent-assisted — starts/reuses the MCP server, waits for bridge connection, then runs the suite
 ./run-agent-integration-test.sh
 ./run-agent-integration-test.sh --yes
 ```
 
-The MCP server and bridge should already be connected before running the CLI suite.
+The CLI suite uses the same MCP server endpoint as MCP clients. It does not start or require a separate CLI server.
 The agent-assisted wrappers are the only approved live-test entrypoint for AI agents; they time out with a clear
 message when the RemNote bridge never connects.
 Agent-assisted flow still has one manual gate: the agent should ask the human collaborator to start the bridge first,
 and must ask for a bridge restart before reruns if bridge code changed since the current RemNote bridge session
 started.
-When switching from the CLI suite to the MCP server suite, stop the CLI daemon first so the MCP server can bind the
-shared WebSocket port.
 
 Successful runs print a workflow summary and remind you how to clean up the created artifacts.
 
