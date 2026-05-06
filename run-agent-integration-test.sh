@@ -85,7 +85,7 @@ status_output() {
 
 start_server() {
   ensure_built_server
-  echo "MCP server not reachable. Building and starting a background server..."
+  echo "MCP server not reachable. Starting a background server..."
   nohup npm run start -- --log-level warn --log-file "${LOG_FILE}" >"${LOG_FILE}" 2>&1 &
   server_pid="$!"
   started_server=1
