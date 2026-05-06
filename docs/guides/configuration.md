@@ -35,8 +35,7 @@ Choose your AI client and follow its configuration guide:
 
 - **[Claude Code CLI](configuration-claude-code-CLI.md)** - Anthropic's command-line interface tool that integrates with
   their Claude AI models *(for a zero-config alternative in Claude Code and other coding harnesses, see
-  [Use RemNote from Any Coding Harness](https://github.com/robert7/remnote-cli/blob/main/docs/demo.md#use-remnote-from-any-coding-harness)
-  in the `remnote-cli` demo)*
+  [Use RemNote from Any Coding Harness](../demo.md#use-remnote-from-any-coding-harness))*
 - **[Accomplish](configuration-accomplish.md)** - open source AI desktop agent that automates file management, document
   creation, and browser tasks
 - **[Claude Desktop / Cowork](configuration-claude-desktop-cowork.md)** - Anthropic remote connector setup

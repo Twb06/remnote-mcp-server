@@ -28,13 +28,27 @@ npm install -g remnote-mcp-server
 npm install -g remnote-mcp-server@0.5.0
 ```
 
+If you previously installed the legacy standalone CLI package, uninstall it so the `remnote-cli` command resolves to
+the executable bundled with `remnote-mcp-server`:
+
+```bash
+npm uninstall -g remnote-cli
+npm install -g remnote-mcp-server
+```
+
 ### Verify Installation
 
 ```bash
 which remnote-mcp-server
 # Should output: /path/to/node/bin/remnote-mcp-server
 
+which remnote-cli
+# Should output: /path/to/node/bin/remnote-cli
+
 remnote-mcp-server --version
+# Should output: 0.x.x
+
+remnote-cli --version
 # Should output: 0.x.x
 ```
 
@@ -87,7 +101,7 @@ remnote-mcp-server
 
 Expected output:
 ```
-RemNote MCP Server v0.2.1 listening { wsPort: 3002, httpPort: 3001 }
+RemNote MCP Server v0.14.0 listening { wsPort: 3002, httpPort: 3001 }
 ```
 
 ### With Custom Ports
@@ -118,7 +132,7 @@ For more CLI options, see [CLI Options Reference](cli-options.md).
 2. Open RemNote
 3. Wait for the bridge to connect automatically in the background
 4. Open the Automation Bridge panel only if you want to confirm status
-5. Only then connect your MCP client to `http://localhost:3001/mcp`
+5. Only then connect your MCP client to `http://localhost:3001/mcp` or run `remnote-cli status --text`
 
 If RemNote was already open before the server started, the bridge should still connect automatically after background
 retry. The panel's **Reconnect** button remains available as a faster manual retry.
@@ -183,6 +197,13 @@ Create a RemNote note titled "MCP Test" with content "Testing the bridge"
 
 This should use the `remnote_create_note` tool and create a new note in your RemNote knowledge base. Verify it appears
 in RemNote.
+
+You can also test the bundled CLI:
+
+```bash
+remnote-cli status --text
+remnote-cli search "MCP Test" --text
+```
 
 ## Common Installation Issues
 

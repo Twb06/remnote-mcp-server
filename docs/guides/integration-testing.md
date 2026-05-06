@@ -6,8 +6,7 @@ This is the canonical workflow for updating and running shared integration cover
 Use it when a feature changes the shared bridge-consumer surface and should be validated end to end against a live
 RemNote instance.
 
-For CLI-specific command details, see the companion [CLI Integration Testing
-Guide](https://github.com/robert7/remnote-cli/blob/main/docs/guides/integration-testing.md).
+The direct MCP suite and bundled CLI suite both live in this repository.
 
 ## Safety And Cleanup
 
@@ -59,16 +58,18 @@ npm run test:integration -- --yes
 
 ### CLI Suite
 
-From the `remnote-cli` repo:
-
 ```bash
 # Run the live CLI integration suite against the MCP server
-./run-integration-test.sh
-./run-integration-test.sh --yes
+npm run test:integration:cli
+npm run test:integration:cli -- --yes
+
+# Convenience wrapper
+./run-integration-cli-test.sh
+./run-integration-cli-test.sh --yes
 
 # Agent-assisted — starts/reuses the MCP server, waits for bridge connection, then runs the suite
-./run-agent-integration-test.sh
-./run-agent-integration-test.sh --yes
+./run-agent-cli-integration-test.sh
+./run-agent-cli-integration-test.sh --yes
 ```
 
 The CLI suite uses the same MCP server endpoint as MCP clients. It does not start or require a separate CLI server.
@@ -89,20 +90,19 @@ Successful runs print a workflow summary and remind you how to clean up the crea
 | `REMNOTE_MCP_URL` | `http://127.0.0.1:3001` | MCP server base URL |
 | `MCP_TEST_DELAY` | `2000` | Delay (ms) after creating notes before searching |
 
-CLI-specific variables are documented in the [CLI Integration Testing Guide](https://github.com/robert7/remnote-cli/blob/main/docs/guides/integration-testing.md).
+The CLI suite uses the same variables.
 
 ## Where To Add New Coverage
 
-If a pull request changes shared external behavior, update integration coverage in both repos where the feature can be
-exercised.
+If a pull request changes shared external behavior, update both integration surfaces where the feature can be exercised.
 
 - MCP server entrypoint: [`test/integration/run-integration.ts`](../../test/integration/run-integration.ts)
 - MCP server workflows: [`test/integration/workflows/`](../../test/integration/workflows/)
-- CLI entrypoint: [`remnote-cli/test/integration/run-integration.ts`](https://github.com/robert7/remnote-cli/blob/main/test/integration/run-integration.ts)
-- CLI workflows: [`remnote-cli/test/integration/workflows/`](https://github.com/robert7/remnote-cli/tree/main/test/integration/workflows)
+- CLI entrypoint: [`test/integration/cli/run-integration.ts`](../../test/integration/cli/run-integration.ts)
+- CLI workflows: [`test/integration/cli/workflows/`](../../test/integration/cli/workflows/)
 
-The usual rule is simple: if users can reach the new behavior through both MCP server and CLI, both integration suites
-should gain coverage.
+The usual rule is simple: if users can reach the new behavior through both MCP tools and `remnote-cli`, both
+integration suites should gain coverage.
 
 ## What The Suites Test
 

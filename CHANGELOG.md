@@ -7,8 +7,18 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Bundled the `remnote-cli` executable into the `remnote-mcp-server` package. The package now provides both
+  `remnote-mcp-server` and `remnote-cli`.
+- Added CLI source under `src/remnote-cli/`, CLI unit coverage, CLI integration coverage, and guarded CLI integration
+  wrappers.
+- Added server-owned CLI command, troubleshooting, demo, and skill documentation.
+
 ### Changed
 
+- Consolidated CLI installation guidance around `npm install -g remnote-mcp-server`; the old standalone
+  `remnote-cli` package is now treated as a legacy migration path.
 - Updated agent-assisted integration docs and wrapper behavior for the unified MCP-server path; the wrapper no longer
   checks for or stops a separate CLI daemon before starting the MCP server.
 

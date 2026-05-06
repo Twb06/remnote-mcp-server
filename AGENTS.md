@@ -4,11 +4,12 @@ This file is a map for AI agents working in `remnote-mcp-server`.
 
 ## Repo Role
 
-This repo exposes RemNote operations as MCP tools over Streamable HTTP and bridges those tool calls to the RemNote
-plugin over WebSocket.
+This repo exposes RemNote operations as MCP tools over Streamable HTTP, bridges those tool calls to the RemNote plugin
+over WebSocket, and ships the bundled `remnote-cli` command.
 
 ```text
 AI agents (HTTP MCP) <-> HTTP server (:3001) <-> WebSocket bridge (:3002) <-> RemNote plugin
+CLI commands <-> remnote-cli <-> HTTP server (:3001) <-> WebSocket bridge (:3002) <-> RemNote plugin
 ```
 
 ## Companion Repos (Sibling Dirs)
@@ -16,13 +17,14 @@ AI agents (HTTP MCP) <-> HTTP server (:3001) <-> WebSocket bridge (:3002) <-> Re
 Resolve from this repo root (`$(pwd)`):
 
 - `$(pwd)/../remnote-mcp-bridge` - source of bridge action contracts + plugin behavior
-- `$(pwd)/../remnote-cli` - parallel consumer of same bridge contract
+- `$(pwd)/../remnote-cli` - legacy CLI repository retained only for migration/redirect docs
 
-When changing action names, payloads, or response semantics, validate all three repos.
+When changing action names, payloads, or response semantics, validate this repo and bridge docs. Touch the legacy CLI
+repo only for migration notices.
 
 ## Contract Map (Current)
 
-### External MCP Tool Surface (8)
+### External MCP Tool Surface (9)
 
 - `remnote_create_note`
 - `remnote_search`
@@ -30,8 +32,20 @@ When changing action names, payloads, or response semantics, validate all three 
 - `remnote_read_note`
 - `remnote_update_note`
 - `remnote_append_journal`
+- `remnote_read_table`
 - `remnote_get_playbook`
 - `remnote_status`
+
+### Bundled CLI Command Surface
+
+- `remnote-cli create`
+- `remnote-cli search`
+- `remnote-cli search-tag`
+- `remnote-cli read`
+- `remnote-cli update`
+- `remnote-cli journal`
+- `remnote-cli status`
+- `remnote-cli read-table`
 
 ### Bridge Action Mapping and Compatibility
 
@@ -40,7 +54,7 @@ When changing action names, payloads, or response semantics, validate all three 
 - Bridge plugin sends WebSocket `hello` with plugin version.
 - `remnote_status` enriches output with server version + optional `version_warning` for compatibility drift.
 
-Projects are still `0.x`; prefer same minor line across bridge/server/CLI:
+Projects are still `0.x`; prefer the same minor line across bridge and server package:
 
 - `../remnote-mcp-bridge/docs/guides/bridge-consumer-version-compatibility.md`
 
@@ -51,6 +65,7 @@ Projects are still `0.x`; prefer same minor line across bridge/server/CLI:
 - `src/websocket-server.ts` - plugin connection, request correlation, timeouts, `hello` handling
 - `src/tools/index.ts` - MCP tool registration and dispatch
 - `src/schemas/remnote-schemas.ts` - Zod input/output schema contracts
+- `src/remnote-cli/` - bundled CLI command parser, MCP client, command payload mapping, and output formatting
 - `src/version-compat.ts` - 0.x compatibility checks
 
 Primary docs for deeper context:
@@ -74,6 +89,8 @@ Core commands:
 npm run dev
 npm run build
 npm run typecheck
+npm run test:integration
+npm run test:integration:cli
 npm test
 npm run test:coverage
 ./code-quality.sh
@@ -85,11 +102,12 @@ AI agents may run live integration tests in this repo only on explicit human req
 wrapper.
 
 - Default: do not run `npm run test:integration` or `./run-integration-test.sh` directly.
-- Allowed path for AI agents: `./run-agent-integration-test.sh [--yes]`
+- Allowed paths for AI agents: `./run-agent-integration-test.sh [--yes]` for MCP tools and
+  `./run-agent-cli-integration-test.sh [--yes]` for the bundled CLI.
 - Before invoking the wrapper, the agent must ask the human collaborator to start the bridge in RemNote.
 - If bridge code changed after the currently running RemNote bridge session started, the agent must ask the human
   collaborator to restart the bridge before rerunning the suite.
-- The wrapper may build and start the local MCP server if it is not already running, then waits for
+- The wrappers may build and start the local MCP server if it is not already running, then wait for
   `remnote_status.connected === true` before launching the suite.
 - After each agent-assisted integration run, whether it passes, fails, or is interrupted, the agent must stop the MCP
   server if and only if the wrapper started it for that run.
@@ -106,6 +124,7 @@ wrapper.
 ## Release and Publishing Map
 
 - Publish workflow: `./publish-to-npm.sh`
+- The npm package provides both `remnote-mcp-server` and `remnote-cli` bins.
 - Keep release notes aligned with `CHANGELOG.md`
 - For release prep, verify package version and changelog section alignment.
 
