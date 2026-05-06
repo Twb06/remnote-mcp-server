@@ -14,7 +14,7 @@ import {
   hasTableConfig,
   getIntegrationTestConfig,
   getTableConfigWarning,
-} from '../../helpers/integration-config.js';
+} from '../../../helpers/integration-config.js';
 import type { CliTestClient } from '../cli-test-client.js';
 import type { WorkflowResult, SharedState, StepResult } from '../types';
 
