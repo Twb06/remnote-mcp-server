@@ -68,9 +68,7 @@ remnote-mcp-server --version
    ```bash
    # For development installs
    cd /path/to/remnote-mcp-server
-   npm install
-   npm run build
-   npm link
+   ./link-cli.sh
    ```
 
 ### Port Already in Use

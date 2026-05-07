@@ -69,9 +69,9 @@ npm uninstall -g remnote-mcp-server
 ```bash
 git clone https://github.com/robert7/remnote-mcp-server.git
 cd remnote-mcp-server
-npm install
-npm run build
-npm link  # Make command globally available
+./link-cli.sh
+# Later, remove the local links for both remnote-mcp-server and remnote-cli:
+./unlink-cli.sh
 ```
 
 ## RemNote Automation Bridge plugin Setup

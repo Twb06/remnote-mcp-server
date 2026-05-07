@@ -18,44 +18,32 @@ git clone https://github.com/robert7/remnote-mcp-server.git
 cd remnote-mcp-server
 ```
 
-### 2. Install Dependencies
+### 2. Link for Local Testing
 
 ```bash
-npm install
+./link-cli.sh
 ```
 
 > If you will test against an existing bridge plugin install, match your local server checkout/version to the bridge plugin version line (`0.x` semver). See the [Bridge / Consumer Version Compatibility Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/bridge-consumer-version-compatibility.md).
 
-This installs both production and development dependencies, including:
+This installs dependencies, runs tests, builds `dist/`, and links both package executables:
 
-- TypeScript and type definitions
-- Testing frameworks (Vitest)
-- Code quality tools (ESLint, Prettier)
-- Development utilities (pino-pretty for pretty logs)
-
-### 3. Build the Project
-
-```bash
-npm run build
-```
-
-This compiles TypeScript files from `src/` to JavaScript in `dist/`.
-
-### 4. Link for Local Testing
-
-```bash
-npm link
-```
-
-This makes the `remnote-mcp-server` command globally available, pointing to your local development build.
+- `remnote-mcp-server`
+- `remnote-cli`
 
 **Verify:**
+
 ```bash
 which remnote-mcp-server
-# Should point to your local project's bin file
-
+which remnote-cli
 remnote-mcp-server --version
-# Should match version in package.json
+remnote-cli --version
+```
+
+To remove the local links later:
+
+```bash
+./unlink-cli.sh
 ```
 
 ## Development Workflow

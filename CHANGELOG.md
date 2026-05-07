@@ -9,6 +9,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Added and documented local `link-cli.sh` and `unlink-cli.sh` helpers for linking both `remnote-mcp-server` and
+  `remnote-cli` executables during development.
 - Bundled the `remnote-cli` executable into the `remnote-mcp-server` package. The package now provides both
   `remnote-mcp-server` and `remnote-cli`.
 - Added CLI source under `src/remnote-cli/`, CLI unit coverage, CLI integration coverage, and guarded CLI integration
