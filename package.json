@@ -21,10 +21,10 @@
     "test:integration:mcp": "tsx test/integration/run-integration.ts",
     "test:integration:cli": "tsx test/integration/cli/run-integration.ts",
     "test:ui": "vitest --ui",
-    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\"",
-    "lint:fix": "eslint \"src/**/*.ts\" \"test/**/*.ts\" --fix",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"mcpb/**/*.js\"",
+    "lint:fix": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"mcpb/**/*.js\" --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"mcpb/**/*.js\" \"mcpb/**/*.json\" \"mcpb/**/*.md\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"mcpb/**/*.js\" \"mcpb/**/*.json\" \"mcpb/**/*.md\"",
     "quality": "./code-quality.sh",
     "precommit": "./code-quality.sh"
   },
@@ -43,6 +43,7 @@
   "license": "MIT",
   "files": [
     "dist/",
+    "mcpb/",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"

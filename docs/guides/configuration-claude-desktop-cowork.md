@@ -13,8 +13,9 @@ That means:
 - `http://localhost` will not work for this remote connector flow
 - The same remote connector can be used from Claude Desktop and Claude Cowork
 
-This guide covers the remote HTTPS connector path. Anthropic also has separate local MCP / desktop extension flows,
-but those are not covered here.
+This guide covers the remote HTTPS connector path. For Claude Desktop without public HTTPS, use the separate
+[local MCPB extension guide](configuration-claude-desktop-local-mcpb.md). Claude Cowork still requires the remote HTTPS
+connector path because it cannot run local desktop extensions on your machine.
 
 ## Prerequisites
 
@@ -103,6 +104,8 @@ See the [Tools Reference](tools-reference.md) for detailed documentation of all 
 ## Related Documentation
 
 - [Remote Access Setup](remote-access.md) - Tunnel setup, security, and troubleshooting
+- [Claude Desktop Local MCPB Configuration](configuration-claude-desktop-local-mcpb.md) - Local extension setup without
+  public HTTPS
 - [Tools Reference](tools-reference.md) - Available MCP tools and usage
 - [Troubleshooting](troubleshooting.md) - Common issues and solutions
 

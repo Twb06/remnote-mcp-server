@@ -7,6 +7,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Added a `remnote-local` MCPB package for Claude Desktop that proxies stdio MCP calls to a locally running
+  `remnote-mcp-server` Streamable HTTP endpoint without public HTTPS.
+- Added Claude Desktop local MCPB setup documentation.
+
 ### Changed
 
 - Updated documentation and agent repo maps to reflect that the old standalone `remnote-cli` repository is

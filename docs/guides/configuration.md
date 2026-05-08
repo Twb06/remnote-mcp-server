@@ -40,6 +40,8 @@ Choose your AI client and follow its configuration guide:
   creation, and browser tasks
 - **[Claude Desktop / Cowork](configuration-claude-desktop-cowork.md)** - Anthropic remote connector setup
   for Claude Desktop and Claude Cowork
+- **[Claude Desktop Local MCPB](configuration-claude-desktop-local-mcpb.md)** - Local Claude Desktop extension setup
+  without public HTTPS
 
 ## Other MCP Clients
 
