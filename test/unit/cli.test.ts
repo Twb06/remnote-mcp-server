@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { parseCliArgs } from '../../src/cli.js';
+import { getBundledMcpbPath, handleUtilityCommand, parseCliArgs } from '../../src/cli.js';
 
 describe('CLI Argument Parsing', () => {
   const originalArgv = process.argv;
@@ -20,6 +20,22 @@ describe('CLI Argument Parsing', () => {
       process.argv = ['node', 'remnote-mcp-server'];
       const options = parseCliArgs();
       expect(options).toEqual({});
+    });
+  });
+
+  describe('Utility Commands', () => {
+    it('prints the bundled MCPB path without starting the server', () => {
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      expect(handleUtilityCommand(['node', 'remnote-mcp-server', 'mcpb-path'])).toBe(true);
+      expect(log).toHaveBeenCalledWith(getBundledMcpbPath());
+      expect(getBundledMcpbPath()).toMatch(/mcpb[/\\]remnote-local[/\\]remnote-local\.mcpb$/);
+    });
+
+    it('ignores normal server arguments', () => {
+      expect(handleUtilityCommand(['node', 'remnote-mcp-server', '--http-port', '4001'])).toBe(
+        false
+      );
     });
   });
 

@@ -16,12 +16,10 @@ http://127.0.0.1:3001/mcp
 This extension does not start or supervise `remnote-mcp-server`. It is a stdio proxy that forwards Claude Desktop tool
 calls to the local Streamable HTTP endpoint.
 
-## Packaging
+## Installed Package Path
 
-Install production dependencies inside this directory, then pack:
+When installed from npm, print the bundled `.mcpb` path with:
 
 ```bash
-npm install --production
-mcpb validate .
-mcpb pack . remnote-local.mcpb
+remnote-mcp-server mcpb-path
 ```

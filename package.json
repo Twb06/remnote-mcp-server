@@ -9,7 +9,8 @@
     "remnote-cli": "dist/remnote-cli/index.js"
   },
   "scripts": {
-    "build": "tsc && node scripts/chmod-bins.mjs",
+    "build": "tsc && node scripts/chmod-bins.mjs && node scripts/build-mcpb.mjs",
+    "build:mcpb": "node scripts/build-mcpb.mjs",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
@@ -21,10 +22,10 @@
     "test:integration:mcp": "tsx test/integration/run-integration.ts",
     "test:integration:cli": "tsx test/integration/cli/run-integration.ts",
     "test:ui": "vitest --ui",
-    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"mcpb/**/*.js\"",
-    "lint:fix": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"mcpb/**/*.js\" --fix",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"mcpb/**/*.js\" \"mcpb/**/*.json\" \"mcpb/**/*.md\"",
-    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"mcpb/**/*.js\" \"mcpb/**/*.json\" \"mcpb/**/*.md\"",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"mcpb/**/*.js\" \"scripts/**/*.mjs\"",
+    "lint:fix": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"mcpb/**/*.js\" \"scripts/**/*.mjs\" --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"mcpb/**/*.js\" \"mcpb/**/*.json\" \"mcpb/**/*.md\" \"scripts/**/*.mjs\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"mcpb/**/*.js\" \"mcpb/**/*.json\" \"mcpb/**/*.md\" \"scripts/**/*.mjs\"",
     "quality": "./code-quality.sh",
     "precommit": "./code-quality.sh"
   },

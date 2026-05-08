@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
 
 const require = createRequire(import.meta.url);
 const packageJson = require('../package.json');
@@ -17,6 +18,23 @@ export interface CliOptions {
 }
 
 const validLogLevels = ['debug', 'info', 'warn', 'error'];
+const MCPB_PATH_COMMAND = 'mcpb-path';
+
+export function getBundledMcpbPath(): string {
+  return fileURLToPath(new URL('../mcpb/remnote-local/remnote-local.mcpb', import.meta.url));
+}
+
+/**
+ * Handle utility commands that do not start the MCP server.
+ */
+export function handleUtilityCommand(argv = process.argv): boolean {
+  if (argv[2] !== MCPB_PATH_COMMAND) {
+    return false;
+  }
+
+  console.log(getBundledMcpbPath());
+  return true;
+}
 
 /**
  * Parse CLI arguments and return typed options
@@ -28,6 +46,10 @@ export function parseCliArgs(): CliOptions {
     .name('remnote-mcp-server')
     .description('MCP server bridge for RemNote knowledge base')
     .version(packageJson.version)
+    .addHelpText(
+      'after',
+      '\nCommands:\n  mcpb-path                 Print the bundled Claude Desktop MCPB extension path'
+    )
     .option('--ws-port <number>', 'WebSocket port (default: 3002, env: REMNOTE_WS_PORT)', parsePort)
     .option(
       '--http-port <number>',

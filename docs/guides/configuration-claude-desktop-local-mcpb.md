@@ -20,20 +20,29 @@ remote custom connector flow, which still require a public HTTPS MCP URL.
 - RemNote MCP Server installed and running locally
 - RemNote app running with the Automation Bridge plugin installed and connected
 - Claude Desktop with desktop extensions enabled
-- A packaged `remnote-local.mcpb` file
+- `remnote-mcp-server` installed from npm
 
-## Package the Extension
+## Locate the Extension
 
-From the MCPB directory:
+Install the package:
 
 ```bash
-cd mcpb/remnote-local
-npm install --production
-mcpb validate .
-mcpb pack . remnote-local.mcpb
+npm install -g remnote-mcp-server
 ```
 
-The extension intentionally does not start `remnote-mcp-server`. Start the server separately:
+Print the bundled extension path:
+
+```bash
+remnote-mcp-server mcpb-path
+```
+
+Expected output is an absolute path ending in:
+
+```text
+mcpb/remnote-local/remnote-local.mcpb
+```
+
+The extension intentionally does not start `remnote-mcp-server`. Start the server separately in a terminal:
 
 ```bash
 remnote-mcp-server
@@ -44,7 +53,7 @@ remnote-mcp-server
 1. Open Claude Desktop.
 2. Go to **Settings -> Extensions**.
 3. Open **Advanced settings**.
-4. Click **Install Extension...** and select `remnote-local.mcpb`.
+4. Click **Install Extension...** and select the `.mcpb` file printed by `remnote-mcp-server mcpb-path`.
 5. Keep the default MCP URL unless you changed the server port:
 
 ```text

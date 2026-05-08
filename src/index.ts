@@ -2,7 +2,7 @@
 import { createRequire } from 'module';
 import { WebSocketServer } from './websocket-server.js';
 import { HttpMcpServer } from './http-server.js';
-import { parseCliArgs } from './cli.js';
+import { handleUtilityCommand, parseCliArgs } from './cli.js';
 import { getConfig } from './config.js';
 import { createLogger, ensureLogDirectory, createRequestResponseLogger } from './logger.js';
 
@@ -98,6 +98,10 @@ async function main() {
 
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
+}
+
+if (handleUtilityCommand()) {
+  process.exit(0);
 }
 
 main().catch((error) => {

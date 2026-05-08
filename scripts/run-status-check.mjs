@@ -1,9 +1,11 @@
+import process from 'node:process';
+import { URL } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
 const mcpUrl = process.env.MCP_URL;
 if (!mcpUrl) {
-  console.error('Status check failed: MCP_URL is not set');
+  process.stderr.write('Status check failed: MCP_URL is not set\n');
   process.exit(1);
 }
 
@@ -19,7 +21,7 @@ try {
       Array.isArray(result.content) && result.content[0]?.type === 'text'
         ? (result.content[0].text ?? JSON.stringify(result))
         : JSON.stringify(result);
-    console.error(`Status check failed: ${text}`);
+    process.stderr.write(`Status check failed: ${text}\n`);
     process.exit(1);
   }
 
@@ -30,13 +32,13 @@ try {
 
   try {
     const parsed = JSON.parse(text);
-    console.log(JSON.stringify(parsed, null, 2));
+    process.stdout.write(`${JSON.stringify(parsed, null, 2)}\n`);
   } catch {
-    console.log(text);
+    process.stdout.write(`${text}\n`);
   }
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
-  console.error(`Status check failed: ${message}`);
+  process.stderr.write(`Status check failed: ${message}\n`);
   process.exit(1);
 } finally {
   try {
