@@ -24,7 +24,7 @@ export class McpServerClient {
   private client: Client | null = null;
   private transport: StreamableHTTPClientTransport | null = null;
 
-  constructor(mcpUrl: string, clientInfo = { name: 'remnote-cli', version: '0.14.0' }) {
+  constructor(mcpUrl: string, clientInfo = { name: 'remnote-cli', version: '0.14.1' }) {
     this.mcpUrl = normalizeMcpUrl(mcpUrl);
     this.clientInfo = clientInfo;
   }

@@ -3,6 +3,11 @@
 How to configure Claude Desktop and Claude Cowork to connect to the RemNote MCP Server through Anthropic's remote
 connector flow.
 
+> **Claude Desktop local option:** If you only need Claude Desktop on the same machine as RemNote, use
+> [Claude Desktop Local MCPB Configuration](configuration-claude-desktop-local-mcpb.md). It is available from
+> `remnote-mcp-server` v0.14.1+ and does not require ngrok, public HTTPS, or remote access setup. The remote connector
+> setup in this guide is still required for Claude Cowork and other cloud-hosted clients.
+
 ## Overview
 
 Claude Desktop and Claude Cowork use Anthropic's remote connector infrastructure for custom MCP servers.
@@ -13,9 +18,8 @@ That means:
 - `http://localhost` will not work for this remote connector flow
 - The same remote connector can be used from Claude Desktop and Claude Cowork
 
-This guide covers the remote HTTPS connector path. For Claude Desktop without public HTTPS, use the separate
-[local MCPB extension guide](configuration-claude-desktop-local-mcpb.md). Claude Cowork still requires the remote HTTPS
-connector path because it cannot run local desktop extensions on your machine.
+This guide covers the remote HTTPS connector path. Claude Cowork requires this path because it cannot run local desktop
+extensions on your machine.
 
 ## Prerequisites
 

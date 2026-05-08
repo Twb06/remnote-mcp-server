@@ -193,7 +193,7 @@ remnote-mcp-server --version
 
 Output:
 ```
-0.14.0
+0.14.1
 ```
 
 ## Environment Variables

@@ -9,7 +9,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 export const DEFAULT_MCP_URL = 'http://127.0.0.1:3001/mcp';
-export const SERVER_INFO = { name: 'remnote-local-mcpb', version: '0.14.0' };
+export const SERVER_INFO = { name: 'remnote-local-mcpb', version: '0.14.1' };
 
 export const FALLBACK_TOOLS = [
   {

@@ -81,7 +81,7 @@ remnote-mcp-server
 
 Expected output:
 ```
-RemNote MCP Server v0.14.0 listening { wsPort: 3002, httpPort: 3001 }
+RemNote MCP Server v0.14.1 listening { wsPort: 3002, httpPort: 3001 }
 ```
 
 **Note:** ngrok tunnels to localhost, so the default 127.0.0.1 binding works perfectly. No special host configuration

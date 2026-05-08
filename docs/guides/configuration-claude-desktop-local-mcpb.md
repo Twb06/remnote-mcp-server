@@ -2,7 +2,9 @@
 
 How to use RemNote MCP tools from Claude Desktop without exposing the local MCP server over public HTTPS.
 
-> note available from version 0.4.1
+> **Local Claude Desktop only:** This setup is available from `remnote-mcp-server` v0.14.1+ and does not require
+> remote access. For Claude Cowork or cloud-hosted clients, use
+> [Claude Desktop / Cowork Configuration](configuration-claude-desktop-cowork.md), which requires public HTTPS.
 
 ## Overview
 
@@ -12,8 +14,7 @@ Claude Desktop can install local MCP Bundle (`.mcpb`) extensions. The RemNote lo
 Claude Desktop <-> MCPB stdio proxy <-> http://127.0.0.1:3001/mcp <-> remnote-mcp-server <-> RemNote bridge
 ```
 
-This avoids ngrok or other public HTTPS tunnels for Claude Desktop. It does not apply to Claude Cowork or Anthropic's
-remote custom connector flow, which still require a public HTTPS MCP URL.
+This avoids ngrok or other public HTTPS tunnels for Claude Desktop.
 
 ## Prerequisites
 

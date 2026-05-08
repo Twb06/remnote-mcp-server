@@ -125,7 +125,7 @@ sudo remnote-mcp-server --http-port 80
 **Expected behavior:** Modern versions use structured logging. On first start, you should see:
 
 ```
-RemNote MCP Server v0.14.0 listening { wsPort: 3002, httpPort: 3001 }
+RemNote MCP Server v0.14.1 listening { wsPort: 3002, httpPort: 3001 }
 ```
 
 **If you see nothing:**

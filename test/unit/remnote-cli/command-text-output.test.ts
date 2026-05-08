@@ -71,13 +71,13 @@ describe('command text output', () => {
   it('formats status results with optional metadata', async () => {
     const { output, executeSpy } = await runTextCommand(['status'], {
       connected: true,
-      pluginVersion: '0.14.0',
-      cliVersion: '0.14.0-test',
+      pluginVersion: '0.14.1',
+      cliVersion: '0.14.1-test',
       version_warning: 'minor versions differ',
     });
 
-    expect(output).toContain('Bridge: Connected (plugin v0.14.0)');
-    expect(output).toContain('CLI: v0.14.0-test');
+    expect(output).toContain('Bridge: Connected (plugin v0.14.1)');
+    expect(output).toContain('CLI: v0.14.1-test');
     expect(output).toContain('WARNING: minor versions differ');
     executeSpy.mockRestore();
   });

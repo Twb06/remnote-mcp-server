@@ -54,14 +54,14 @@ describe('McpServerClient', () => {
 
   it('parses JSON text content when structured content is absent', async () => {
     mocks.callTool.mockResolvedValue({
-      content: [{ type: 'text', text: '{"connected":true,"serverVersion":"0.14.0"}' }],
+      content: [{ type: 'text', text: '{"connected":true,"serverVersion":"0.14.1"}' }],
     });
 
     const client = new McpServerClient('http://127.0.0.1:3001/mcp');
     await expect(client.execute('get_status', {})).resolves.toEqual({
       connected: true,
-      serverVersion: '0.14.0',
-      cliVersion: '0.14.0',
+      serverVersion: '0.14.1',
+      cliVersion: '0.14.1',
     });
   });
 
@@ -75,7 +75,7 @@ describe('McpServerClient', () => {
     await expect(client.execute('get_status', {})).resolves.toMatchObject({
       connected: true,
       serverVersion: '0.15.0',
-      cliVersion: '0.14.0',
+      cliVersion: '0.14.1',
       version_warning: expect.stringContaining('MCP server v0.15.0'),
     });
   });

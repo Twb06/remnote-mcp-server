@@ -26,7 +26,7 @@ describe('RemNoteLocalProxy', () => {
 
     expect(createClient).toHaveBeenCalledWith('http://localhost:4000/mcp', {
       name: 'remnote-local-mcpb',
-      version: '0.14.0',
+      version: '0.14.1',
     });
     expect(client.connect).toHaveBeenCalledWith(transport);
     expect(client.listTools).toHaveBeenCalled();
@@ -43,8 +43,8 @@ describe('RemNoteLocalProxy', () => {
 
   it('forwards tool calls and preserves the remote MCP result', async () => {
     const callToolResult = {
-      structuredContent: { connected: true, serverVersion: '0.14.0' },
-      content: [{ type: 'text', text: '{"connected":true,"serverVersion":"0.14.0"}' }],
+      structuredContent: { connected: true, serverVersion: '0.14.1' },
+      content: [{ type: 'text', text: '{"connected":true,"serverVersion":"0.14.1"}' }],
     };
     const { createClient, client } = createMockClient({ callToolResult });
     const proxy = new RemNoteLocalProxy({ createClient });
