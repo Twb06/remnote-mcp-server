@@ -79,6 +79,13 @@ Specification](https://modelcontextprotocol.io/specification/2025-06-18/basic/tr
 Use `remnote-mcp-stdio` for local MCP clients that can spawn stdio MCP servers but cannot connect to Streamable HTTP
 directly.
 
+Prerequisite: before any stdio client can use RemNote, `remnote-mcp-server` must already be running and the RemNote
+Automation Bridge must be connected to it.
+
+```text
+stdio client -> remnote-mcp-stdio -> remnote-mcp-server :3001 -> RemNote bridge :3002 -> RemNote
+```
+
 Important runtime model:
 
 - `remnote-mcp-stdio` is a stdio-to-HTTP proxy, not the main server.
@@ -106,6 +113,9 @@ Generic client configuration:
 If the HTTP server uses the default endpoint, `REMNOTE_MCP_URL` can be omitted. Set it when you start
 `remnote-mcp-server` with a custom HTTP port.
 
+For a concrete stdio client setup, see
+[Codex Configuration: Stdio MCP Proxy](configuration-codex.md#option-2-stdio-mcp-proxy).
+
 For manual checks, `remnote-mcp-stdio --help` prints usage and `remnote-mcp-stdio -V` prints the installed version.
 Running `remnote-mcp-stdio` directly in a terminal prints the same usage text instead of silently waiting for MCP
 messages.
@@ -117,6 +127,8 @@ remnote-mcp-stdio -V
 remnote-mcp-stdio --help
 remnote-mcp-stdio
 echo $?
+
+# if you cloned and installed this repo, you can also run the MCPB integration test suite
 ./run-agent-integration-test.sh --suite mcpb --yes
 ```
 

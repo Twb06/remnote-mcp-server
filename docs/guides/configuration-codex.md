@@ -76,6 +76,15 @@ Use this when a Codex environment can launch local stdio MCP commands but Stream
 `remnote-mcp-stdio` is a stdio-to-HTTP proxy. It is not the main RemNote-facing server. It forwards Codex tool calls to
 the already-running `remnote-mcp-server` endpoint.
 
+Prerequisite: before Codex can use this stdio proxy, `remnote-mcp-server` must already be running and the RemNote
+Automation Bridge must be connected to it.
+
+```text
+Codex -> remnote-mcp-stdio -> remnote-mcp-server :3001 -> RemNote Automation Bridge :3002 -> RemNote
+```
+
+For the generic stdio MCP client model, see [Stdio MCP Clients](configuration.md#stdio-mcp-clients).
+
 ### Codex.app
 
 Open **Settings -> MCP servers**, add a server named `RemNote`, and set the launch command:

@@ -15,6 +15,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Added official Claude Desktop local MCP extension and MCPB repository references to the Local MCPB guide.
 - Added MCP protocol compatibility guidance clarifying that `2025-11-25` initialize requests are supported and separate
   from bridge/server package versions.
+- Added clearer stdio proxy prerequisites and cross-links between the generic stdio MCP client section and the Codex
+  stdio setup example.
 - Added a `remnote-local` MCPB package for Claude Desktop that proxies stdio MCP calls to a locally running
   `remnote-mcp-server` Streamable HTTP endpoint without public HTTPS.
 - Added Claude Desktop local MCPB setup documentation.
