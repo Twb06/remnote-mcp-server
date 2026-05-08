@@ -317,6 +317,31 @@ For the detailed bridge retry phases and wake-up behavior, see the canonical bri
    # Update configuration to match
    ```
 
+### Claude Desktop Initialize Timeout with `protocolVersion: "2025-11-25"`
+
+**Symptom:** Claude Desktop logs show an `initialize` request with `protocolVersion: "2025-11-25"`, then the client
+times out or never shows the RemNote tools.
+
+**Cause:** `2025-11-25` is the current MCP protocol version used by newer MCP clients. It is supported by current
+`remnote-mcp-server` builds and is not the same thing as the `0.x` `remnote-mcp-server` or bridge plugin package
+version.
+
+**Solutions:**
+
+1. **For local Claude Desktop, prefer the local MCPB setup:** use
+   [Claude Desktop Local MCPB](configuration-claude-desktop-local-mcpb.md). It avoids public HTTPS tunneling for the
+   local desktop use case.
+2. **For Claude Cowork or remote connector flows, verify public reachability:** remote Anthropic connectors cannot
+   call your private `localhost`; expose `/mcp` through HTTPS as described in
+   [Remote Access Setup](remote-access.md).
+3. **Check the local server endpoint directly:**
+   ```bash
+   curl -I http://127.0.0.1:3001/mcp
+   ```
+4. **Verify RemNote bridge connectivity:** open the Automation Bridge panel in RemNote or run `remnote-cli status`.
+5. **Check package compatibility:** keep the bridge plugin and `remnote-mcp-server` on the same `0.x` minor version
+   line unless release notes say otherwise.
+
 ### `Invalid session ID` After Server Restart
 
 **Symptom:** Claude Code tool calls fail after restarting `remnote-mcp-server` with an error like:

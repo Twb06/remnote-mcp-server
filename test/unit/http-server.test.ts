@@ -124,6 +124,39 @@ describe('HttpMcpServer', () => {
       expect(httpServer.getActiveSessionCount()).toBe(1);
     });
 
+    it('should accept current Claude Desktop MCP protocol version 2025-11-25', async () => {
+      await httpServer.start();
+      await waitForHttpServer(port);
+
+      const response = await fetch(`http://127.0.0.1:${port}/mcp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json, text/event-stream',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'initialize',
+          id: 1,
+          params: {
+            protocolVersion: '2025-11-25',
+            capabilities: {},
+            clientInfo: { name: 'claude-desktop-test-client', version: '1.0.0' },
+          },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('mcp-session-id')).toBeTruthy();
+
+      const body = await response.text();
+      const dataLine = body.split('\n').find((line) => line.startsWith('data: '));
+      expect(dataLine).toBeTruthy();
+
+      const data = JSON.parse(dataLine!.slice('data: '.length));
+      expect(data.result.protocolVersion).toBe('2025-11-25');
+    });
+
     it('should handle multiple concurrent session initializations', async () => {
       await httpServer.start();
       await waitForHttpServer(port);

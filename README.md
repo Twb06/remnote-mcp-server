@@ -171,6 +171,10 @@ Tools that declare an `outputSchema` return MCP `structuredContent` plus a JSON 
 See the [MCP tools specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools) for the
 protocol contract.
 
+The server uses `@modelcontextprotocol/sdk` and supports current MCP protocol negotiation, including `2025-11-25`.
+Do not confuse MCP protocol versions with `remnote-mcp-server` or bridge plugin package versions; package versions use
+`0.x` semver and should usually match by minor line.
+
 See the [Tools Reference](docs/guides/tools-reference.md) for detailed usage and examples.
 
 ## Supported AI Clients

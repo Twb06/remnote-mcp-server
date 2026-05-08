@@ -58,7 +58,11 @@ that only support stdio can use `remnote-mcp-stdio` as a proxy to the same serve
 
 **Transport type:** HTTP with SSE (Server-Sent Events)
 
-**Protocol version:** 2024-11-05 or later
+**MCP protocol versions:** supports current MCP SDK protocol negotiation, including `2025-11-25`, `2025-06-18`,
+`2025-03-26`, and earlier `2024-*` versions supported by the SDK.
+
+Seeing Claude Desktop send `protocolVersion: "2025-11-25"` during `initialize` is expected. That value is an MCP
+protocol version, not the `remnote-mcp-server` or bridge plugin package version.
 
 ### Connection Flow
 
