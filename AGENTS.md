@@ -17,10 +17,9 @@ CLI commands <-> remnote-cli <-> HTTP server (:3001) <-> WebSocket bridge (:3002
 Resolve from this repo root (`$(pwd)`):
 
 - `$(pwd)/../remnote-mcp-bridge` - source of bridge action contracts + plugin behavior
-- `$(pwd)/../remnote-cli` - legacy CLI repository retained only for migration/redirect docs
 
-When changing action names, payloads, or response semantics, validate this repo and bridge docs. Touch the legacy CLI
-repo only for migration notices.
+When changing action names, payloads, or response semantics, validate this repo and bridge docs. The old standalone
+`remnote-cli` repo is discontinued; maintained CLI code lives in this repo under `src/remnote-cli/`.
 
 ## Contract Map (Current)
 
@@ -89,12 +88,17 @@ Core commands:
 npm run dev
 npm run build
 npm run typecheck
-npm run test:integration
-npm run test:integration:mcp
-npm run test:integration:cli
 npm test
 npm run test:coverage
 ./code-quality.sh
+```
+
+Manual live integration commands:
+
+```bash
+npm run test:integration
+npm run test:integration:mcp
+npm run test:integration:cli
 ```
 
 ## Integration and Live Validation Policy

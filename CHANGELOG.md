@@ -7,6 +7,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Updated documentation and agent repo maps to reflect that the old standalone `remnote-cli` repository is
+  discontinued and the maintained CLI lives in this package.
+
 ## [0.14.0] - 2026-05-07
 
 ### Added

@@ -274,8 +274,6 @@ For the canonical workflow for updating and running shared live integration cove
 ## Related Projects
 
 - [RemNote Automation Bridge](https://github.com/robert7/remnote-mcp-bridge) - Browser plugin for RemNote integration
-- [Legacy remnote-cli repository](https://github.com/robert7/remnote-cli) - Historical source; the maintained CLI now
-  ships from this package
 - [Model Context Protocol](https://modelcontextprotocol.io/) - Open protocol for AI-application integration
 
 ## License
