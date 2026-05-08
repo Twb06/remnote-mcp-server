@@ -9,6 +9,10 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Reject RemNote bridge WebSocket connections that do not send a compatible bridge `hello.version`, with a clearer
+  disconnect reason and server log message pointing users to `MCP/OpenClaw Automation Bridge`.
+- Added prominent README troubleshooting guidance for wrong or incompatible RemNote Marketplace plugin installs,
+  including the related `quentintou/remnote-mcp-bridge#8` report.
 - Updated Claude Desktop / Cowork setup docs to clarify that local MCPB works for Cowork in the Claude Desktop app
   when desktop extensions are enabled, while remote connectors remain required for web/mobile, cloud-hosted clients,
   and managed deployments without local MCPB.

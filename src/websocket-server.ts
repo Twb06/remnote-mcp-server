@@ -5,6 +5,11 @@ import { checkVersionCompatibility } from './version-compat.js';
 import type { Logger } from './logger.js';
 
 export const REQUEST_TIMEOUT_MS = 15000;
+export const HELLO_TIMEOUT_MS = 2000;
+const POLICY_VIOLATION = 1008;
+const INCOMPATIBLE_BRIDGE_REASON =
+  'Wrong/incompatible RemNote plugin installed. Install MCP/OpenClaw Automation Bridge matching server.';
+const BRIDGE_REJECTION_LOG_PREFIX = `Rejecting bridge connection: ${INCOMPATIBLE_BRIDGE_REASON}`;
 
 export class WebSocketServer {
   private wss: WSServer | null = null;
@@ -16,6 +21,8 @@ export class WebSocketServer {
   private responseLogger: Logger | null = null;
   private serverVersion: string;
   private bridgeVersion: string | null = null;
+  private clientAccepted = false;
+  private helloTimeout: NodeJS.Timeout | null = null;
   private pendingRequests = new Map<
     string,
     {
@@ -59,12 +66,20 @@ export class WebSocketServer {
         // Only allow single client connection
         if (this.client && this.client.readyState === WebSocket.OPEN) {
           this.logger.warn('Rejecting connection: client already connected');
-          ws.close(1008, 'Only one client allowed');
+          ws.close(POLICY_VIOLATION, 'Only one client allowed');
           return;
         }
 
         this.client = ws;
+        this.clientAccepted = false;
         this.logger.info('WebSocket client connected');
+        this.helloTimeout = setTimeout(() => {
+          if (this.client === ws && !this.clientAccepted && ws.readyState === WebSocket.OPEN) {
+            this.logger.warn(`${BRIDGE_REJECTION_LOG_PREFIX} Detail: hello timeout.`);
+            ws.close(POLICY_VIOLATION, INCOMPATIBLE_BRIDGE_REASON);
+          }
+        }, HELLO_TIMEOUT_MS);
+
         setImmediate(() => {
           if (ws.readyState !== WebSocket.OPEN) {
             return;
@@ -78,7 +93,6 @@ export class WebSocketServer {
             })
           );
         });
-        this.connectCallbacks.forEach((cb) => cb());
 
         ws.on('message', (data) => {
           try {
@@ -90,8 +104,13 @@ export class WebSocketServer {
 
         ws.on('close', () => {
           this.logger.info('WebSocket client disconnected');
-          this.client = null;
-          this.bridgeVersion = null;
+          const wasAccepted = this.clientAccepted;
+          if (this.client === ws) {
+            this.client = null;
+            this.bridgeVersion = null;
+            this.clientAccepted = false;
+            this.clearHelloTimeout();
+          }
 
           // Reject all pending requests
           for (const [_id, pending] of this.pendingRequests.entries()) {
@@ -100,7 +119,9 @@ export class WebSocketServer {
           }
           this.pendingRequests.clear();
 
-          this.disconnectCallbacks.forEach((cb) => cb());
+          if (wasAccepted) {
+            this.disconnectCallbacks.forEach((cb) => cb());
+          }
         });
 
         ws.on('error', (error) => {
@@ -115,6 +136,9 @@ export class WebSocketServer {
       if (this.client) {
         this.client.close();
         this.client = null;
+        this.bridgeVersion = null;
+        this.clientAccepted = false;
+        this.clearHelloTimeout();
       }
 
       if (this.wss) {
@@ -130,7 +154,7 @@ export class WebSocketServer {
   }
 
   async sendRequest(action: string, payload: Record<string, unknown>): Promise<unknown> {
-    if (!this.client || this.client.readyState !== WebSocket.OPEN) {
+    if (!this.isConnected()) {
       throw new Error(
         'RemNote plugin not connected. Please ensure the plugin is installed and running.'
       );
@@ -192,7 +216,7 @@ export class WebSocketServer {
   }
 
   isConnected(): boolean {
-    return this.client !== null && this.client.readyState === WebSocket.OPEN;
+    return this.client !== null && this.client.readyState === WebSocket.OPEN && this.clientAccepted;
   }
 
   getBridgeVersion(): string | null {
@@ -224,13 +248,22 @@ export class WebSocketServer {
 
       // Handle hello from bridge plugin
       if ('type' in message && message.type === 'hello') {
-        this.bridgeVersion = message.version;
-        this.logger.info({ bridgeVersion: message.version }, 'Bridge identified');
+        if (typeof message.version !== 'string') {
+          this.rejectBridge('Bridge hello missing version', INCOMPATIBLE_BRIDGE_REASON);
+          return;
+        }
 
         const warning = checkVersionCompatibility(this.serverVersion, message.version);
         if (warning) {
-          this.logger.warn({ warning }, 'Bridge version compatibility warning');
+          this.rejectBridge(warning, INCOMPATIBLE_BRIDGE_REASON);
+          return;
         }
+
+        this.bridgeVersion = message.version;
+        this.clientAccepted = true;
+        this.clearHelloTimeout();
+        this.logger.info({ bridgeVersion: message.version }, 'Bridge identified');
+        this.connectCallbacks.forEach((cb) => cb());
         return;
       }
 
@@ -249,6 +282,14 @@ export class WebSocketServer {
 
       // Handle response to our request
       if ('id' in message) {
+        if (!this.clientAccepted) {
+          this.rejectBridge(
+            'Bridge sent response before compatible hello',
+            INCOMPATIBLE_BRIDGE_REASON
+          );
+          return;
+        }
+
         const response = message as BridgeResponse;
         const pending = this.pendingRequests.get(response.id);
 
@@ -265,8 +306,39 @@ export class WebSocketServer {
           this.logger.warn({ id: response.id }, 'Unknown request ID');
         }
       }
+
+      if (!this.clientAccepted) {
+        this.rejectBridge(
+          'Bridge sent message before compatible hello',
+          INCOMPATIBLE_BRIDGE_REASON
+        );
+      }
     } catch (error) {
       this.logger.error({ error }, 'Error parsing message');
+      if (!this.clientAccepted) {
+        this.rejectBridge(
+          'Bridge sent invalid JSON before compatible hello',
+          INCOMPATIBLE_BRIDGE_REASON
+        );
+      }
     }
+  }
+
+  private rejectBridge(detail: string, closeReason: string): void {
+    this.logger.warn({ detail }, BRIDGE_REJECTION_LOG_PREFIX);
+    this.clearHelloTimeout();
+
+    if (this.client && this.client.readyState === WebSocket.OPEN) {
+      this.client.close(POLICY_VIOLATION, closeReason);
+    }
+  }
+
+  private clearHelloTimeout(): void {
+    if (!this.helloTimeout) {
+      return;
+    }
+
+    clearTimeout(this.helloTimeout);
+    this.helloTimeout = null;
   }
 }

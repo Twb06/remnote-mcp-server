@@ -7,13 +7,21 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { REQUEST_TIMEOUT_MS, WebSocketServer } from '../../src/websocket-server.js';
+import {
+  HELLO_TIMEOUT_MS,
+  REQUEST_TIMEOUT_MS,
+  WebSocketServer,
+} from '../../src/websocket-server.js';
 import { WebSocket } from 'ws';
 import { getAvailablePort, wait } from '../helpers/test-server.js';
 import { createMockLogger } from '../setup.js';
 
 const TEST_WS_HOST = '127.0.0.1';
 const TEST_SERVER_VERSION = '0.5.1';
+const TEST_BRIDGE_VERSION = '0.5.0';
+const INCOMPATIBLE_BRIDGE_REASON =
+  'Wrong/incompatible RemNote plugin installed. Install MCP/OpenClaw Automation Bridge matching server.';
+const BRIDGE_REJECTION_LOG_PREFIX = `Rejecting bridge connection: ${INCOMPATIBLE_BRIDGE_REASON}`;
 const START_RETRIES = 5;
 const RETRY_DELAY_MS = 20;
 
@@ -66,6 +74,29 @@ async function createStartedServer({
   }
 
   throw lastError instanceof Error ? lastError : new Error('Failed to start WebSocket test server');
+}
+
+async function openWebSocket(port: number): Promise<WebSocket> {
+  const client = new WebSocket(`ws://localhost:${port}`);
+  await new Promise<void>((resolve, reject) => {
+    client.once('open', () => resolve());
+    client.once('error', reject);
+  });
+  return client;
+}
+
+async function connectAcceptedClient(
+  wsServer: WebSocketServer,
+  port: number,
+  bridgeVersion = TEST_BRIDGE_VERSION
+): Promise<WebSocket> {
+  const connectPromise = new Promise<void>((resolve) => {
+    wsServer.onClientConnect(() => resolve());
+  });
+  const client = await openWebSocket(port);
+  client.send(JSON.stringify({ type: 'hello', version: bridgeVersion }));
+  await connectPromise;
+  return client;
 }
 
 describe('WebSocketServer - Lifecycle', () => {
@@ -141,12 +172,7 @@ describe('WebSocketServer - Connection State', () => {
   });
 
   it('should report connected after client connects', async () => {
-    const connectPromise = new Promise<void>((resolve) => {
-      wsServer.onClientConnect(() => resolve());
-    });
-
-    client = new WebSocket(`ws://localhost:${port}`);
-    await connectPromise;
+    client = await connectAcceptedClient(wsServer, port);
 
     expect(wsServer.isConnected()).toBe(true);
   });
@@ -156,10 +182,7 @@ describe('WebSocketServer - Connection State', () => {
       wsServer.onClientDisconnect(() => resolve());
     });
 
-    client = new WebSocket(`ws://localhost:${port}`);
-    await new Promise<void>((resolve) => {
-      client.on('open', () => resolve());
-    });
+    client = await connectAcceptedClient(wsServer, port);
 
     client.close();
     await disconnectPromise;
@@ -177,8 +200,7 @@ describe('WebSocketServer - Connection State', () => {
       callbackTriggered = true;
     });
 
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
 
     expect(callbackTriggered).toBe(true);
   });
@@ -189,8 +211,7 @@ describe('WebSocketServer - Connection State', () => {
       callbackTriggered = true;
     });
 
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
 
     client.close();
     await wait(100);
@@ -224,15 +245,13 @@ describe('WebSocketServer - Single Client Model', () => {
   });
 
   it('should accept first client connection', async () => {
-    client1 = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client1 = await connectAcceptedClient(wsServer, port);
 
     expect(wsServer.isConnected()).toBe(true);
   });
 
   it('should reject second client with code 1008', async () => {
-    client1 = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client1 = await connectAcceptedClient(wsServer, port);
 
     const closePromise = new Promise<{ code: number; reason: string }>((resolve) => {
       client2 = new WebSocket(`ws://localhost:${port}`);
@@ -247,14 +266,12 @@ describe('WebSocketServer - Single Client Model', () => {
   });
 
   it('should allow new connection after first client disconnects', async () => {
-    client1 = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client1 = await connectAcceptedClient(wsServer, port);
 
     client1.close();
     await wait(100);
 
-    client2 = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client2 = await connectAcceptedClient(wsServer, port);
 
     expect(wsServer.isConnected()).toBe(true);
   });
@@ -272,10 +289,7 @@ describe('WebSocketServer - Request/Response', () => {
     wsServer = started.wsServer;
     port = started.port;
 
-    client = new WebSocket(`ws://localhost:${port}`);
-    await new Promise<void>((resolve) => {
-      wsServer.onClientConnect(() => resolve());
-    });
+    client = await connectAcceptedClient(wsServer, port);
   });
 
   afterEach(async () => {
@@ -418,8 +432,7 @@ describe('WebSocketServer - Heartbeat Protocol', () => {
     wsServer = started.wsServer;
     port = started.port;
 
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
   });
 
   afterEach(async () => {
@@ -466,8 +479,7 @@ describe('WebSocketServer - Hello Message', () => {
     wsServer = started.wsServer;
     port = started.port;
 
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await openWebSocket(port);
   });
 
   afterEach(async () => {
@@ -495,16 +507,24 @@ describe('WebSocketServer - Hello Message', () => {
     expect(mockLogger.info).toHaveBeenCalledWith({ bridgeVersion: '0.5.0' }, 'Bridge identified');
   });
 
-  it('should log warning on version mismatch', async () => {
+  it('should reject incompatible version mismatch', async () => {
     mockLogger.warn = vi.fn();
 
+    const closePromise = new Promise<{ code: number; reason: string }>((resolve) => {
+      client.on('close', (code, reason) => {
+        resolve({ code, reason: reason.toString() });
+      });
+    });
+
     client.send(JSON.stringify({ type: 'hello', version: '0.6.0' }));
-    await wait(100);
+    const result = await closePromise;
 
     expect(mockLogger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ warning: expect.stringContaining('Version mismatch') }),
-      'Bridge version compatibility warning'
+      expect.objectContaining({ detail: expect.stringContaining('Version mismatch') }),
+      BRIDGE_REJECTION_LOG_PREFIX
     );
+    expect(result).toEqual({ code: 1008, reason: INCOMPATIBLE_BRIDGE_REASON });
+    expect(wsServer.isConnected()).toBe(false);
   });
 
   it('should not log warning on compatible versions', async () => {
@@ -514,6 +534,44 @@ describe('WebSocketServer - Hello Message', () => {
     await wait(100);
 
     expect(mockLogger.warn).not.toHaveBeenCalled();
+  });
+
+  it('should reject malformed hello versions', async () => {
+    const closePromise = new Promise<{ code: number; reason: string }>((resolve) => {
+      client.on('close', (code, reason) => {
+        resolve({ code, reason: reason.toString() });
+      });
+    });
+
+    client.send(JSON.stringify({ type: 'hello', version: 'not-semver' }));
+    const result = await closePromise;
+
+    expect(result).toEqual({ code: 1008, reason: INCOMPATIBLE_BRIDGE_REASON });
+    expect(wsServer.isConnected()).toBe(false);
+  });
+
+  it(
+    'should reject connections that never send hello',
+    async () => {
+      const closePromise = new Promise<{ code: number; reason: string }>((resolve) => {
+        client.on('close', (code, reason) => {
+          resolve({ code, reason: reason.toString() });
+        });
+      });
+
+      const result = await closePromise;
+
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        `${BRIDGE_REJECTION_LOG_PREFIX} Detail: hello timeout.`
+      );
+      expect(result).toEqual({ code: 1008, reason: INCOMPATIBLE_BRIDGE_REASON });
+      expect(wsServer.isConnected()).toBe(false);
+    },
+    HELLO_TIMEOUT_MS + 1000
+  );
+
+  it('should reject requests before compatible hello is accepted', async () => {
+    await expect(wsServer.sendRequest('test', {})).rejects.toThrow('RemNote plugin not connected');
   });
 
   it('should clear bridge version on disconnect', async () => {
@@ -531,7 +589,11 @@ describe('WebSocketServer - Hello Message', () => {
   });
 
   it('should announce MCP server identity on connect', async () => {
+    const closePromise = new Promise<void>((resolve) => {
+      client.once('close', () => resolve());
+    });
     client.close();
+    await closePromise;
 
     const messagePromise = new Promise<string>((resolve, reject) => {
       const nextClient = new WebSocket(`ws://localhost:${port}`);
@@ -570,8 +632,7 @@ describe('WebSocketServer - Error Handling', () => {
   });
 
   it('should handle malformed JSON gracefully', async () => {
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
 
     // Send invalid JSON
     client.send('not valid json');
@@ -582,8 +643,7 @@ describe('WebSocketServer - Error Handling', () => {
   });
 
   it('should handle unknown message types', async () => {
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
 
     // Send unknown message type
     client.send(JSON.stringify({ unknown: 'field' }));
@@ -594,8 +654,7 @@ describe('WebSocketServer - Error Handling', () => {
   });
 
   it('should handle response for unknown request ID', async () => {
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
 
     // Send response for non-existent request
     client.send(JSON.stringify({ id: 'nonexistent-id', result: 'data' }));
@@ -651,8 +710,7 @@ describe('WebSocketServer - Logging', () => {
   });
 
   it('should log client disconnection', async () => {
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
     mockLogger.info = vi.fn(); // Reset
     client.close();
     await wait(100);
@@ -660,8 +718,7 @@ describe('WebSocketServer - Logging', () => {
   });
 
   it('should log when rejecting multiple connections', async () => {
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
     mockLogger.warn = vi.fn(); // Reset
 
     const client2 = new WebSocket(`ws://localhost:${port}`);
@@ -672,8 +729,7 @@ describe('WebSocketServer - Logging', () => {
   });
 
   it('should log sent requests', async () => {
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
     mockLogger.debug = vi.fn(); // Reset
 
     client.on('message', (data) => {
@@ -690,8 +746,7 @@ describe('WebSocketServer - Logging', () => {
   });
 
   it('should log received messages', async () => {
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
     mockLogger.debug = vi.fn(); // Reset
 
     client.on('message', (data) => {
@@ -708,8 +763,7 @@ describe('WebSocketServer - Logging', () => {
   });
 
   it('should log warning for unknown request ID', async () => {
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
     mockLogger.warn = vi.fn(); // Reset
 
     client.send(JSON.stringify({ id: 'unknown-id', result: 'data' }));
@@ -719,8 +773,7 @@ describe('WebSocketServer - Logging', () => {
   });
 
   it('should log errors', async () => {
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
     mockLogger.error = vi.fn(); // Reset
 
     client.send('invalid json');
@@ -759,8 +812,7 @@ describe('WebSocketServer - Request/Response Logging', () => {
   });
 
   it('should log requests when request logger is provided', async () => {
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
 
     client.on('message', (data) => {
       const request = JSON.parse(data.toString());
@@ -779,8 +831,7 @@ describe('WebSocketServer - Request/Response Logging', () => {
   });
 
   it('should log responses when response logger is provided', async () => {
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
 
     client.on('message', (data) => {
       const request = JSON.parse(data.toString());
@@ -799,8 +850,7 @@ describe('WebSocketServer - Request/Response Logging', () => {
   });
 
   it('should log error responses', async () => {
-    client = new WebSocket(`ws://localhost:${port}`);
-    await wait(100);
+    client = await connectAcceptedClient(wsServer, port);
 
     client.on('message', (data) => {
       const request = JSON.parse(data.toString());

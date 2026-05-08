@@ -29,6 +29,10 @@ remnote-mcp-server
 For the detailed bridge connection lifecycle, retry phases, and wake-up triggers, see the canonical bridge guide:
 [Connection Lifecycle Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/connection-lifecycle.md).
 
+The server accepts only bridge plugins that identify themselves with a compatible `0.x` package version during the
+WebSocket handshake. During pre-stable releases, the bridge and server must use the same minor version line, for
+example server `0.14.x` with bridge `0.14.x`.
+
 **3. Configure your AI client:**
 
 Choose your AI client and follow its configuration guide:

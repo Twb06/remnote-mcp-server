@@ -11,6 +11,13 @@ plugin](https://github.com/robert7/remnote-mcp-bridge).
 
 > If you run into any issues, please [report them here](https://github.com/robert7/remnote-mcp-server/issues).
 
+> **Connection issue? Check the RemNote plugin first.** The RemNote Marketplace may show multiple similarly named
+> `MCP Bridge` plugins. For this server, install the official **MCP/OpenClaw Automation Bridge** plugin by Robert
+> Spiegel and keep it on the same `0.x` minor version line as `remnote-mcp-server` (for example `0.14.x` with
+> `0.14.x`). Wrong plugin flavors or incompatible marketplace copies can connect briefly and then disconnect with a
+> `1008` compatibility message. See the related upstream marketplace confusion report:
+> [quentintou/remnote-mcp-bridge#8](https://github.com/quentintou/remnote-mcp-bridge/issues/8).
+
 ## What is This?
 
 The RemNote MCP Server enables AI assistants like Claude Code to interact directly with your RemNote knowledge base
@@ -94,9 +101,10 @@ remnote-mcp-stdio --version
 
 ### 2. Install the RemNote Plugin
 
-Install the [RemNote Automation Bridge plugin](https://github.com/robert7/remnote-mcp-bridge) in your RemNote app.
-Currently available from GitHub; registration in the RemNote marketplace is pending approval. Configure the plugin
-to connect to `ws://127.0.0.1:3002`.
+Install the official [MCP/OpenClaw Automation Bridge plugin](https://github.com/robert7/remnote-mcp-bridge) in your
+RemNote app. If installing from the RemNote Marketplace, verify the plugin name and author; similarly named
+`MCP Bridge` variants may be incompatible with this server and cause connection loops or `1008` disconnects. Configure
+the plugin to connect to `ws://127.0.0.1:3002`.
 
 ### 3. Start the Server
 
