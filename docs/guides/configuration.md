@@ -10,7 +10,7 @@ The RemNote MCP Server uses Streamable HTTP transport, which means:
 - Clients connect via HTTP to `http://localhost:3001/mcp` (default)
 - Multiple clients can connect simultaneously
 - Each client gets its own MCP session
-- MCP clients use HTTP only for this project; `stdio` transport is not supported on current versions
+- Stdio-only MCP clients can use the `remnote-mcp-stdio` proxy, which forwards to the same local HTTP endpoint
 
 ## Quick Start
 
@@ -42,12 +42,15 @@ Choose your AI client and follow its configuration guide:
   for Claude Desktop and Claude Cowork
 - **[Claude Desktop Local MCPB](configuration-claude-desktop-local-mcpb.md)** - Local Claude Desktop extension setup
   without public HTTPS
+- **[Generic stdio MCP clients](#stdio-mcp-clients)** - Use `remnote-mcp-stdio` when the client cannot consume
+  Streamable HTTP directly
 
 ## Other MCP Clients
 
-Any MCP client that supports Streamable HTTP transport can connect to the RemNote MCP Server.
+Any MCP client that supports Streamable HTTP transport can connect to the RemNote MCP Server directly. Local clients
+that only support stdio can use `remnote-mcp-stdio` as a proxy to the same server.
 
-### Generic Configuration
+### Streamable HTTP Clients
 
 **Server URL:** `http://localhost:3001/mcp`
 
@@ -64,6 +67,42 @@ Any MCP client that supports Streamable HTTP transport can connect to the RemNot
 
 For technical details, see the [MCP
 Specification](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#http-with-sse).
+
+### Stdio MCP Clients
+
+Use `remnote-mcp-stdio` for local MCP clients that can spawn stdio MCP servers but cannot connect to Streamable HTTP
+directly.
+
+Important runtime model:
+
+- `remnote-mcp-stdio` is a stdio-to-HTTP proxy, not the main server.
+- `remnote-mcp-server` must already be running, or started separately.
+- The RemNote Automation Bridge always connects to `remnote-mcp-server` over WebSocket. The server does not connect
+  outward to the bridge, and `remnote-mcp-stdio` does not talk to the bridge directly.
+- Multiple stdio clients may each spawn their own `remnote-mcp-stdio` process while sharing the same
+  `remnote-mcp-server` instance.
+
+Generic client configuration:
+
+```json
+{
+  "mcpServers": {
+    "remnote": {
+      "command": "remnote-mcp-stdio",
+      "env": {
+        "REMNOTE_MCP_URL": "http://127.0.0.1:3001/mcp"
+      }
+    }
+  }
+}
+```
+
+If the HTTP server uses the default endpoint, `REMNOTE_MCP_URL` can be omitted. Set it when you start
+`remnote-mcp-server` with a custom HTTP port.
+
+For manual checks, `remnote-mcp-stdio --help` prints usage and `remnote-mcp-stdio -V` prints the installed version.
+Running `remnote-mcp-stdio` directly in a terminal prints the same usage text instead of silently waiting for MCP
+messages.
 
 ## Environment Variables
 
@@ -146,12 +185,12 @@ If the status shows "Disconnected," see the [Troubleshooting Guide](troubleshoot
 
 ## Common Configuration Mistakes
 
-### Wrong Transport Type
+### Wrong Stdio Command
 
-This project uses HTTP transport for MCP clients. Do not configure Claude Code or other MCP clients to spawn
-`remnote-mcp-server` via `stdio`.
+Do not configure stdio MCP clients to spawn `remnote-mcp-server` itself. That command starts the long-running HTTP and
+WebSocket server; it does not speak MCP over stdio.
 
-❌ **Incorrect (old stdio transport):**
+❌ **Incorrect:**
 ```json
 {
   "type": "stdio",
@@ -159,11 +198,19 @@ This project uses HTTP transport for MCP clients. Do not configure Claude Code o
 }
 ```
 
-✅ **Correct (HTTP transport):**
+✅ **Correct for HTTP-capable clients:**
 ```json
 {
   "type": "http",
   "url": "http://localhost:3001/mcp"
+}
+```
+
+✅ **Correct for stdio-only clients:**
+```json
+{
+  "type": "stdio",
+  "command": "remnote-mcp-stdio"
 }
 ```
 

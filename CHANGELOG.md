@@ -14,6 +14,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Added Claude Desktop local MCPB setup documentation.
 - Added `remnote-mcp-server mcpb-path` to print the bundled Claude Desktop extension path after npm installation.
 - Added a live MCPB stdio proxy integration suite that reuses the RemNote MCP tool workflows.
+- Added the `remnote-mcp-stdio` executable for local MCP clients that consume stdio servers.
+- Added `remnote-mcp-stdio --help` and `-V`/`--version` utility output for manual checks.
 
 ### Changed
 

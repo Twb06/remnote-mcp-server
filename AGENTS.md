@@ -5,10 +5,11 @@ This file is a map for AI agents working in `remnote-mcp-server`.
 ## Repo Role
 
 This repo exposes RemNote operations as MCP tools over Streamable HTTP, bridges those tool calls to the RemNote plugin
-over WebSocket, and ships the bundled `remnote-cli` command.
+over WebSocket, and ships bundled local client entrypoints.
 
 ```text
 AI agents (HTTP MCP) <-> HTTP server (:3001) <-> WebSocket bridge (:3002) <-> RemNote plugin
+AI agents (stdio MCP) <-> remnote-mcp-stdio <-> HTTP server (:3001) <-> WebSocket bridge (:3002) <-> RemNote plugin
 CLI commands <-> remnote-cli <-> HTTP server (:3001) <-> WebSocket bridge (:3002) <-> RemNote plugin
 ```
 
@@ -65,6 +66,7 @@ Projects are still `0.x`; prefer the same minor line across bridge and server pa
 - `src/tools/index.ts` - MCP tool registration and dispatch
 - `src/schemas/remnote-schemas.ts` - Zod input/output schema contracts
 - `src/remnote-cli/` - bundled CLI command parser, MCP client, command payload mapping, and output formatting
+- `mcpb/remnote-local/server/index.js` - stdio MCP proxy used by `remnote-mcp-stdio` and the Claude Desktop MCPB
 - `src/version-compat.ts` - 0.x compatibility checks
 
 Primary docs for deeper context:
@@ -131,7 +133,7 @@ wrapper.
 ## Release and Publishing Map
 
 - Publish workflow: `./publish-to-npm.sh`
-- The npm package provides both `remnote-mcp-server` and `remnote-cli` bins.
+- The npm package provides `remnote-mcp-server`, `remnote-cli`, and `remnote-mcp-stdio` bins.
 - Keep release notes aligned with `CHANGELOG.md`
 - For release prep, verify package version and changelog section alignment.
 

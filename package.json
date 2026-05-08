@@ -6,7 +6,8 @@
   "main": "dist/index.js",
   "bin": {
     "remnote-mcp-server": "dist/index.js",
-    "remnote-cli": "dist/remnote-cli/index.js"
+    "remnote-cli": "dist/remnote-cli/index.js",
+    "remnote-mcp-stdio": "mcpb/remnote-local/server/index.js"
   },
   "scripts": {
     "build": "tsc && node scripts/chmod-bins.mjs && node scripts/build-mcpb.mjs",

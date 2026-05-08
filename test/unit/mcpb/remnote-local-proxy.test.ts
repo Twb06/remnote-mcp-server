@@ -3,6 +3,9 @@ import {
   DEFAULT_MCP_URL,
   FALLBACK_TOOLS,
   RemNoteLocalProxy,
+  formatUsage,
+  handleUtilityCommand,
+  isInteractiveTerminalInvocation,
   normalizeMcpUrl,
 } from '../../../mcpb/remnote-local/server/index.js';
 
@@ -25,7 +28,7 @@ describe('RemNoteLocalProxy', () => {
     await expect(proxy.listTools()).resolves.toEqual(remoteTools);
 
     expect(createClient).toHaveBeenCalledWith('http://localhost:4000/mcp', {
-      name: 'remnote-local-mcpb',
+      name: 'remnote-mcp-stdio',
       version: '0.14.1',
     });
     expect(client.connect).toHaveBeenCalledWith(transport);
@@ -70,6 +73,38 @@ describe('RemNoteLocalProxy', () => {
         },
       ],
     });
+  });
+
+  it('prints its version for npm bin verification without starting stdio transport', () => {
+    const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+    expect(handleUtilityCommand(['node', 'remnote-mcp-stdio', '--version'])).toBe(true);
+    expect(stdout).toHaveBeenCalledWith('0.14.1\n');
+    expect(handleUtilityCommand(['node', 'remnote-mcp-stdio', '-V'])).toBe(true);
+
+    stdout.mockRestore();
+  });
+
+  it('prints help for manual stdio proxy discovery', () => {
+    const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+    expect(handleUtilityCommand(['node', 'remnote-mcp-stdio', '--help'])).toBe(true);
+    expect(stdout).toHaveBeenCalledWith(expect.stringContaining('Usage:\n'));
+    expect(stdout).toHaveBeenCalledWith(expect.stringContaining('remnote-mcp-server separately'));
+
+    stdout.mockRestore();
+  });
+
+  it('detects direct terminal invocation without treating MCP client stdio as interactive', () => {
+    const tty = { isTTY: true };
+    const pipe = { isTTY: false };
+
+    expect(isInteractiveTerminalInvocation(['node', 'remnote-mcp-stdio'], tty, tty)).toBe(true);
+    expect(isInteractiveTerminalInvocation(['node', 'remnote-mcp-stdio'], pipe, tty)).toBe(false);
+    expect(isInteractiveTerminalInvocation(['node', 'remnote-mcp-stdio', '--help'], tty, tty)).toBe(
+      false
+    );
+    expect(formatUsage()).toContain('Default target: http://127.0.0.1:3001/mcp');
   });
 });
 

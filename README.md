@@ -15,9 +15,9 @@ plugin](https://github.com/robert7/remnote-mcp-bridge).
 
 The RemNote MCP Server enables AI assistants like Claude Code to interact directly with your RemNote knowledge base
 through the Model Context Protocol (MCP). The same npm package also provides `remnote-cli`, a command-line MCP client
-for local scripts and coding harnesses. Create notes, hierarchical markdown trees, and RemNote-native flashcards;
-search and read your knowledge base; update existing notes; and maintain your daily journal through MCP tools or shell
-commands.
+for local scripts and coding harnesses, and `remnote-mcp-stdio`, a stdio MCP proxy for clients that cannot consume
+Streamable HTTP directly. Create notes, hierarchical markdown trees, and RemNote-native flashcards; search and read
+your knowledge base; update existing notes; and maintain your daily journal through MCP tools or shell commands.
 
 ## Demo
 
@@ -29,10 +29,11 @@ This system consists of **two separate runtime components** that work together:
 
 1. **[RemNote Automation Bridge](https://github.com/robert7/remnote-mcp-bridge)** - A RemNote plugin that runs in your
    browser or RemNote desktop app and exposes RemNote API functionality via WebSocket
-2. **RemNote MCP Server** (this project) - A standalone server package that provides the `remnote-mcp-server`
-   executable for MCP clients and the `remnote-cli` executable for command-line workflows
+2. **RemNote MCP Server** (this project) - A standalone server package that provides `remnote-mcp-server` for MCP
+   HTTP clients, `remnote-mcp-stdio` for stdio MCP clients, and `remnote-cli` for command-line workflows
 
-The `remnote-cli` command is not a second server. It calls the MCP endpoint exposed by `remnote-mcp-server`.
+The `remnote-cli` and `remnote-mcp-stdio` commands are not second RemNote-facing servers. They call the MCP endpoint
+exposed by `remnote-mcp-server`.
 
 For the detailed bridge connection lifecycle, retry phases, and wake-up triggers, use the bridge repo as the source of
 truth: [Connection Lifecycle Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/connection-lifecycle.md).
@@ -41,12 +42,14 @@ truth: [Connection Lifecycle Guide](https://github.com/robert7/remnote-mcp-bridg
 
 ```text
 AI agents (HTTP) -> MCP HTTP Server :3001 -> WebSocket Server :3002 -> RemNote Plugin -> RemNote
+AI agents (stdio) -> remnote-mcp-stdio -> MCP HTTP Server :3001 -> WebSocket Server :3002 -> RemNote Plugin -> RemNote
 CLI commands -> remnote-cli -> MCP HTTP Server :3001 -> WebSocket Server :3002 -> RemNote Plugin -> RemNote
 ```
 
 The server acts as a bridge:
 
 - Communicates with AI agents via Streamable HTTP transport (MCP protocol) - supports both local and remote access
+- Provides `remnote-mcp-stdio` as a local stdio MCP proxy for clients that need stdio transport
 - Provides `remnote-cli` as a bundled command-line MCP client for local automation
 - HTTP server (port 3001) manages MCP sessions for multiple concurrent agents
 - WebSocket server (port 3002) connects to the RemNote browser plugin
@@ -79,11 +82,12 @@ connection always stays local for security. See [Remote Access Guide](docs/guide
 npm install -g remnote-mcp-server
 ```
 
-The package installs both commands:
+The package installs these commands:
 
 ```bash
 remnote-mcp-server --version
 remnote-cli --version
+remnote-mcp-stdio --version
 ```
 
 ### 2. Install the RemNote Plugin
@@ -113,6 +117,7 @@ Keep this terminal running.
   - [Claude Desktop / Cowork](docs/guides/configuration-claude-desktop-cowork.md) - Remote connector setup (requires remote access setup)
   - [Claude Code CLI](docs/guides/configuration-claude-code-CLI.md) - Detailed Claude Code CLI configuration
   - [Accomplish](docs/guides/configuration-accomplish.md) - Accomplish (Openwork) configuration
+  - [Generic stdio MCP clients](docs/guides/configuration.md#stdio-mcp-clients) - Use `remnote-mcp-stdio`
 
 ## Documentation
 
@@ -171,6 +176,7 @@ See the [Tools Reference](docs/guides/tools-reference.md) for detailed usage and
 - **Claude Desktop / Cowork** - Remote connector clients (require [remote access](docs/guides/remote-access.md))
 - **[Accomplish](https://github.com/accomplish-ai/accomplish)** - Task-based MCP client (formerly Openwork)
 - **Any MCP client** supporting Streamable HTTP transport
+- **Any local MCP client** supporting stdio transport through `remnote-mcp-stdio`
 - **Any local command runner** that can call `remnote-cli`
 
 ## Example Usage
@@ -253,7 +259,7 @@ See the [Troubleshooting Guide](docs/guides/troubleshooting.md) for detailed sol
 git clone https://github.com/robert7/remnote-mcp-server.git
 cd remnote-mcp-server
 ./link-cli.sh
-# Later, remove the local links for both remnote-mcp-server and remnote-cli:
+# Later, remove the local links for package executables:
 ./unlink-cli.sh
 ```
 

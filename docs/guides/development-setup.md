@@ -26,18 +26,21 @@ cd remnote-mcp-server
 
 > If you will test against an existing bridge plugin install, match your local server checkout/version to the bridge plugin version line (`0.x` semver). See the [Bridge / Consumer Version Compatibility Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/bridge-consumer-version-compatibility.md).
 
-This installs dependencies, runs tests, builds `dist/`, and links both package executables:
+This installs dependencies, runs tests, builds `dist/`, and links all package executables:
 
 - `remnote-mcp-server`
 - `remnote-cli`
+- `remnote-mcp-stdio`
 
 **Verify:**
 
 ```bash
 which remnote-mcp-server
 which remnote-cli
+which remnote-mcp-stdio
 remnote-mcp-server --version
 remnote-cli --version
+remnote-mcp-stdio --version
 ```
 
 To remove the local links later:

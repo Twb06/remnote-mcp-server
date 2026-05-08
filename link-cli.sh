@@ -23,7 +23,7 @@ npm test
 npm run build
 npm link
 
-echo "${package_name} linked:"
+echo "${package_name} linked. Verifying package executables:"
 while IFS= read -r bin_name; do
   command -v "$bin_name" || true
   "$bin_name" --version || true

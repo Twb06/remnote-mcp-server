@@ -32,6 +32,7 @@ describe('link-cli.sh', () => {
     const content = readFileSync(scriptPath, 'utf-8');
 
     expect(content).toContain("Object.keys(require('./package.json').bin).join('\\n')");
+    expect(content).toContain('Verifying package executables');
     expect(content).toContain('while IFS= read -r bin_name; do');
     expect(content).toContain('command -v "$bin_name"');
     expect(content).toContain('"$bin_name" --version');

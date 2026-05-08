@@ -11,6 +11,7 @@ Complete installation instructions for the RemNote MCP Server.
 - **An MCP client** - Examples:
   - [Claude Code CLI](https://claude.com/claude-code)
   - [Accomplish](https://github.com/accomplish-ai/accomplish) (formerly Openwork)
+  - Local MCP clients that consume stdio servers
   - Claude Desktop / Claude Cowork (requires [remote access setup](remote-access.md))
 
 ## Installation from npm
@@ -45,10 +46,16 @@ which remnote-mcp-server
 which remnote-cli
 # Should output: /path/to/node/bin/remnote-cli
 
+which remnote-mcp-stdio
+# Should output: /path/to/node/bin/remnote-mcp-stdio
+
 remnote-mcp-server --version
 # Should output: 0.x.x
 
 remnote-cli --version
+# Should output: 0.x.x
+
+remnote-mcp-stdio --version
 # Should output: 0.x.x
 ```
 
@@ -70,7 +77,7 @@ npm uninstall -g remnote-mcp-server
 git clone https://github.com/robert7/remnote-mcp-server.git
 cd remnote-mcp-server
 ./link-cli.sh
-# Later, remove the local links for both remnote-mcp-server and remnote-cli:
+# Later, remove the local links for package executables:
 ./unlink-cli.sh
 ```
 
@@ -263,12 +270,14 @@ export PATH="$(npm config get prefix)/bin:$PATH"
 
 **Solution:** See [Troubleshooting Guide](troubleshooting.md#plugin-wont-connect)
 
-### MCP Client Configured with `stdio`
+### MCP Client Configured with `remnote-mcp-server` over `stdio`
 
 **Symptom:** The MCP client starts `remnote-mcp-server` as a child process or times out during initialization
 
-**Solution:** This project uses HTTP transport for MCP clients. Configure the client to connect to
-`http://localhost:3001/mcp`, not `"type": "stdio"`. See [Configuration Guide](configuration.md#wrong-transport-type).
+**Solution:** Do not configure `remnote-mcp-server` itself as a stdio server. Use HTTP transport to
+`http://localhost:3001/mcp`, or use `remnote-mcp-stdio` for clients that only support stdio. In both cases,
+`remnote-mcp-server` must keep running separately and the RemNote bridge must connect to it.
+See [Configuration Guide](configuration.md#stdio-mcp-clients).
 
 ### Bridge / Server Version Mismatch (0.x)
 

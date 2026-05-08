@@ -9,7 +9,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 export const DEFAULT_MCP_URL = 'http://127.0.0.1:3001/mcp';
-export const SERVER_INFO = { name: 'remnote-local-mcpb', version: '0.14.1' };
+export const SERVER_INFO = { name: 'remnote-mcp-stdio', version: '0.14.1' };
 
 export const FALLBACK_TOOLS = [
   {
@@ -214,6 +214,46 @@ export async function run() {
   await server.connect(new StdioServerTransport());
 }
 
+export function formatUsage() {
+  return [
+    'remnote-mcp-stdio - stdio MCP proxy for a local RemNote MCP Server',
+    '',
+    'Usage:',
+    '  remnote-mcp-stdio              Run stdio MCP transport for an MCP client',
+    '  remnote-mcp-stdio --help, -h   Print this help',
+    '  remnote-mcp-stdio --version, -V  Print version',
+    '',
+    'This command is normally launched by a stdio MCP client.',
+    'Start remnote-mcp-server separately first, then let the RemNote Automation Bridge connect to it.',
+    `Default target: ${DEFAULT_MCP_URL}`,
+    '',
+    'Environment:',
+    '  REMNOTE_MCP_URL  Override the local MCP endpoint',
+  ].join('\n');
+}
+
+export function handleUtilityCommand(argv = process.argv) {
+  if (argv.includes('--version') || argv.includes('-V') || argv.includes('-v')) {
+    process.stdout.write(`${SERVER_INFO.version}\n`);
+    return true;
+  }
+
+  if (argv.includes('--help') || argv.includes('-h')) {
+    process.stdout.write(`${formatUsage()}\n`);
+    return true;
+  }
+
+  return false;
+}
+
+export function isInteractiveTerminalInvocation(
+  argv = process.argv,
+  stdin = process.stdin,
+  stdout = process.stdout
+) {
+  return argv.length <= 2 && Boolean(stdin.isTTY) && Boolean(stdout.isTTY);
+}
+
 async function closeBestEffort(transport, client) {
   try {
     if (typeof transport.terminateSession === 'function') {
@@ -231,6 +271,15 @@ async function closeBestEffort(transport, client) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  if (handleUtilityCommand()) {
+    process.exit(0);
+  }
+
+  if (isInteractiveTerminalInvocation()) {
+    process.stderr.write(`${formatUsage()}\n`);
+    process.exit(1);
+  }
+
   run().catch((error) => {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     process.exit(1);
