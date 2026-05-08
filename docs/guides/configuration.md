@@ -40,10 +40,10 @@ Choose your AI client and follow its configuration guide:
   proxy, or the `remnote-cli` skill path
 - **[Accomplish](configuration-accomplish.md)** - open source AI desktop agent that automates file management, document
   creation, and browser tasks
-- **[Claude Desktop / Cowork](configuration-claude-desktop-cowork.md)** - Anthropic remote connector setup
-  for Claude Desktop and Claude Cowork
-- **[Claude Desktop Local MCPB](configuration-claude-desktop-local-mcpb.md)** - Local Claude Desktop extension setup
+- **[Claude Desktop / Cowork Local MCPB](configuration-claude-desktop-local-mcpb.md)** - Local desktop extension setup
   without public HTTPS
+- **[Claude Desktop / Cowork Remote Connector](configuration-claude-desktop-cowork.md)** - Anthropic remote connector
+  setup when local MCPB is not applicable
 - **[Generic stdio MCP clients](#stdio-mcp-clients)** - Use `remnote-mcp-stdio` when the client cannot consume
   Streamable HTTP directly
 

@@ -1,13 +1,16 @@
 # Remote Access Setup
 
-How to expose your local RemNote MCP Server to cloud-based services like Claude Desktop,
-Claude Cowork, and ChatGPT Apps.
+How to expose your local RemNote MCP Server to cloud-based services and remote connector flows.
 
 ## Overview
 
 By default, the RemNote MCP Server binds to localhost (127.0.0.1) and is only accessible from your local machine.
-To enable cloud-based AI services to access your RemNote knowledge base, you need to expose the HTTP MCP endpoint
-remotely.
+To enable cloud-based AI services or Claude remote connectors to access your RemNote knowledge base, you need to
+expose the HTTP MCP endpoint remotely.
+
+For local Claude Desktop or Claude Cowork in the Claude Desktop app, prefer the bundled local MCPB extension when
+desktop extensions are enabled. Remote access is still required for Claude web/mobile, cloud-hosted clients, ChatGPT
+Apps, and managed Claude deployments where local MCPB is disabled or not applicable.
 
 **Security Warning:** The methods described here provide **no authentication** by default and expose your RemNote access
 to anyone with the URL. Of course, **you can configure authentication** and access controls with tools like ngrok,
@@ -17,18 +20,18 @@ Unless you configure authentication, use remote access only for:
 
 - Local development and testing
 - Short-term demonstrations
-- Integration testing with cloud-based agents (for example Claude Desktop, Claude Cowork, or ChatGPT Apps)
+- Integration testing with cloud-based agents or remote connector flows
 
 ## Architecture
 
 When using remote access, the architecture becomes:
 
 ```
-Cloud Agent (Claude Desktop / Cowork or ChatGPT) ↔ Tunnel (HTTPS) ↔ HTTP MCP Server :3001 (127.0.0.1)
-                                                          ↕
-                                                          WebSocket Server :3002 (127.0.0.1)
-                                                          ↕
-                                                          RemNote Plugin (Local)
+Cloud agent or remote connector ↔ Tunnel (HTTPS) ↔ HTTP MCP Server :3001 (127.0.0.1)
+                                                    ↕
+                                                    WebSocket Server :3002 (127.0.0.1)
+                                                    ↕
+                                                    RemNote Plugin (Local)
 ```
 
 **Critical Security:** The WebSocket server ALWAYS binds to localhost (127.0.0.1) and cannot be overridden. Only the
@@ -246,7 +249,8 @@ If ngrok free-tier limits are hit:
 ## Related Documentation
 
 - [Configuration Guide](configuration.md) - Configure MCP clients
-- [Claude Desktop / Cowork Configuration](configuration-claude-desktop-cowork.md) - Anthropic remote connector setup
+- [Claude Desktop / Cowork Remote Connector Configuration](configuration-claude-desktop-cowork.md) - Anthropic remote
+  connector setup
 - [ChatGPT Configuration](configuration-chatgpt.md) - ChatGPT Apps setup steps
 - [CLI Options Reference](cli-options.md) - Server configuration options
 - [Troubleshooting](troubleshooting.md) - Common issues

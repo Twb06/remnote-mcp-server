@@ -1,12 +1,13 @@
-# Claude Desktop / Cowork Configuration
+# Claude Desktop / Cowork Remote Connector Configuration
 
 How to configure Claude Desktop and Claude Cowork to connect to the RemNote MCP Server through Anthropic's remote
 connector flow.
 
-> **Claude Desktop local option:** If you only need Claude Desktop on the same machine as RemNote, use
-> [Claude Desktop Local MCPB Configuration](configuration-claude-desktop-local-mcpb.md). It is available from
-> `remnote-mcp-server` v0.14.1+ and does not require ngrok, public HTTPS, or remote access setup. The remote connector
-> setup in this guide is still required for Claude Cowork and other cloud-hosted clients.
+> **Local desktop option:** If you use Claude Desktop or Claude Cowork in the Claude Desktop app on the same machine as
+> RemNote, prefer [Claude Desktop / Cowork Local MCPB Configuration](configuration-claude-desktop-local-mcpb.md). It is
+> available from `remnote-mcp-server` v0.14.1+ and does not require ngrok, public HTTPS, or remote access setup, as long
+> as desktop extensions are enabled. Use this remote connector guide for Claude web/mobile, cloud-hosted clients, or
+> managed deployments where local `.mcpb` extensions are disabled or not applicable.
 
 ## Overview
 
@@ -18,8 +19,8 @@ That means:
 - `http://localhost` will not work for this remote connector flow
 - The same remote connector can be used from Claude Desktop and Claude Cowork
 
-This guide covers the remote HTTPS connector path. Claude Cowork requires this path because it cannot run local desktop
-extensions on your machine.
+This guide covers the remote HTTPS connector path. It is still useful when you want the same connector available across
+Claude surfaces, or when local desktop extensions are blocked by policy.
 
 ## Prerequisites
 
@@ -108,8 +109,8 @@ See the [Tools Reference](tools-reference.md) for detailed documentation of all 
 ## Related Documentation
 
 - [Remote Access Setup](remote-access.md) - Tunnel setup, security, and troubleshooting
-- [Claude Desktop Local MCPB Configuration](configuration-claude-desktop-local-mcpb.md) - Local extension setup without
-  public HTTPS
+- [Claude Desktop / Cowork Local MCPB Configuration](configuration-claude-desktop-local-mcpb.md) - Local extension
+  setup without public HTTPS
 - [Tools Reference](tools-reference.md) - Available MCP tools and usage
 - [Troubleshooting](troubleshooting.md) - Common issues and solutions
 

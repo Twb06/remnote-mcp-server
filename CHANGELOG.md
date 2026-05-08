@@ -7,6 +7,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Updated Claude Desktop / Cowork setup docs to clarify that local MCPB works for Cowork in the Claude Desktop app
+  when desktop extensions are enabled, while remote connectors remain required for web/mobile, cloud-hosted clients,
+  and managed deployments without local MCPB.
+
 ## [0.14.1] - 2026-05-08
 
 ### Added

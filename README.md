@@ -58,9 +58,11 @@ The server acts as a bridge:
 **Multi-Agent Support:** Multiple AI agents can connect simultaneously to the same RemNote knowledge base. Each agent
 gets its own MCP session while sharing the WebSocket bridge.
 
-**Remote Access:** By default, the server binds to localhost (127.0.0.1) for local AI agents. Cloud-based services like
-Claude Desktop and Claude Cowork require remote access—use tunneling tools like ngrok to expose the HTTP endpoint securely. The WebSocket
-connection always stays local for security. See [Remote Access Guide](docs/guides/remote-access.md) for setup.
+**Remote Access:** By default, the server binds to localhost (127.0.0.1) for local AI agents. Claude Desktop and Claude
+Cowork can use the bundled local MCPB extension when desktop extensions are enabled. Cloud-based clients, web/mobile
+surfaces, and managed Claude deployments without local MCPB require remote access—use tunneling tools like ngrok to
+expose the HTTP endpoint securely. The WebSocket connection always stays local for security. See
+[Remote Access Guide](docs/guides/remote-access.md) for setup.
 
 ## Features
 
@@ -114,8 +116,8 @@ Keep this terminal running.
 
 - [Configuration Guide](docs/guides/configuration.md) - Overview and generic setup
   - [Codex TUI / Codex.app](docs/guides/configuration-codex.md) - HTTP MCP, stdio proxy, and `remnote-cli` skill setup
-  - [Claude Desktop Local MCPB](docs/guides/configuration-claude-desktop-local-mcpb.md) - Preferred local Claude Desktop setup, no public HTTPS required
-  - [Claude Desktop / Cowork](docs/guides/configuration-claude-desktop-cowork.md) - Remote connector setup when local MCPB is not applicable
+  - [Claude Desktop / Cowork Local MCPB](docs/guides/configuration-claude-desktop-local-mcpb.md) - Preferred local desktop setup, no public HTTPS required
+  - [Claude Desktop / Cowork Remote Connector](docs/guides/configuration-claude-desktop-cowork.md) - Remote connector setup when local MCPB is not applicable
   - [Claude Code CLI](docs/guides/configuration-claude-code-CLI.md) - Claude Code local MCP setup
   - [ChatGPT](docs/guides/configuration-chatgpt.md) - ChatGPT Apps configuration
   - [Accomplish](docs/guides/configuration-accomplish.md) - Accomplish (Openwork) configuration
@@ -140,7 +142,8 @@ Keep this terminal running.
 - **[CLI Options Reference](docs/guides/cli-options.md)** - Command-line options and environment variables
 - **[remnote-cli Command Reference](docs/guides/cli-command-reference.md)** - Shell command reference for the bundled CLI
 - **[MCP Tools Reference](docs/guides/tools-reference.md)** - Detailed reference for all 9 RemNote tools
-- **[Remote Access Setup](docs/guides/remote-access.md)** - Expose server for Claude Desktop / Cowork (ngrok, etc.)
+- **[Remote Access Setup](docs/guides/remote-access.md)** - Expose server for cloud clients or remote connector flows
+  (ngrok, etc.)
 
 ### Help & Advanced
 
@@ -181,7 +184,8 @@ See the [Tools Reference](docs/guides/tools-reference.md) for detailed usage and
 
 - **[Claude Code CLI](https://claude.com/claude-code)** - Local terminal-based agent
 - **Codex TUI / Codex.app** - Local OpenAI coding agent clients
-- **Claude Desktop / Cowork** - Remote connector clients (require [remote access](docs/guides/remote-access.md))
+- **Claude Desktop / Cowork** - Local MCPB clients when desktop extensions are enabled, or remote connector clients
+  when local MCPB is not applicable
 - **[Accomplish](https://github.com/accomplish-ai/accomplish)** - Task-based MCP client (formerly Openwork)
 - **Any MCP client** supporting Streamable HTTP transport
 - **Any local MCP client** supporting stdio transport through `remnote-mcp-stdio`

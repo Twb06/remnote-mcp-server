@@ -328,11 +328,11 @@ version.
 
 **Solutions:**
 
-1. **For local Claude Desktop, prefer the local MCPB setup:** use
-   [Claude Desktop Local MCPB](configuration-claude-desktop-local-mcpb.md). It avoids public HTTPS tunneling for the
-   local desktop use case.
-2. **For Claude Cowork or remote connector flows, verify public reachability:** remote Anthropic connectors cannot
-   call your private `localhost`; expose `/mcp` through HTTPS as described in
+1. **For local Claude Desktop or Cowork, prefer the local MCPB setup:** use
+   [Claude Desktop / Cowork Local MCPB](configuration-claude-desktop-local-mcpb.md). It avoids public HTTPS tunneling
+   for the local desktop use case when desktop extensions are enabled.
+2. **For remote connector flows, verify public reachability:** remote Anthropic connectors cannot call your private
+   `localhost`; expose `/mcp` through HTTPS as described in
    [Remote Access Setup](remote-access.md).
 3. **Check the local server endpoint directly:**
    ```bash
@@ -471,7 +471,7 @@ Invalid session ID: ...
 
 ### Can't Connect from Remote Client
 
-**Symptom:** Claude Desktop, Claude Cowork, or remote client can't connect
+**Symptom:** Claude remote connector, ChatGPT App, or another remote client can't connect
 
 **Solutions:**
 
@@ -485,7 +485,7 @@ Invalid session ID: ...
    ```
 
 3. **Verify HTTPS URL (not HTTP):**
-   - Claude Desktop and Claude Cowork require HTTPS
+   - Remote connector flows require HTTPS
    - ngrok provides HTTPS by default
 4. **Test tunnel endpoint** (see [Testing the MCP HTTP Endpoint](#testing-the-mcp-http-endpoint) and replace URL with
    your ngrok URL)

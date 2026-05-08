@@ -12,7 +12,7 @@ Complete installation instructions for the RemNote MCP Server.
   - [Claude Code CLI](https://claude.com/claude-code)
   - [Accomplish](https://github.com/accomplish-ai/accomplish) (formerly Openwork)
   - Local MCP clients that consume stdio servers
-  - Claude Desktop / Claude Cowork (requires [remote access setup](remote-access.md))
+  - Claude Desktop / Claude Cowork (local MCPB or [remote access setup](remote-access.md))
 
 ## Installation from npm
 

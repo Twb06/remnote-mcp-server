@@ -63,12 +63,12 @@ plugin panel (right side) shows connection statistics and recent actions.
 Claude Desktop using the same remote connector to search RemNote for "blue light & sleep", returning the matching
 notes and their key context directly in chat.
 
-## Claude Desktop Local MCPB
+## Claude Desktop / Cowork Local MCPB
 
-Local Claude Desktop integration using the bundled **RemNote Local** MCPB extension. This path uses a local stdio
-extension and does not require exposing `remnote-mcp-server` over public HTTPS.
+Local Claude Desktop or Claude Cowork integration using the bundled **RemNote Local** MCPB extension. This path uses a
+local stdio extension and does not require exposing `remnote-mcp-server` over public HTTPS.
 
-**Setup:** [Claude Desktop Local MCPB Configuration Guide](guides/configuration-claude-desktop-local-mcpb.md)
+**Setup:** [Claude Desktop / Cowork Local MCPB Configuration Guide](guides/configuration-claude-desktop-local-mcpb.md)
 
 ![Claude Desktop search using RemNote Local MCPB](images/remnote-claude-desktop-mcpb-search-result.jpg)
 

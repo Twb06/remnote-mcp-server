@@ -1,23 +1,28 @@
-# Claude Desktop Local MCPB Configuration
+# Claude Desktop / Cowork Local MCPB Configuration
 
-How to use RemNote MCP tools from Claude Desktop without exposing the local MCP server over public HTTPS.
+How to use RemNote MCP tools from Claude Desktop or Claude Cowork without exposing the local MCP server over public
+HTTPS.
 
-> **Local Claude Desktop only:** This setup is available from `remnote-mcp-server` v0.14.1+ and does not require
-> remote access. For Claude Cowork or cloud-hosted clients, use
-> [Claude Desktop / Cowork Configuration](configuration-claude-desktop-cowork.md), which requires public HTTPS.
+> **Local desktop option:** This setup is available from `remnote-mcp-server` v0.14.1+ and does not require remote
+> access. It applies to Claude Desktop and Claude Cowork running in Claude Desktop when desktop extensions are enabled.
+> For Claude web/mobile, cloud-hosted clients, or managed deployments where desktop extensions are disabled, use
+> [Claude Desktop / Cowork Remote Connector Configuration](configuration-claude-desktop-cowork.md), which requires
+> public HTTPS.
 
 ## Overview
 
-Claude Desktop can install local MCP Bundle (`.mcpb`) extensions. The RemNote local MCPB is a small stdio MCP proxy:
+Claude Desktop can install local MCP Bundle (`.mcpb`) extensions. Claude Cowork can use them in the Claude Desktop app
+when desktop extensions are enabled. The RemNote local MCPB is a small stdio MCP proxy:
 
 ```text
-Claude Desktop <-> MCPB stdio proxy <-> http://127.0.0.1:3001/mcp <-> remnote-mcp-server <-> RemNote bridge
+Claude Desktop / Cowork <-> MCPB stdio proxy <-> http://127.0.0.1:3001/mcp <-> remnote-mcp-server <-> RemNote bridge
 ```
 
-This avoids ngrok or other public HTTPS tunnels for Claude Desktop.
+This avoids ngrok or other public HTTPS tunnels for local Claude Desktop and eligible Claude Cowork desktop sessions.
 
-For local Claude Desktop, this is the preferred setup. Use the remote connector guide only for Claude Cowork or other
-cloud-hosted clients that cannot install a local `.mcpb` extension.
+For local Claude Desktop or Claude Cowork in the desktop app, this is the preferred setup when `.mcpb` extensions are
+available. Use the remote connector guide for Claude web/mobile, cloud-hosted clients, or managed deployments that
+disable local desktop extensions.
 
 For Claude Desktop's general local MCP extension workflow, see Anthropic's
 [Getting Started with Local MCP Servers on Claude Desktop](https://support.claude.com/en/articles/10949351-getting-started-with-local-mcp-servers-on-claude-desktop).
@@ -28,6 +33,8 @@ For the bundle format and tooling, see the [MCPB repository](https://github.com/
 - RemNote MCP Server installed and running locally
 - RemNote app running with the Automation Bridge plugin installed and connected
 - Claude Desktop with desktop extensions enabled
+  - For Claude Cowork on managed deployments, admins can disable `.mcpb` installation with `isDesktopExtensionEnabled`
+    or require signed extensions.
 - `remnote-mcp-server` installed from npm
 
 ## Locate the Extension
@@ -89,7 +96,7 @@ Open **Configure** to confirm the local MCP URL and choose tool permissions:
 
 ## Verify
 
-Start a new Claude Desktop chat and run:
+Start a new Claude Desktop or Cowork session and run:
 
 ```text
 Use remnote_status to check the connection
@@ -97,8 +104,7 @@ Use remnote_status to check the connection
 
 Expected: the response includes bridge connection information, server version, and plugin version.
 
-You can also run a read-only search. Claude Desktop should show that it loaded tools and used the **RemNote Local**
-integration:
+You can also run a read-only search. Claude should show that it loaded tools and used the **RemNote Local** integration:
 
 ![Claude Desktop search using RemNote Local MCPB](../images/remnote-claude-desktop-mcpb-search-result.jpg)
 
@@ -112,5 +118,6 @@ If the tool reports that it cannot connect to the local RemNote MCP Server, veri
 ## Related Documentation
 
 - [Configuration Guide](configuration.md) - Local Streamable HTTP setup
-- [Claude Desktop / Cowork Configuration](configuration-claude-desktop-cowork.md) - Remote HTTPS connector setup
-- [Remote Access Setup](remote-access.md) - Required for Claude Cowork and cloud clients
+- [Claude Desktop / Cowork Remote Connector Configuration](configuration-claude-desktop-cowork.md) - Remote HTTPS
+  connector setup
+- [Remote Access Setup](remote-access.md) - Required for cloud clients and managed deployments without local MCPB

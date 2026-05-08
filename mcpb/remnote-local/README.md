@@ -1,6 +1,7 @@
 # RemNote Local MCPB
 
-Claude Desktop extension that exposes a local `remnote-mcp-server` to Claude Desktop without a public HTTPS tunnel.
+Claude Desktop extension that exposes a local `remnote-mcp-server` to Claude Desktop and eligible Claude Cowork
+desktop sessions without a public HTTPS tunnel.
 
 ## Usage
 
@@ -13,8 +14,8 @@ Claude Desktop extension that exposes a local `remnote-mcp-server` to Claude Des
 http://127.0.0.1:3001/mcp
 ```
 
-This extension does not start or supervise `remnote-mcp-server`. It is a stdio proxy that forwards Claude Desktop tool
-calls to the local Streamable HTTP endpoint.
+This extension does not start or supervise `remnote-mcp-server`. It is a stdio proxy that forwards Claude Desktop and
+eligible Claude Cowork tool calls to the local Streamable HTTP endpoint.
 
 ## Installed Package Path
 
