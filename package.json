@@ -42,7 +42,7 @@
     "websocket",
     "bridge"
   ],
-  "author": "nightingale7 <nightingale7@gmail.com>",
+  "author": "Robert Spiegel <nightingale7@gmail.com>",
   "license": "MIT",
   "files": [
     "dist/",
