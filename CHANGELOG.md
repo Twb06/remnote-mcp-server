@@ -11,6 +11,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Added Codex TUI and Codex.app configuration documentation covering Streamable HTTP MCP, `remnote-mcp-stdio`, and
   `remnote-cli` skill setup.
+- Added Claude Desktop Local MCPB setup screenshots and a demo entry showing RemNote Local search in Claude Desktop.
+- Added official Claude Desktop local MCP extension and MCPB repository references to the Local MCPB guide.
 - Added a `remnote-local` MCPB package for Claude Desktop that proxies stdio MCP calls to a locally running
   `remnote-mcp-server` Streamable HTTP endpoint without public HTTPS.
 - Added Claude Desktop local MCPB setup documentation.
