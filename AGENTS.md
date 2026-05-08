@@ -98,6 +98,7 @@ Manual live integration commands:
 ```bash
 npm run test:integration
 npm run test:integration:mcp
+npm run test:integration:mcpb
 npm run test:integration:cli
 ```
 
@@ -107,8 +108,9 @@ AI agents may run live integration tests in this repo only on explicit human req
 wrapper.
 
 - Default: do not run `npm run test:integration` or `./run-integration-test.sh` directly.
-- Allowed path for AI agents: `./run-agent-integration-test.sh [--yes]`, which validates both the direct MCP tools
-  path and the bundled CLI path by default. Use `--suite mcp` or `--suite cli` only for targeted reruns.
+- Allowed path for AI agents: `./run-agent-integration-test.sh [--yes]`, which validates the direct MCP tools path,
+  MCPB stdio proxy path, and bundled CLI path by default. Use `--suite mcp`, `--suite mcpb`, or `--suite cli` only for
+  targeted reruns.
 - Before invoking the wrapper, the agent must ask the human collaborator to start the bridge in RemNote.
 - If bridge code changed after the currently running RemNote bridge session started, the agent must ask the human
   collaborator to restart the bridge before rerunning the suite.

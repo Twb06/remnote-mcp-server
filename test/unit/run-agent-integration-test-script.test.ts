@@ -144,4 +144,21 @@ describe('run-agent-integration-test.sh', () => {
     expect(commandLog).toContain('integration:--yes --suite cli');
     expect(isProcessAlive(serverPid)).toBe(false);
   });
+
+  it('passes the MCPB suite through to the unified integration wrapper', () => {
+    const sandbox = setupServerWrapperSandbox(0);
+
+    const result = spawnSync('bash', [sandbox.scriptPath, '--suite', 'mcpb'], {
+      cwd: resolve(process.cwd()),
+      encoding: 'utf-8',
+      env: sandbox.env,
+    });
+
+    const commandLog = readFileSync(sandbox.commandLogPath, 'utf-8');
+    const serverPid = Number.parseInt(readFileSync(sandbox.serverPidPath, 'utf-8').trim(), 10);
+
+    expect(result.status).toBe(0);
+    expect(commandLog).toContain('integration:--yes --suite mcpb');
+    expect(isProcessAlive(serverPid)).toBe(false);
+  });
 });

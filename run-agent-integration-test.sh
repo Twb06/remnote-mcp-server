@@ -20,7 +20,7 @@ cleanup_ran=0
 
 usage() {
   cat <<'EOF'
-Usage: ./run-agent-integration-test.sh [--yes] [--suite all|mcp|cli]
+Usage: ./run-agent-integration-test.sh [--yes] [--suite all|mcp|mcpb|cli]
 
 Agent-safe live integration wrapper. Builds once, starts remnote-mcp-server if
 needed, waits for a connected RemNote bridge, then runs the selected suite.
@@ -28,7 +28,8 @@ Default suite is "all".
 
 Options:
   --yes                 Accepted for compatibility; agent wrapper is always non-interactive
-  --suite all|mcp|cli   Run both suites, only direct MCP, or only bundled CLI
+  --suite all|mcp|mcpb|cli
+                        Run all suites, only direct MCP, only MCPB stdio proxy, or only bundled CLI
   -h, --help            Show this help
 EOF
 }
@@ -62,9 +63,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "${suite}" in
-  all|mcp|cli) ;;
+  all|mcp|mcpb|cli) ;;
   *)
-    echo "Invalid --suite value: ${suite}. Expected all, mcp, or cli." >&2
+    echo "Invalid --suite value: ${suite}. Expected all, mcp, mcpb, or cli." >&2
     exit 1
     ;;
 esac

@@ -13,6 +13,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   `remnote-mcp-server` Streamable HTTP endpoint without public HTTPS.
 - Added Claude Desktop local MCPB setup documentation.
 - Added `remnote-mcp-server mcpb-path` to print the bundled Claude Desktop extension path after npm installation.
+- Added a live MCPB stdio proxy integration suite that reuses the RemNote MCP tool workflows.
 
 ### Changed
 

@@ -7,14 +7,15 @@ source "${SCRIPT_DIR}/node-check.sh" || exit 1
 
 usage() {
   cat <<'EOF'
-Usage: ./run-integration-test.sh [--yes] [--suite all|mcp|cli]
+Usage: ./run-integration-test.sh [--yes] [--suite all|mcp|mcpb|cli]
 
 Runs live integration tests against a running remnote-mcp-server with a connected
 RemNote Automation Bridge plugin. Default suite is "all".
 
 Options:
   --yes                 Skip the confirmation prompt
-  --suite all|mcp|cli   Run both suites, only direct MCP, or only bundled CLI
+  --suite all|mcp|mcpb|cli
+                        Run all suites, only direct MCP, only MCPB stdio proxy, or only bundled CLI
   -h, --help            Show this help
 EOF
 }
@@ -53,9 +54,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "${suite}" in
-  all|mcp|cli) ;;
+  all|mcp|mcpb|cli) ;;
   *)
-    echo "Invalid --suite value: ${suite}. Expected all, mcp, or cli." >&2
+    echo "Invalid --suite value: ${suite}. Expected all, mcp, mcpb, or cli." >&2
     exit 1
     ;;
 esac
@@ -96,14 +97,24 @@ run_cli_suite() {
   npm run test:integration:cli -- "${runner_args[@]}"
 }
 
+run_mcpb_suite() {
+  echo "Running MCPB stdio proxy integration suite..."
+  npm run test:integration:mcpb -- "${runner_args[@]}"
+}
+
 case "${suite}" in
   all)
     run_mcp_suite
+    echo ""
+    run_mcpb_suite
     echo ""
     run_cli_suite
     ;;
   mcp)
     run_mcp_suite
+    ;;
+  mcpb)
+    run_mcpb_suite
     ;;
   cli)
     run_cli_suite

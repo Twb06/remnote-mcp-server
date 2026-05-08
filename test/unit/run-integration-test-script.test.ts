@@ -28,7 +28,7 @@ cmd="$*"
 if [[ "$cmd" == "run build" ]]; then
   exit 0
 fi
-if [[ "$cmd" == "run test:integration:mcp -- "* ]] || [[ "$cmd" == "run test:integration:cli -- "* ]]; then
+if [[ "$cmd" == "run test:integration:mcp -- "* ]] || [[ "$cmd" == "run test:integration:mcpb -- "* ]] || [[ "$cmd" == "run test:integration:cli -- "* ]]; then
   exit 0
 fi
 echo "unexpected npm invocation: $cmd" >&2
@@ -62,6 +62,7 @@ describe('run-integration-test.sh', () => {
     expect(result.status).toBe(0);
     expect(commandLog).toContain('run build');
     expect(commandLog).toContain('run test:integration:mcp -- --yes');
+    expect(commandLog).toContain('run test:integration:mcpb -- --yes');
     expect(commandLog).toContain('run test:integration:cli -- --yes');
   });
 
@@ -79,6 +80,23 @@ describe('run-integration-test.sh', () => {
     expect(commandLog).toContain('run build');
     expect(commandLog).not.toContain('run test:integration:mcp');
     expect(commandLog).toContain('run test:integration:cli -- --yes');
+  });
+
+  it('can run only the MCPB suite', () => {
+    const sandbox = setupIntegrationWrapperSandbox();
+
+    const result = spawnSync('bash', [sandbox.scriptPath, '--yes', '--suite', 'mcpb'], {
+      cwd: resolve(process.cwd()),
+      encoding: 'utf-8',
+      env: sandbox.env,
+    });
+
+    const commandLog = readFileSync(sandbox.commandLogPath, 'utf-8');
+    expect(result.status).toBe(0);
+    expect(commandLog).toContain('run build');
+    expect(commandLog).not.toContain('run test:integration:mcp --');
+    expect(commandLog).toContain('run test:integration:mcpb -- --yes');
+    expect(commandLog).not.toContain('run test:integration:cli');
   });
 
   it('rejects invalid suite names', () => {

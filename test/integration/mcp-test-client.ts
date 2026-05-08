@@ -6,7 +6,14 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
-export class McpTestClient {
+export interface IntegrationTestClient {
+  connect(baseUrl: string): Promise<void>;
+  callTool(name: string, args?: Record<string, unknown>): Promise<Record<string, unknown>>;
+  callToolExpectError(name: string, args?: Record<string, unknown>): Promise<string>;
+  close(): Promise<void>;
+}
+
+export class McpTestClient implements IntegrationTestClient {
   private client: Client | null = null;
   private transport: StreamableHTTPClientTransport | null = null;
 

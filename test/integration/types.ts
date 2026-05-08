@@ -2,7 +2,7 @@
  * Shared types for integration test workflows.
  */
 
-import type { McpTestClient } from './mcp-test-client.js';
+import type { IntegrationTestClient } from './mcp-test-client.js';
 
 /** Result of a single test step within a workflow. */
 export interface StepResult {
@@ -21,7 +21,7 @@ export interface WorkflowResult {
 
 /** Context passed to each workflow function. */
 export interface WorkflowContext {
-  client: McpTestClient;
+  client: IntegrationTestClient;
   runId: string;
   serverBaseUrl: string;
 }

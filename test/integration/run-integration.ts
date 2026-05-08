@@ -15,6 +15,7 @@
 
 import * as readline from 'node:readline';
 import { McpTestClient } from './mcp-test-client.js';
+import { McpbStdioTestClient } from './mcpb-stdio-test-client.js';
 import { statusWorkflow } from './workflows/01-status.js';
 import { createSearchWorkflow } from './workflows/02-create-search.js';
 import { readUpdateWorkflow } from './workflows/03-read-update.js';
@@ -37,6 +38,38 @@ const INTEGRATION_PARENT_SEARCH_QUERIES = [
   'RemNote Automation Bridge temporary integration test data',
   'temporary integration test data',
 ];
+type IntegrationTransport = 'direct' | 'mcpb';
+
+function parseRunnerOptions(): { skipConfirm: boolean; transport: IntegrationTransport } {
+  let skipConfirm = false;
+  let transport: IntegrationTransport = 'direct';
+
+  for (let i = 2; i < process.argv.length; i += 1) {
+    const arg = process.argv[i];
+    if (arg === '--yes') {
+      skipConfirm = true;
+      continue;
+    }
+    if (arg === '--transport') {
+      const value = process.argv[i + 1];
+      if (value !== 'direct' && value !== 'mcpb') {
+        throw new Error(`Invalid --transport value: ${String(value)}. Expected direct or mcpb.`);
+      }
+      transport = value;
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--transport=')) {
+      const value = arg.slice('--transport='.length);
+      if (value !== 'direct' && value !== 'mcpb') {
+        throw new Error(`Invalid --transport value: ${value}. Expected direct or mcpb.`);
+      }
+      transport = value;
+    }
+  }
+
+  return { skipConfirm, transport };
+}
 
 interface IntegrationParentResolution {
   status: 'reused' | 'created';
@@ -242,7 +275,7 @@ async function ensureIntegrationParentNote(
 }
 
 async function main(): Promise<void> {
-  const skipConfirm = process.argv.includes('--yes');
+  const { skipConfirm, transport } = parseRunnerOptions();
   const baseUrl = process.env.REMNOTE_MCP_URL ?? 'http://127.0.0.1:3001';
   const mcpUrl = baseUrl.endsWith('/mcp') ? baseUrl : `${baseUrl}/mcp`;
   const runId = new Date().toISOString();
@@ -258,9 +291,10 @@ async function main(): Promise<void> {
   }
 
   console.log(`Server: ${mcpUrl}`);
+  console.log(`Transport: ${transport === 'mcpb' ? 'MCPB stdio proxy' : 'direct Streamable HTTP'}`);
   console.log(`Run ID: ${runId}`);
 
-  const client = new McpTestClient();
+  const client = transport === 'mcpb' ? new McpbStdioTestClient() : new McpTestClient();
   const results: WorkflowResult[] = [];
   const state: SharedState = {};
   const overallStart = Date.now();
@@ -297,7 +331,7 @@ async function main(): Promise<void> {
   // Define workflow sequence
   const workflows: Array<{ name: string; fn: WorkflowFn }> = [
     { name: 'Status Check', fn: statusWorkflow },
-    { name: 'OAuth HTTP Surface', fn: oauthWorkflow },
+    ...(transport === 'direct' ? [{ name: 'OAuth HTTP Surface', fn: oauthWorkflow }] : []),
     { name: 'Create & Search', fn: createSearchWorkflow },
     { name: 'Read & Update', fn: readUpdateWorkflow },
     { name: 'Journal', fn: journalWorkflow },

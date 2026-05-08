@@ -6,7 +6,7 @@ This is the canonical workflow for updating and running shared integration cover
 Use it when a feature changes the shared bridge-consumer surface and should be validated end to end against a live
 RemNote instance.
 
-The direct MCP suite and bundled CLI suite both live in this repository.
+The direct MCP suite, MCPB stdio proxy suite, and bundled CLI suite all live in this repository.
 
 ## Safety And Cleanup
 
@@ -42,18 +42,18 @@ Bridge as connected.
 ### Full Suite
 
 ```bash
-# Manual — prompts once before creating content, then runs direct MCP and bundled CLI suites
+# Manual — prompts once before creating content, then runs direct MCP, MCPB stdio proxy, and bundled CLI suites
 ./run-integration-test.sh
 
 # Non-interactive — skips confirmation
 ./run-integration-test.sh --yes
 
-# Agent-assisted — starts the server if needed, waits for bridge connection, then runs both suites
+# Agent-assisted — starts the server if needed, waits for bridge connection, then runs all suites
 ./run-agent-integration-test.sh
 ./run-agent-integration-test.sh --yes
 ```
 
-`npm run test:integration` delegates to `./run-integration-test.sh`, so it also runs both suites by default.
+`npm run test:integration` delegates to `./run-integration-test.sh`, so it also runs all suites by default.
 
 ### Targeted Reruns
 
@@ -62,6 +62,10 @@ Bridge as connected.
 ./run-integration-test.sh --suite mcp
 ./run-agent-integration-test.sh --suite mcp --yes
 
+# Claude Desktop MCPB stdio proxy path only
+./run-integration-test.sh --suite mcpb
+./run-agent-integration-test.sh --suite mcpb --yes
+
 # Bundled remnote-cli path only
 ./run-integration-test.sh --suite cli
 ./run-agent-integration-test.sh --suite cli --yes
@@ -69,6 +73,11 @@ Bridge as connected.
 # Fast connection check only (no test data creation)
 ./run-status-check.sh
 ```
+
+The MCPB suite launches `mcpb/remnote-local/server/index.js` over stdio and points it at the same live MCP server
+endpoint via `REMNOTE_MCP_URL`. It runs the RemNote tool workflows through the Claude Desktop-facing proxy path. The
+direct HTTP OAuth workflow remains direct-MCP-only because OAuth metadata is an HTTP server surface, not stdio proxy
+behavior.
 
 The CLI suite uses the same MCP server endpoint as MCP clients. It does not start or require a separate CLI server.
 The agent-assisted wrapper is the only approved live-test entrypoint for AI agents; it times out with a clear message
@@ -96,7 +105,7 @@ If a pull request changes shared external behavior, update both integration surf
 
 - Combined shell entrypoint: [`run-integration-test.sh`](../../run-integration-test.sh)
 - Agent-safe shell entrypoint: [`run-agent-integration-test.sh`](../../run-agent-integration-test.sh)
-- MCP runner: [`test/integration/run-integration.ts`](../../test/integration/run-integration.ts)
+- MCP and MCPB runner: [`test/integration/run-integration.ts`](../../test/integration/run-integration.ts)
 - MCP server workflows: [`test/integration/workflows/`](../../test/integration/workflows/)
 - CLI runner: [`test/integration/cli/run-integration.ts`](../../test/integration/cli/run-integration.ts)
 - CLI workflows: [`test/integration/cli/workflows/`](../../test/integration/cli/workflows/)
@@ -106,7 +115,7 @@ integration suites should gain coverage.
 
 ## What The Suites Test
 
-Both suites follow the same shape:
+The direct MCP and MCPB stdio proxy suites follow the same RemNote tool workflow shape:
 
 1. **Status Check** — Verifies the live consumer path is connected to the bridge. If this fails, all subsequent workflows are
    skipped.
@@ -118,6 +127,8 @@ Both suites follow the same shape:
    them gracefully.
 6. **Read Table** — Reads a pre-configured Advanced Table by name and Rem ID, then validates pagination, filtering,
    and not-found behavior.
+
+The direct MCP suite also verifies the OAuth HTTP metadata and token endpoints.
 
 ## Cleanup After A Run
 
