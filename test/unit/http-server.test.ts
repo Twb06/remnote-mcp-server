@@ -476,51 +476,41 @@ describe('HttpMcpServer', () => {
   });
 
   describe('Session Management', () => {
+    const initializeSession = async (id: number): Promise<Response> => {
+      const response = await fetch(`http://127.0.0.1:${port}/mcp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json, text/event-stream',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'initialize',
+          id,
+          params: {
+            protocolVersion: '2024-11-05',
+            capabilities: {},
+            clientInfo: { name: 'test-client', version: '1.0.0' },
+          },
+        }),
+      });
+
+      expect(response.status).toBe(200);
+      await response.arrayBuffer();
+      return response;
+    };
+
     it('should track active session count', async () => {
       await httpServer.start();
       await waitForHttpServer(port);
 
       expect(httpServer.getActiveSessionCount()).toBe(0);
 
-      // Initialize first session
-      await fetch(`http://127.0.0.1:${port}/mcp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json, text/event-stream',
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'initialize',
-          id: 1,
-          params: {
-            protocolVersion: '2024-11-05',
-            capabilities: {},
-            clientInfo: { name: 'test-client', version: '1.0.0' },
-          },
-        }),
-      });
+      await initializeSession(1);
 
       expect(httpServer.getActiveSessionCount()).toBe(1);
 
-      // Initialize second session
-      await fetch(`http://127.0.0.1:${port}/mcp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json, text/event-stream',
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'initialize',
-          id: 2,
-          params: {
-            protocolVersion: '2024-11-05',
-            capabilities: {},
-            clientInfo: { name: 'test-client', version: '1.0.0' },
-          },
-        }),
-      });
+      await initializeSession(2);
 
       expect(httpServer.getActiveSessionCount()).toBe(2);
     });
@@ -529,42 +519,8 @@ describe('HttpMcpServer', () => {
       await httpServer.start();
       await waitForHttpServer(port);
 
-      // Initialize 2 sessions
-      await fetch(`http://127.0.0.1:${port}/mcp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json, text/event-stream',
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'initialize',
-          id: 1,
-          params: {
-            protocolVersion: '2024-11-05',
-            capabilities: {},
-            clientInfo: { name: 'test-client', version: '1.0.0' },
-          },
-        }),
-      });
-
-      await fetch(`http://127.0.0.1:${port}/mcp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json, text/event-stream',
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'initialize',
-          id: 2,
-          params: {
-            protocolVersion: '2024-11-05',
-            capabilities: {},
-            clientInfo: { name: 'test-client', version: '1.0.0' },
-          },
-        }),
-      });
+      await initializeSession(1);
+      await initializeSession(2);
 
       expect(httpServer.getActiveSessionCount()).toBe(2);
 
