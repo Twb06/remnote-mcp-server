@@ -7,6 +7,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.14.2] - 2026-05-08
+
 ### Changed
 
 - Reject RemNote bridge WebSocket connections that do not send a compatible bridge `hello.version`, with a clearer
