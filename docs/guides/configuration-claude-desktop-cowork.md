@@ -4,8 +4,8 @@ How to configure Claude Desktop and Claude Cowork to connect to the RemNote MCP 
 connector flow.
 
 > **Local desktop option:** If you use Claude Desktop or Claude Cowork in the Claude Desktop app on the same machine as
-> RemNote, prefer [Claude Desktop / Cowork Local MCPB Configuration](configuration-claude-desktop-local-mcpb.md). It is
-> available from `remnote-mcp-server` v0.14.1+ and does not require ngrok, public HTTPS, or remote access setup, as long
+> RemNote, prefer [Claude Desktop / Cowork Local MCPB Configuration](configuration-claude-desktop-local-mcpb.md). It 
+> does not require ngrok, public HTTPS, or remote access setup, as long
 > as desktop extensions are enabled. Use this remote connector guide for Claude web/mobile, cloud-hosted clients, or
 > managed deployments where local `.mcpb` extensions are disabled or not applicable.
 

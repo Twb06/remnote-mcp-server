@@ -3,7 +3,7 @@
 How to use RemNote MCP tools from Claude Desktop or Claude Cowork without exposing the local MCP server over public
 HTTPS.
 
-> **Local desktop option:** This setup is available from `remnote-mcp-server` v0.14.1+ and does not require remote
+> **Local desktop option:** This setup does not require remote
 > access. It applies to Claude Desktop and Claude Cowork running in Claude Desktop when desktop extensions are enabled.
 > For Claude web/mobile, cloud-hosted clients, or managed deployments where desktop extensions are disabled, use
 > [Claude Desktop / Cowork Remote Connector Configuration](configuration-claude-desktop-cowork.md), which requires
