@@ -9,6 +9,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Added Codex TUI and Codex.app configuration documentation covering Streamable HTTP MCP, `remnote-mcp-stdio`, and
+  `remnote-cli` skill setup.
 - Added a `remnote-local` MCPB package for Claude Desktop that proxies stdio MCP calls to a locally running
   `remnote-mcp-server` Streamable HTTP endpoint without public HTTPS.
 - Added Claude Desktop local MCPB setup documentation.
@@ -20,6 +22,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Reordered the README AI client setup list to include Codex and prioritize the local Claude Desktop MCPB path before
+  remote connector setup.
 - Updated documentation and agent repo maps to reflect that the old standalone `remnote-cli` repository is
   discontinued and the maintained CLI lives in this package.
 

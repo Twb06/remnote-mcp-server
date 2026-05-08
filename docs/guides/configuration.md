@@ -36,6 +36,8 @@ Choose your AI client and follow its configuration guide:
 - **[Claude Code CLI](configuration-claude-code-CLI.md)** - Anthropic's command-line interface tool that integrates with
   their Claude AI models *(for a zero-config alternative in Claude Code and other coding harnesses, see
   [Use RemNote from Any Coding Harness](../demo.md#use-remnote-from-any-coding-harness))*
+- **[Codex TUI / Codex.app](configuration-codex.md)** - OpenAI coding agent setup with Streamable HTTP MCP, stdio
+  proxy, or the `remnote-cli` skill path
 - **[Accomplish](configuration-accomplish.md)** - open source AI desktop agent that automates file management, document
   creation, and browser tasks
 - **[Claude Desktop / Cowork](configuration-claude-desktop-cowork.md)** - Anthropic remote connector setup
@@ -363,6 +365,7 @@ remnote-mcp-server --http-port 3005
 
 - **AI Client Guides:**
   - [Claude Code Configuration](configuration-claude-code-CLI.md)
+  - [Codex Configuration](configuration-codex.md)
   - [Accomplish Configuration](configuration-accomplish.md)
   - [Claude Desktop / Cowork Configuration](configuration-claude-desktop-cowork.md)
 - **Server Configuration:**

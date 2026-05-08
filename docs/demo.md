@@ -87,6 +87,18 @@ Local CLI-based integration showing search and connection logs.
 The screenshot shows Claude Code CLI searching RemNote for "AI assisted coding" through the terminal, with RemNote Bridge
 connection logs visible in the background.
 
+## Codex
+
+Codex TUI and Codex.app can use the local RemNote MCP server through Streamable HTTP, through the `remnote-mcp-stdio`
+proxy, or through `remnote-cli` with the bundled RemNote skill.
+
+**Setup:** [Codex Configuration Guide](guides/configuration-codex.md)
+
+![RemNote MCP search from Codex TUI](images/remnote-codex-tui-mcp-search.jpg)
+
+The screenshot shows Codex TUI using the native MCP tools to load the RemNote playbook and search RemNote for "AI
+assisted coding", then summarizing the top matches from the knowledge base.
+
 ## remnote-cli
 
 Local command-line and coding-harness workflows using the `remnote-cli` executable bundled with this package.

@@ -113,9 +113,11 @@ Keep this terminal running.
 ### 4. Configure Your AI Client
 
 - [Configuration Guide](docs/guides/configuration.md) - Overview and generic setup
+  - [Codex TUI / Codex.app](docs/guides/configuration-codex.md) - HTTP MCP, stdio proxy, and `remnote-cli` skill setup
+  - [Claude Desktop Local MCPB](docs/guides/configuration-claude-desktop-local-mcpb.md) - Preferred local Claude Desktop setup, no public HTTPS required
+  - [Claude Desktop / Cowork](docs/guides/configuration-claude-desktop-cowork.md) - Remote connector setup when local MCPB is not applicable
+  - [Claude Code CLI](docs/guides/configuration-claude-code-CLI.md) - Claude Code local MCP setup
   - [ChatGPT](docs/guides/configuration-chatgpt.md) - ChatGPT Apps configuration
-  - [Claude Desktop / Cowork](docs/guides/configuration-claude-desktop-cowork.md) - Remote connector setup (requires remote access setup)
-  - [Claude Code CLI](docs/guides/configuration-claude-code-CLI.md) - Detailed Claude Code CLI configuration
   - [Accomplish](docs/guides/configuration-accomplish.md) - Accomplish (Openwork) configuration
   - [Generic stdio MCP clients](docs/guides/configuration.md#stdio-mcp-clients) - Use `remnote-mcp-stdio`
 
@@ -129,6 +131,7 @@ Keep this terminal running.
   \- Match server version to installed bridge plugin version (`0.x` semver)
 - **[Bridge Connection Lifecycle](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/connection-lifecycle.md)** - Canonical bridge connect/retry behavior
 - **[Configuration Guide](docs/guides/configuration.md)** - Configure Claude Code CLI, Accomplish, and other clients
+- **[Codex Configuration Guide](docs/guides/configuration-codex.md)** - Set up Codex TUI and Codex.app with RemNote
 - **[ChatGPT Configuration Guide](docs/guides/configuration-chatgpt.md)** - Set up ChatGPT Apps with your MCP server
 - **[Demo & Screenshots](docs/demo.md)** - See the server in action with different AI clients
 
@@ -173,6 +176,7 @@ See the [Tools Reference](docs/guides/tools-reference.md) for detailed usage and
 ## Supported AI Clients
 
 - **[Claude Code CLI](https://claude.com/claude-code)** - Local terminal-based agent
+- **Codex TUI / Codex.app** - Local OpenAI coding agent clients
 - **Claude Desktop / Cowork** - Remote connector clients (require [remote access](docs/guides/remote-access.md))
 - **[Accomplish](https://github.com/accomplish-ai/accomplish)** - Task-based MCP client (formerly Openwork)
 - **Any MCP client** supporting Streamable HTTP transport
