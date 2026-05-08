@@ -104,6 +104,23 @@ For manual checks, `remnote-mcp-stdio --help` prints usage and `remnote-mcp-stdi
 Running `remnote-mcp-stdio` directly in a terminal prints the same usage text instead of silently waiting for MCP
 messages.
 
+Manual smoke checks:
+
+```bash
+remnote-mcp-stdio -V
+remnote-mcp-stdio --help
+remnote-mcp-stdio
+echo $?
+./run-agent-integration-test.sh --suite mcpb --yes
+```
+
+Expected behavior:
+
+- `-V` prints the installed package version.
+- `--help` prints usage text.
+- Direct terminal invocation prints usage and exits with status `1`.
+- The MCPB integration suite verifies real stdio MCP tool calls through the running local server and connected bridge.
+
 ## Environment Variables
 
 You can customize server ports and host binding via environment variables.

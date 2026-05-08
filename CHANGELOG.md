@@ -16,6 +16,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Added a live MCPB stdio proxy integration suite that reuses the RemNote MCP tool workflows.
 - Added the `remnote-mcp-stdio` executable for local MCP clients that consume stdio servers.
 - Added `remnote-mcp-stdio --help` and `-V`/`--version` utility output for manual checks.
+- Added stdio proxy smoke-test commands to the configuration guide.
 
 ### Changed
 

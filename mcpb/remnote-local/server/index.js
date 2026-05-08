@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import process from 'node:process';
-import { URL, pathToFileURL } from 'node:url';
+import { realpathSync } from 'node:fs';
+import { fileURLToPath, URL, pathToFileURL } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -254,6 +255,18 @@ export function isInteractiveTerminalInvocation(
   return argv.length <= 2 && Boolean(stdin.isTTY) && Boolean(stdout.isTTY);
 }
 
+export function isMainModule(argv = process.argv, moduleUrl = import.meta.url) {
+  if (!argv[1]) {
+    return false;
+  }
+
+  try {
+    return realpathSync(argv[1]) === realpathSync(fileURLToPath(moduleUrl));
+  } catch {
+    return pathToFileURL(argv[1]).href === moduleUrl;
+  }
+}
+
 async function closeBestEffort(transport, client) {
   try {
     if (typeof transport.terminateSession === 'function') {
@@ -270,7 +283,7 @@ async function closeBestEffort(transport, client) {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isMainModule()) {
   if (handleUtilityCommand()) {
     process.exit(0);
   }

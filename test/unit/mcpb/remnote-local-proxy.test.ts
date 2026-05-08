@@ -1,4 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import { mkdtempSync, symlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   DEFAULT_MCP_URL,
   FALLBACK_TOOLS,
@@ -6,6 +9,7 @@ import {
   formatUsage,
   handleUtilityCommand,
   isInteractiveTerminalInvocation,
+  isMainModule,
   normalizeMcpUrl,
 } from '../../../mcpb/remnote-local/server/index.js';
 
@@ -105,6 +109,14 @@ describe('RemNoteLocalProxy', () => {
       false
     );
     expect(formatUsage()).toContain('Default target: http://127.0.0.1:3001/mcp');
+  });
+
+  it('detects npm bin symlink invocation as the main module', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'remnote-mcp-stdio-bin-'));
+    const symlinkPath = join(dir, 'remnote-mcp-stdio');
+    symlinkSync(join(process.cwd(), 'mcpb/remnote-local/server/index.js'), symlinkPath);
+
+    expect(isMainModule(['node', symlinkPath])).toBe(true);
   });
 });
 
