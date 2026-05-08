@@ -7,24 +7,22 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-05-08
+
 ### Added
 
+- Added a `remnote-local` MCPB package for Claude Desktop that proxies stdio MCP calls to a locally running
+  `remnote-mcp-server` Streamable HTTP endpoint without public HTTPS, including setup docs, screenshots, and official
+  MCPB references.
+- Added `remnote-mcp-server mcpb-path` to print the bundled Claude Desktop extension path after npm installation.
+- Added the `remnote-mcp-stdio` executable for local MCP clients that consume stdio servers, including help/version
+  output and smoke-test commands in the configuration guide.
 - Added Codex TUI and Codex.app configuration documentation covering Streamable HTTP MCP, `remnote-mcp-stdio`, and
   `remnote-cli` skill setup.
-- Added Claude Desktop Local MCPB setup screenshots and a demo entry showing RemNote Local search in Claude Desktop.
-- Added official Claude Desktop local MCP extension and MCPB repository references to the Local MCPB guide.
 - Added MCP protocol compatibility guidance clarifying that `2025-11-25` initialize requests are supported and separate
   from bridge/server package versions.
 - Added clearer stdio proxy prerequisites and cross-links between the generic stdio MCP client section and the Codex
   stdio setup example.
-- Added a `remnote-local` MCPB package for Claude Desktop that proxies stdio MCP calls to a locally running
-  `remnote-mcp-server` Streamable HTTP endpoint without public HTTPS.
-- Added Claude Desktop local MCPB setup documentation.
-- Added `remnote-mcp-server mcpb-path` to print the bundled Claude Desktop extension path after npm installation.
-- Added a live MCPB stdio proxy integration suite that reuses the RemNote MCP tool workflows.
-- Added the `remnote-mcp-stdio` executable for local MCP clients that consume stdio servers.
-- Added `remnote-mcp-stdio --help` and `-V`/`--version` utility output for manual checks.
-- Added stdio proxy smoke-test commands to the configuration guide.
 
 ### Changed
 
