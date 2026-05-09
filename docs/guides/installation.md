@@ -129,6 +129,14 @@ exits:
 remnote-mcp-server daemon install-launchd
 ```
 
+After installing the LaunchAgent, use the same daemon commands for control:
+
+```bash
+remnote-mcp-server daemon status
+remnote-mcp-server daemon stop
+remnote-mcp-server daemon start
+```
+
 ### With Custom Ports
 
 ```bash

@@ -97,6 +97,9 @@ remnote-mcp-server --http-port 3003 --ws-port 3004
 `remnote-mcp-server daemon start` treats an already-running daemon as success. If no managed daemon is recorded but a
 configured port is occupied, it fails before spawning another server.
 
+On macOS after `remnote-mcp-server daemon install-launchd`, `daemon status`, `daemon start`, `daemon stop`, and
+`daemon restart` operate on the launchd service. Use `daemon logs` for the shared daemon log file.
+
 **For custom ports:**
 
 1. Update MCP client configuration to use new HTTP port

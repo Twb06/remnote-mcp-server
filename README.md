@@ -136,6 +136,8 @@ persistence:
 remnote-mcp-server daemon install-launchd
 ```
 
+After installing the LaunchAgent, `remnote-mcp-server daemon status|start|stop|restart` controls the launchd service.
+
 ### 4. Configure Your AI Client
 
 - [Configuration Guide](docs/guides/configuration.md) - Overview and generic setup
@@ -273,6 +275,7 @@ remnote-mcp-server daemon start
 - Use `remnote-mcp-server daemon stop` for graceful shutdown.
 - Use `remnote-mcp-server daemon install-launchd` on macOS to keep the server running across login and unexpected
   exits.
+- When launchd is installed, the same `daemon status/start/stop/restart` commands control the launchd service.
 
 See [remnote-mcp-server Command Reference](docs/guides/remnote-mcp-server-command-reference.md) for all options.
 

@@ -26,6 +26,9 @@ For an everyday local setup that survives terminal close:
 remnote-mcp-server daemon start
 ```
 
+On macOS, `remnote-mcp-server daemon install-launchd` makes that service persistent across login. Once installed,
+`daemon start`, `daemon stop`, `daemon restart`, and `daemon status` control the launchd service.
+
 **2. Open RemNote and let the bridge auto-connect:**
 
 - Open RemNote with the Automation Bridge plugin enabled

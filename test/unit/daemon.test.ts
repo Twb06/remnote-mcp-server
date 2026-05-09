@@ -476,6 +476,154 @@ describe('daemon commands', () => {
     expect(plist).toContain(join(stateDir, 'remnote-mcp-server.log'));
   });
 
+  it('uses launchd for status when the macOS LaunchAgent is installed', async () => {
+    await writeLaunchAgent();
+    const execFile = vi.fn().mockResolvedValue({
+      stdout: `service = ${LAUNCHD_LABEL}\n\tpid = 2468\n`,
+      stderr: '',
+    });
+
+    const exitCode = await runDaemonCommand(
+      { action: 'status', cliOptions: {}, stateDir },
+      {
+        platform: 'darwin',
+        uid: 501,
+        homeDir: stateDir,
+        execFile: execFile as never,
+        stdout,
+        stderr,
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stdout.text()).toContain('launchd=installed loaded=true running=true pid=2468');
+    expect(execFile).toHaveBeenCalledWith('launchctl', ['print', `gui/501/${LAUNCHD_LABEL}`]);
+  });
+
+  it('starts an installed but unloaded macOS LaunchAgent through launchd', async () => {
+    await writeLaunchAgent();
+    let printCount = 0;
+    const execFile = vi.fn().mockImplementation(async (_command: string, args: string[]) => {
+      if (args[0] === 'print') {
+        printCount += 1;
+        if (printCount === 1) {
+          throw new Error('not loaded');
+        }
+        return { stdout: 'pid = 3579\n', stderr: '' };
+      }
+      return { stdout: '', stderr: '' };
+    });
+
+    const exitCode = await runDaemonCommand(
+      { action: 'start', cliOptions: {}, stateDir },
+      {
+        platform: 'darwin',
+        uid: 501,
+        homeDir: stateDir,
+        execFile: execFile as never,
+        stdout,
+        stderr,
+      }
+    );
+
+    const launchAgentFile = join(stateDir, 'Library', 'LaunchAgents', `${LAUNCHD_LABEL}.plist`);
+    expect(exitCode).toBe(0);
+    expect(stdout.text()).toContain('launchd service started pid 3579');
+    expect(execFile).toHaveBeenCalledWith('launchctl', ['bootstrap', 'gui/501', launchAgentFile]);
+    expect(execFile).toHaveBeenCalledWith('launchctl', ['enable', `gui/501/${LAUNCHD_LABEL}`]);
+    expect(execFile).toHaveBeenCalledWith('launchctl', [
+      'kickstart',
+      `gui/501/${LAUNCHD_LABEL}`,
+    ]);
+  });
+
+  it('does not restart an already running macOS LaunchAgent on start', async () => {
+    await writeLaunchAgent();
+    const execFile = vi.fn().mockResolvedValue({ stdout: 'pid = 3579\n', stderr: '' });
+
+    const exitCode = await runDaemonCommand(
+      { action: 'start', cliOptions: {}, stateDir },
+      {
+        platform: 'darwin',
+        uid: 501,
+        homeDir: stateDir,
+        execFile: execFile as never,
+        stdout,
+        stderr,
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stdout.text()).toContain('launchd service already running pid 3579');
+    expect(execFile).not.toHaveBeenCalledWith('launchctl', [
+      'kickstart',
+      expect.any(String),
+    ]);
+  });
+
+  it('stops an installed macOS LaunchAgent through launchd', async () => {
+    await writeLaunchAgent();
+    const execFile = vi.fn().mockResolvedValue({ stdout: '', stderr: '' });
+
+    const exitCode = await runDaemonCommand(
+      { action: 'stop', cliOptions: {}, stateDir },
+      {
+        platform: 'darwin',
+        uid: 501,
+        homeDir: stateDir,
+        execFile: execFile as never,
+        stdout,
+        stderr,
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stdout.text()).toContain('launchd service stopped');
+    expect(execFile).toHaveBeenCalledWith('launchctl', [
+      'bootout',
+      'gui/501',
+      join(stateDir, 'Library', 'LaunchAgents', `${LAUNCHD_LABEL}.plist`),
+    ]);
+  });
+
+  it('restarts an installed macOS LaunchAgent through launchd', async () => {
+    await writeLaunchAgent();
+    const execFile = vi.fn().mockImplementation(async (_command: string, args: string[]) => {
+      if (args[0] === 'print') {
+        throw new Error('not loaded');
+      }
+      return { stdout: '', stderr: '' };
+    });
+
+    const exitCode = await runDaemonCommand(
+      { action: 'restart', cliOptions: {}, stateDir },
+      {
+        platform: 'darwin',
+        uid: 501,
+        homeDir: stateDir,
+        execFile: execFile as never,
+        stdout,
+        stderr,
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(execFile).toHaveBeenCalledWith('launchctl', [
+      'bootout',
+      'gui/501',
+      join(stateDir, 'Library', 'LaunchAgents', `${LAUNCHD_LABEL}.plist`),
+    ]);
+    expect(execFile).toHaveBeenCalledWith('launchctl', [
+      'bootstrap',
+      'gui/501',
+      join(stateDir, 'Library', 'LaunchAgents', `${LAUNCHD_LABEL}.plist`),
+    ]);
+    expect(execFile).toHaveBeenCalledWith('launchctl', [
+      'kickstart',
+      `gui/501/${LAUNCHD_LABEL}`,
+    ]);
+  });
+
   it('surfaces launchctl failures during macOS LaunchAgent install', async () => {
     const execFile = vi.fn().mockImplementation(async (_command: string, args: string[]) => {
       if (args[0] === 'bootstrap') {
@@ -553,6 +701,12 @@ describe('daemon commands', () => {
     };
     await writeFile(join(stateDir, DAEMON_PID_FILE_NAME), `${state.pid}\n`, 'utf8');
     await writeFile(join(stateDir, DAEMON_STATE_FILE_NAME), `${JSON.stringify(state)}\n`, 'utf8');
+  }
+
+  async function writeLaunchAgent(): Promise<void> {
+    const launchAgentDir = join(stateDir, 'Library', 'LaunchAgents');
+    await mkdir(launchAgentDir, { recursive: true });
+    await writeFile(join(launchAgentDir, `${LAUNCHD_LABEL}.plist`), '<plist />', 'utf8');
   }
 });
 

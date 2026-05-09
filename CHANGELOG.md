@@ -17,6 +17,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Rename CLI guide files so `remnote-mcp-server` and `remnote-cli` documentation targets are explicit.
 - Add daemon startup, status, log, and macOS persistence pointers to installation, configuration, and troubleshooting
   docs.
+- Make daemon lifecycle commands launchd-aware on macOS when the LaunchAgent is installed, and document the shared
+  control surface.
 
 ## [0.14.2] - 2026-05-08
 

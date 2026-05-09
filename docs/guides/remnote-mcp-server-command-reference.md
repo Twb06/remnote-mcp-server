@@ -26,12 +26,23 @@ Defaults:
 - PID file: `~/.remnote-mcp-server/remnote-mcp-server.pid`
 - Log file: `~/.remnote-mcp-server/remnote-mcp-server.log`
 
-`daemon start` refuses to spawn a second server when the daemon PID is already alive. If no daemon PID is present but
-the configured HTTP or WebSocket port is occupied, startup fails before spawning.
+Without macOS launchd installed, `daemon start` refuses to spawn a second server when the daemon PID is already alive.
+If no daemon PID is present but the configured HTTP or WebSocket port is occupied, startup fails before spawning.
+
+When the macOS LaunchAgent is installed, `daemon start`, `daemon stop`, `daemon restart`, and `daemon status` control
+the launchd service instead of the manual PID-file daemon. This keeps the CLI as the single control surface:
+
+```bash
+remnote-mcp-server daemon install-launchd
+remnote-mcp-server daemon status
+remnote-mcp-server daemon stop
+remnote-mcp-server daemon start
+```
 
 ### daemon start
 
-Start the server as a detached background process.
+Start the server as a detached background process, or start/kick the launchd service when the macOS LaunchAgent is
+installed.
 
 ```bash
 remnote-mcp-server daemon start
@@ -48,7 +59,7 @@ Use `--log-file <path>` to change the daemon stdout/stderr log path.
 
 ### daemon stop
 
-Stop the managed daemon process gracefully.
+Stop the managed daemon process gracefully, or unload the launchd service when the macOS LaunchAgent is installed.
 
 ```bash
 remnote-mcp-server daemon stop
@@ -73,7 +84,15 @@ remnote-mcp-server daemon install-launchd
 ```
 
 The LaunchAgent is written to `~/Library/LaunchAgents/com.remnote.mcp-server.plist`. It runs the server in the
-foreground under `launchd`, with stdout/stderr routed to the daemon log file.
+foreground under `launchd`, with stdout/stderr routed to the daemon log file. After installation, use the normal daemon
+commands to inspect and control it:
+
+```bash
+remnote-mcp-server daemon status
+remnote-mcp-server daemon stop
+remnote-mcp-server daemon start
+remnote-mcp-server daemon restart
+```
 
 To remove it:
 

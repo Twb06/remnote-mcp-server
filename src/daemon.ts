@@ -93,6 +93,13 @@ interface AcquiredLock {
   release: () => Promise<void>;
 }
 
+interface LaunchdStatus {
+  installed: boolean;
+  loaded: boolean;
+  running: boolean;
+  pid?: number;
+}
+
 export function getDefaultDaemonPaths(homeDir = homedir(), stateDir?: string): DaemonPaths {
   const resolvedStateDir = resolveTilde(
     stateDir ?? join(homeDir, DEFAULT_DAEMON_DIR_NAME),
@@ -166,10 +173,17 @@ export async function runDaemonCommand(
   const getProcessCommand = runtime.getProcessCommand ?? defaultGetProcessCommand;
 
   try {
+    const useLaunchd = await shouldUseLaunchd(paths, runtime);
     switch (command.action) {
       case 'start':
+        if (useLaunchd) {
+          return await startLaunchd(paths, runtime);
+        }
         return await startDaemon(command, paths, runtime);
       case 'stop':
+        if (useLaunchd) {
+          return await stopLaunchd(paths, runtime);
+        }
         return await stopDaemon(command, paths, {
           isProcessAlive,
           getProcessCommand,
@@ -178,6 +192,9 @@ export async function runDaemonCommand(
           killProcess: runtime.killProcess ?? process.kill,
         });
       case 'restart': {
+        if (useLaunchd) {
+          return await restartLaunchd(paths, runtime);
+        }
         const stopCode = await stopDaemon({ ...command, action: 'stop' }, paths, {
           isProcessAlive,
           getProcessCommand,
@@ -191,6 +208,9 @@ export async function runDaemonCommand(
         return await startDaemon({ ...command, action: 'start' }, paths, runtime);
       }
       case 'status':
+        if (useLaunchd) {
+          return await printLaunchdStatus(paths, runtime);
+        }
         return await printDaemonStatus(command, paths, {
           isProcessAlive,
           canBind: runtime.canBind ?? canBind,
@@ -514,12 +534,12 @@ async function installLaunchd(
 
   await writeFile(paths.launchAgentFile, plist, 'utf8');
   const exec = runtime.execFile ?? execFileAsync;
-  const domain = `gui/${runtime.uid ?? process.getuid?.() ?? 501}`;
+  const domain = getLaunchdDomain(runtime);
 
   await execLaunchctl(exec, ['bootout', domain, paths.launchAgentFile], true);
   await execLaunchctl(exec, ['bootstrap', domain, paths.launchAgentFile], false);
-  await execLaunchctl(exec, ['enable', `${domain}/${LAUNCHD_LABEL}`], false);
-  await execLaunchctl(exec, ['kickstart', '-k', `${domain}/${LAUNCHD_LABEL}`], false);
+  await execLaunchctl(exec, ['enable', getLaunchdServiceTarget(runtime)], false);
+  await execLaunchctl(exec, ['kickstart', '-k', getLaunchdServiceTarget(runtime)], false);
 
   (runtime.stdout ?? process.stdout).write(
     `Installed launchd agent ${LAUNCHD_LABEL} (${paths.launchAgentFile})\n`
@@ -534,11 +554,100 @@ async function uninstallLaunchd(paths: DaemonPaths, runtime: DaemonRuntime): Pro
   }
 
   const exec = runtime.execFile ?? execFileAsync;
-  const domain = `gui/${runtime.uid ?? process.getuid?.() ?? 501}`;
+  const domain = getLaunchdDomain(runtime);
   await execLaunchctl(exec, ['bootout', domain, paths.launchAgentFile], true);
   await rm(paths.launchAgentFile, { force: true });
   (runtime.stdout ?? process.stdout).write(`Uninstalled launchd agent ${LAUNCHD_LABEL}\n`);
   return 0;
+}
+
+async function shouldUseLaunchd(paths: DaemonPaths, runtime: DaemonRuntime): Promise<boolean> {
+  return (
+    (runtime.platform ?? osPlatform()) === 'darwin' && (await fileExists(paths.launchAgentFile))
+  );
+}
+
+async function startLaunchd(paths: DaemonPaths, runtime: DaemonRuntime): Promise<number> {
+  const exec = runtime.execFile ?? execFileAsync;
+  const status = await getLaunchdStatus(paths, runtime);
+  if (status.running) {
+    const pidText = status.pid ? ` pid ${status.pid}` : '';
+    (runtime.stdout ?? process.stdout).write(`launchd service already running${pidText}\n`);
+    return 0;
+  }
+
+  if (!status.loaded) {
+    await execLaunchctl(
+      exec,
+      ['bootstrap', getLaunchdDomain(runtime), paths.launchAgentFile],
+      false
+    );
+  }
+
+  await execLaunchctl(exec, ['enable', getLaunchdServiceTarget(runtime)], false);
+  await execLaunchctl(exec, ['kickstart', getLaunchdServiceTarget(runtime)], false);
+  const updatedStatus = await getLaunchdStatus(paths, runtime);
+  const pidText = updatedStatus.pid ? ` pid ${updatedStatus.pid}` : '';
+  (runtime.stdout ?? process.stdout).write(`launchd service started${pidText}\n`);
+  return 0;
+}
+
+async function stopLaunchd(paths: DaemonPaths, runtime: DaemonRuntime): Promise<number> {
+  await execLaunchctl(
+    runtime.execFile ?? execFileAsync,
+    ['bootout', getLaunchdDomain(runtime), paths.launchAgentFile],
+    true
+  );
+  (runtime.stdout ?? process.stdout).write(`launchd service stopped (${LAUNCHD_LABEL})\n`);
+  return 0;
+}
+
+async function restartLaunchd(paths: DaemonPaths, runtime: DaemonRuntime): Promise<number> {
+  await stopLaunchd(paths, runtime);
+  return await startLaunchd(paths, runtime);
+}
+
+async function printLaunchdStatus(paths: DaemonPaths, runtime: DaemonRuntime): Promise<number> {
+  const status = await getLaunchdStatus(paths, runtime);
+  const parts = [
+    'launchd=installed',
+    `loaded=${status.loaded ? 'true' : 'false'}`,
+    `running=${status.running ? 'true' : 'false'}`,
+  ];
+
+  if (status.pid) {
+    parts.push(`pid=${status.pid}`);
+  }
+
+  parts.push(`plist=${paths.launchAgentFile}`);
+  parts.push(`log=${paths.logFile}`);
+  (runtime.stdout ?? process.stdout).write(`${parts.join(' ')}\n`);
+  return status.running ? 0 : 1;
+}
+
+async function getLaunchdStatus(
+  paths: DaemonPaths,
+  runtime: DaemonRuntime
+): Promise<LaunchdStatus> {
+  if (!(await fileExists(paths.launchAgentFile))) {
+    return { installed: false, loaded: false, running: false };
+  }
+
+  try {
+    const { stdout } = await (runtime.execFile ?? execFileAsync)('launchctl', [
+      'print',
+      getLaunchdServiceTarget(runtime),
+    ]);
+    const pid = parseLaunchdPid(stdout);
+    return {
+      installed: true,
+      loaded: true,
+      running: pid !== undefined,
+      pid,
+    };
+  } catch {
+    return { installed: true, loaded: false, running: false };
+  }
 }
 
 function renderLaunchdPlist({
@@ -784,6 +893,24 @@ async function execLaunchctl(
       throw error;
     }
   }
+}
+
+function getLaunchdDomain(runtime: DaemonRuntime): string {
+  return `gui/${runtime.uid ?? process.getuid?.() ?? 501}`;
+}
+
+function getLaunchdServiceTarget(runtime: DaemonRuntime): string {
+  return `${getLaunchdDomain(runtime)}/${LAUNCHD_LABEL}`;
+}
+
+function parseLaunchdPid(output: string): number | undefined {
+  const match = output.match(/\bpid\s*=\s*(\d+)/);
+  if (!match) {
+    return undefined;
+  }
+
+  const pid = Number(match[1]);
+  return Number.isInteger(pid) && pid > 0 ? pid : undefined;
 }
 
 async function fileExists(path: string): Promise<boolean> {
