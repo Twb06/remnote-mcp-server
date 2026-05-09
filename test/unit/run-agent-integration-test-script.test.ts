@@ -4,10 +4,15 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-function setupServerWrapperSandbox(runExitCode: number) {
+function setupServerWrapperSandbox(
+  runExitCode: number,
+  statusSequence: Array<'fail' | 'connected'> = ['fail', 'connected']
+) {
   const tempRoot = mkdtempSync(join(tmpdir(), 'remnote-mcp-server-agent-wrapper-'));
   const binDir = join(tempRoot, 'bin');
+  const distDir = join(tempRoot, 'dist');
   mkdirSync(binDir, { recursive: true });
+  mkdirSync(distDir, { recursive: true });
 
   const scriptPath = join(tempRoot, 'run-agent-integration-test.sh');
   const integrationScriptPath = join(tempRoot, 'run-integration-test.sh');
@@ -16,12 +21,44 @@ function setupServerWrapperSandbox(runExitCode: number) {
   const commandLogPath = join(tempRoot, 'commands.log');
   const statusCountPath = join(tempRoot, 'status-count');
   const serverPidPath = join(tempRoot, 'server.pid');
+  const launchdRunningPath = join(tempRoot, 'launchd-running');
 
   cpSync(resolve(process.cwd(), 'run-agent-integration-test.sh'), scriptPath);
   chmodSync(scriptPath, 0o755);
 
   writeFileSync(nodeCheckPath, '#!/usr/bin/env bash\nreturn 0\n');
   chmodSync(nodeCheckPath, 0o755);
+
+  writeFileSync(
+    join(distDir, 'index.js'),
+    `const fs = require('node:fs');
+const args = process.argv.slice(2);
+fs.appendFileSync(${JSON.stringify(commandLogPath)}, \`daemon:\${args.join(' ')}\\n\`);
+if (args[0] !== 'daemon') process.exit(1);
+if (args[1] === 'status') {
+  if (fs.existsSync(${JSON.stringify(launchdRunningPath)})) {
+    console.log('launchd=installed loaded=true running=true pid=2468');
+    process.exit(0);
+  }
+  console.log('launchd=installed loaded=false running=false');
+  process.exit(1);
+}
+if (args[1] === 'stop') {
+  fs.rmSync(${JSON.stringify(launchdRunningPath)}, { force: true });
+  console.log('launchd service stopped');
+  process.exit(0);
+}
+if (args[1] === 'start') {
+  fs.writeFileSync(${JSON.stringify(launchdRunningPath)}, 'running');
+  console.log('launchd service started');
+  process.exit(0);
+}
+process.exit(0);
+`
+  );
+
+  writeFileSync(join(binDir, 'uname'), '#!/usr/bin/env bash\necho Darwin\n');
+  chmodSync(join(binDir, 'uname'), 0o755);
 
   writeFileSync(
     integrationScriptPath,
@@ -42,10 +79,19 @@ if [[ -f "${statusCountPath}" ]]; then
 fi
 count=$((count + 1))
 echo "$count" > "${statusCountPath}"
-if (( count == 1 )); then
+${statusSequence
+  .map((mode, index) =>
+    mode === 'fail'
+      ? `if (( count == ${index + 1} )); then
   echo "status unavailable" >&2
   exit 1
-fi
+fi`
+      : `if (( count == ${index + 1} )); then
+echo '{"connected": true}'
+  exit 0
+fi`
+  )
+  .join('\n')}
 echo '{"connected": true}'
 `
   );
@@ -77,12 +123,27 @@ exit 1
     scriptPath,
     commandLogPath,
     serverPidPath,
+    launchdRunningPath,
+    launchAgentPath: join(tempRoot, 'Library', 'LaunchAgents', 'com.remnote.mcp-server.plist'),
     env: {
       ...process.env,
       PATH: `${binDir}:${process.env.PATH ?? ''}`,
       HOME: tempRoot,
+      REMNOTE_AGENT_POLL_INTERVAL: '0',
+      REMNOTE_AGENT_WAIT_TIMEOUT: '5',
     },
   };
+}
+
+function installLaunchAgent(
+  sandbox: ReturnType<typeof setupServerWrapperSandbox>,
+  running: boolean
+) {
+  mkdirSync(join(sandbox.env.HOME, 'Library', 'LaunchAgents'), { recursive: true });
+  writeFileSync(sandbox.launchAgentPath, '<plist />');
+  if (running) {
+    writeFileSync(sandbox.launchdRunningPath, 'running');
+  }
 }
 
 function isProcessAlive(pid: number): boolean {
@@ -159,6 +220,50 @@ describe('run-agent-integration-test.sh', () => {
 
     expect(result.status).toBe(0);
     expect(commandLog).toContain('integration:--yes --suite mcpb');
+    expect(isProcessAlive(serverPid)).toBe(false);
+  });
+
+  it('stops a running launchd-managed server before starting its local test server and restores it after', () => {
+    const sandbox = setupServerWrapperSandbox(0, ['connected', 'fail', 'connected']);
+    installLaunchAgent(sandbox, true);
+
+    const result = spawnSync('bash', [sandbox.scriptPath, '--yes'], {
+      cwd: resolve(process.cwd()),
+      encoding: 'utf-8',
+      env: sandbox.env,
+    });
+
+    const commandLog = readFileSync(sandbox.commandLogPath, 'utf-8');
+    const serverPid = Number.parseInt(readFileSync(sandbox.serverPidPath, 'utf-8').trim(), 10);
+
+    expect(result.status).toBe(0);
+    expect(commandLog).toContain('daemon:daemon status');
+    expect(commandLog).toContain('daemon:daemon stop');
+    expect(commandLog).toContain('run start -- --log-level warn --log-file');
+    expect(commandLog).toContain('integration:--yes --suite all');
+    expect(commandLog).toContain('daemon:daemon start');
+    expect(isProcessAlive(serverPid)).toBe(false);
+    expect(readFileSync(sandbox.launchdRunningPath, 'utf-8')).toBe('running');
+  });
+
+  it('leaves an installed but stopped launchd service stopped after integration tests', () => {
+    const sandbox = setupServerWrapperSandbox(0);
+    installLaunchAgent(sandbox, false);
+
+    const result = spawnSync('bash', [sandbox.scriptPath, '--yes'], {
+      cwd: resolve(process.cwd()),
+      encoding: 'utf-8',
+      env: sandbox.env,
+    });
+
+    const commandLog = readFileSync(sandbox.commandLogPath, 'utf-8');
+    const serverPid = Number.parseInt(readFileSync(sandbox.serverPidPath, 'utf-8').trim(), 10);
+
+    expect(result.status).toBe(0);
+    expect(commandLog).toContain('daemon:daemon status');
+    expect(commandLog).not.toContain('daemon:daemon stop');
+    expect(commandLog).not.toContain('daemon:daemon start');
+    expect(commandLog).toContain('run start -- --log-level warn --log-file');
     expect(isProcessAlive(serverPid)).toBe(false);
   });
 });

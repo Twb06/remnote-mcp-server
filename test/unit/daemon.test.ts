@@ -531,10 +531,7 @@ describe('daemon commands', () => {
     expect(stdout.text()).toContain('launchd service started pid 3579');
     expect(execFile).toHaveBeenCalledWith('launchctl', ['bootstrap', 'gui/501', launchAgentFile]);
     expect(execFile).toHaveBeenCalledWith('launchctl', ['enable', `gui/501/${LAUNCHD_LABEL}`]);
-    expect(execFile).toHaveBeenCalledWith('launchctl', [
-      'kickstart',
-      `gui/501/${LAUNCHD_LABEL}`,
-    ]);
+    expect(execFile).toHaveBeenCalledWith('launchctl', ['kickstart', `gui/501/${LAUNCHD_LABEL}`]);
   });
 
   it('does not restart an already running macOS LaunchAgent on start', async () => {
@@ -555,10 +552,7 @@ describe('daemon commands', () => {
 
     expect(exitCode).toBe(0);
     expect(stdout.text()).toContain('launchd service already running pid 3579');
-    expect(execFile).not.toHaveBeenCalledWith('launchctl', [
-      'kickstart',
-      expect.any(String),
-    ]);
+    expect(execFile).not.toHaveBeenCalledWith('launchctl', ['kickstart', expect.any(String)]);
   });
 
   it('stops an installed macOS LaunchAgent through launchd', async () => {
@@ -618,10 +612,7 @@ describe('daemon commands', () => {
       'gui/501',
       join(stateDir, 'Library', 'LaunchAgents', `${LAUNCHD_LABEL}.plist`),
     ]);
-    expect(execFile).toHaveBeenCalledWith('launchctl', [
-      'kickstart',
-      `gui/501/${LAUNCHD_LABEL}`,
-    ]);
+    expect(execFile).toHaveBeenCalledWith('launchctl', ['kickstart', `gui/501/${LAUNCHD_LABEL}`]);
   });
 
   it('surfaces launchctl failures during macOS LaunchAgent install', async () => {

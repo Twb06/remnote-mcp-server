@@ -55,6 +55,11 @@ Bridge as connected.
 
 `npm run test:integration` delegates to `./run-integration-test.sh`, so it also runs all suites by default.
 
+On macOS, the agent-assisted wrapper checks for a running launchd-managed `remnote-mcp-server` before probing server
+status. If launchd is running, the wrapper stops it, starts the freshly built repo-local server for the test run, and
+then restarts launchd during cleanup. This prevents integration tests from accidentally validating an older globally
+installed server.
+
 ### Targeted Reruns
 
 ```bash

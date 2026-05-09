@@ -118,8 +118,12 @@ wrapper.
   collaborator to restart the bridge before rerunning the suite.
 - The wrapper may build and start the local MCP server if it is not already running, then wait for
   `remnote_status.connected === true` before launching the suite.
+- On macOS, if a launchd-managed `remnote-mcp-server` is installed and running, the wrapper must stop it before
+  probing server status so the suite validates the freshly built repo-local server, not an older global/npm install.
 - After each agent-assisted integration run, whether it passes, fails, or is interrupted, the agent must stop the MCP
   server if and only if the wrapper started it for that run.
+- If the wrapper stopped a launchd-managed server that was running before the test, it must restart that launchd
+  service during cleanup after stopping its own repo-local server.
 - If the bridge never connects, the wrapper must stop and tell the human collaborator to verify the RemNote bridge
   session.
 - Use unit/static checks for routine agent-side verification when explicit live validation is not requested.

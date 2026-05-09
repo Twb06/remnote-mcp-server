@@ -19,6 +19,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   docs.
 - Make daemon lifecycle commands launchd-aware on macOS when the LaunchAgent is installed, and document the shared
   control surface.
+- Update the agent integration wrapper to pause a running launchd-managed server before starting its repo-local test
+  server, then restore launchd during cleanup.
 
 ## [0.14.2] - 2026-05-08
 

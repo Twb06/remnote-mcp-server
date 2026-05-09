@@ -17,6 +17,8 @@ deadline=$((SECONDS + WAIT_TIMEOUT_SECONDS))
 built_server=0
 test_exit_code=0
 cleanup_ran=0
+launchd_was_running=0
+must_start_local_server=0
 
 usage() {
   cat <<'EOF'
@@ -84,6 +86,48 @@ status_output() {
   "${SCRIPT_DIR}/run-status-check.sh" 2>&1
 }
 
+daemon_cli() {
+  node "${SCRIPT_DIR}/dist/index.js" daemon "$@"
+}
+
+is_macos() {
+  [[ "$(uname -s)" == "Darwin" ]]
+}
+
+launchd_status_output() {
+  daemon_cli status 2>&1
+}
+
+stop_running_launchd_server() {
+  if ! is_macos; then
+    return
+  fi
+
+  if ! [[ -f "${HOME}/Library/LaunchAgents/com.remnote.mcp-server.plist" ]]; then
+    return
+  fi
+
+  local output
+  local status_code
+  set +e
+  output="$(launchd_status_output)"
+  status_code=$?
+  set -e
+
+  if (( status_code == 0 )) && grep -q 'launchd=installed' <<<"${output}" && grep -q 'running=true' <<<"${output}"; then
+    echo "Detected running launchd-managed remnote-mcp-server. Stopping it before integration tests..."
+    daemon_cli stop
+    launchd_was_running=1
+    must_start_local_server=1
+  elif grep -q 'launchd=installed' <<<"${output}"; then
+    echo "launchd-managed remnote-mcp-server is installed but not running; leaving it stopped."
+  else
+    echo "Unable to determine launchd-managed remnote-mcp-server state; refusing to run integration tests against an unknown server." >&2
+    echo "${output}" >&2
+    exit 1
+  fi
+}
+
 start_server() {
   ensure_built_server
   echo "MCP server not reachable. Starting a background server..."
@@ -99,25 +143,33 @@ cleanup() {
   fi
   cleanup_ran=1
 
-  if (( started_server == 0 )) || [[ -z "${server_pid}" ]]; then
-    return
+  if (( started_server == 1 )) && [[ -n "${server_pid}" ]]; then
+    if kill -0 "${server_pid}" 2>/dev/null; then
+      echo "Stopping MCP server started by agent wrapper..."
+      kill "${server_pid}" 2>/dev/null || true
+      wait "${server_pid}" 2>/dev/null || true
+    fi
   fi
 
-  if ! kill -0 "${server_pid}" 2>/dev/null; then
-    return
+  if (( launchd_was_running == 1 )); then
+    echo "Restarting launchd-managed remnote-mcp-server that was running before integration tests..."
+    daemon_cli start || true
   fi
-
-  echo "Stopping MCP server started by agent wrapper..."
-  kill "${server_pid}" 2>/dev/null || true
-  wait "${server_pid}" 2>/dev/null || true
 }
 
 trap cleanup EXIT INT TERM
 
 ensure_built_server
+stop_running_launchd_server
 
 while (( SECONDS < deadline )); do
   if output="$(status_output)"; then
+    if (( must_start_local_server == 1 )) && (( started_server == 0 )); then
+      echo "Waiting for stopped launchd-managed MCP server to become unreachable before starting repo-local server..."
+      sleep "${POLL_INTERVAL_SECONDS}"
+      continue
+    fi
+
     if grep -q '"connected": true' <<<"${output}"; then
       echo "Bridge connected. Running integration test suite: ${suite}"
       set +e
@@ -135,6 +187,7 @@ while (( SECONDS < deadline )); do
   else
     if (( started_server == 0 )); then
       start_server
+      must_start_local_server=0
     else
       echo "Waiting for MCP server to become reachable..."
     fi
