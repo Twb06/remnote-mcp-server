@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
+import { handleDaemonCommand, isDaemonCommand } from './daemon.js';
 
 const require = createRequire(import.meta.url);
 const packageJson = require('../package.json');
@@ -27,8 +28,14 @@ export function getBundledMcpbPath(): string {
 /**
  * Handle utility commands that do not start the MCP server.
  */
-export function handleUtilityCommand(argv = process.argv): boolean {
+export async function handleUtilityCommand(argv = process.argv): Promise<boolean> {
   if (argv[2] !== MCPB_PATH_COMMAND) {
+    if (isDaemonCommand(argv)) {
+      const result = await handleDaemonCommand(argv);
+      process.exitCode = result.exitCode;
+      return result.handled;
+    }
+
     return false;
   }
 
@@ -48,7 +55,7 @@ export function parseCliArgs(): CliOptions {
     .version(packageJson.version)
     .addHelpText(
       'after',
-      '\nCommands:\n  mcpb-path                 Print the bundled Claude Desktop MCPB extension path'
+      '\nCommands:\n  mcpb-path                 Print the bundled Claude Desktop MCPB extension path\n  daemon <action>           Manage background server lifecycle and macOS launchd persistence'
     )
     .option('--ws-port <number>', 'WebSocket port (default: 3002, env: REMNOTE_WS_PORT)', parsePort)
     .option(

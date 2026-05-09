@@ -1,4 +1,4 @@
-# Troubleshooting
+# remnote-cli Troubleshooting
 
 ## MCP Server Not Reachable
 

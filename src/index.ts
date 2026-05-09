@@ -100,11 +100,15 @@ async function main() {
   process.on('SIGTERM', shutdown);
 }
 
-if (handleUtilityCommand()) {
-  process.exit(0);
+async function run() {
+  if (await handleUtilityCommand()) {
+    return;
+  }
+
+  await main();
 }
 
-main().catch((error) => {
+run().catch((error) => {
   // Pre-logger error handling
   console.error('[MCP Server] Fatal error:', error);
   process.exit(1);

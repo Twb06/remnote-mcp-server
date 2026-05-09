@@ -7,6 +7,17 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Add `remnote-mcp-server daemon` lifecycle commands for detached background startup, status, logs, graceful shutdown,
+  duplicate-start protection, stable log routing, and macOS `launchd` login persistence.
+
+### Changed
+
+- Rename CLI guide files so `remnote-mcp-server` and `remnote-cli` documentation targets are explicit.
+- Add daemon startup, status, log, and macOS persistence pointers to installation, configuration, and troubleshooting
+  docs.
+
 ## [0.14.2] - 2026-05-08
 
 ### Changed

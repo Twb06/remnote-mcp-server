@@ -325,7 +325,7 @@ See the [Tools Reference](tools-reference.md) for detailed documentation of all 
 
 - [Tools Reference](tools-reference.md) - Available MCP tools and usage
 - [Troubleshooting](troubleshooting.md) - Common issues and solutions
-- [CLI Options Reference](cli-options.md) - Server configuration options
+- [remnote-mcp-server Command Reference](remnote-mcp-server-command-reference.md) - Server configuration options
 
 ## Need Help?
 

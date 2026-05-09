@@ -1,11 +1,84 @@
-# CLI Options Reference
+# remnote-mcp-server Command Reference
 
-Complete reference for command-line options when starting the RemNote MCP Server.
+Complete reference for the `remnote-mcp-server` executable, including foreground startup, daemon lifecycle commands,
+and macOS launchd persistence.
 
 ## Basic Usage
 
 ```bash
 remnote-mcp-server [options]
+```
+
+## Daemon Commands
+
+Use daemon mode when the local server should survive terminal close and write logs to a stable path.
+
+```bash
+remnote-mcp-server daemon start
+remnote-mcp-server daemon status
+remnote-mcp-server daemon logs
+remnote-mcp-server daemon stop
+```
+
+Defaults:
+
+- State directory: `~/.remnote-mcp-server`
+- PID file: `~/.remnote-mcp-server/remnote-mcp-server.pid`
+- Log file: `~/.remnote-mcp-server/remnote-mcp-server.log`
+
+`daemon start` refuses to spawn a second server when the daemon PID is already alive. If no daemon PID is present but
+the configured HTTP or WebSocket port is occupied, startup fails before spawning.
+
+### daemon start
+
+Start the server as a detached background process.
+
+```bash
+remnote-mcp-server daemon start
+```
+
+Server options such as `--http-port`, `--ws-port`, `--http-host`, `--log-level`, `--request-log`, and `--response-log`
+are accepted after `daemon start`.
+
+```bash
+remnote-mcp-server daemon start --http-port 3003 --ws-port 3004 --log-level warn
+```
+
+Use `--log-file <path>` to change the daemon stdout/stderr log path.
+
+### daemon stop
+
+Stop the managed daemon process gracefully.
+
+```bash
+remnote-mcp-server daemon stop
+```
+
+Use `--force` to send `SIGKILL` after the graceful shutdown timeout.
+
+### daemon restart, status, logs
+
+```bash
+remnote-mcp-server daemon restart
+remnote-mcp-server daemon status
+remnote-mcp-server daemon logs --lines 200
+```
+
+### macOS launchd persistence
+
+Install a user LaunchAgent when the server should start at login and be restarted by macOS if it exits.
+
+```bash
+remnote-mcp-server daemon install-launchd
+```
+
+The LaunchAgent is written to `~/Library/LaunchAgents/com.remnote.mcp-server.plist`. It runs the server in the
+foreground under `launchd`, with stdout/stderr routed to the daemon log file.
+
+To remove it:
+
+```bash
+remnote-mcp-server daemon uninstall-launchd
 ```
 
 ## Server Configuration Options

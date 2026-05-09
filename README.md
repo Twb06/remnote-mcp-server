@@ -120,6 +120,22 @@ RemNote MCP Server v0.14.1 listening { wsPort: 3002, httpPort: 3001 }
 
 Keep this terminal running.
 
+For a background server that survives terminal close and writes to a stable log file:
+
+```bash
+remnote-mcp-server daemon start
+remnote-mcp-server daemon status
+remnote-mcp-server daemon logs
+remnote-mcp-server daemon stop
+```
+
+Daemon state and logs default to `~/.remnote-mcp-server/`. On macOS, install a login LaunchAgent for restart/login
+persistence:
+
+```bash
+remnote-mcp-server daemon install-launchd
+```
+
 ### 4. Configure Your AI Client
 
 - [Configuration Guide](docs/guides/configuration.md) - Overview and generic setup
@@ -147,8 +163,8 @@ Keep this terminal running.
 
 ### Usage
 
-- **[CLI Options Reference](docs/guides/cli-options.md)** - Command-line options and environment variables
-- **[remnote-cli Command Reference](docs/guides/cli-command-reference.md)** - Shell command reference for the bundled CLI
+- **[remnote-mcp-server Command Reference](docs/guides/remnote-mcp-server-command-reference.md)** - Server executable, daemon, and launchd options
+- **[remnote-cli Command Reference](docs/guides/remnote-cli-command-reference.md)** - Shell command reference for the bundled CLI
 - **[MCP Tools Reference](docs/guides/tools-reference.md)** - Detailed reference for all 9 RemNote tools
 - **[Remote Access Setup](docs/guides/remote-access.md)** - Expose server for cloud clients or remote connector flows
   (ngrok, etc.)
@@ -245,7 +261,20 @@ remnote-mcp-server --http-port 3003 --ws-port 3004
 
 After changing ports, update your MCP client configuration and RemNote plugin settings.
 
-See [CLI Options Reference](docs/guides/cli-options.md) for all options.
+### Background Daemon
+
+```bash
+remnote-mcp-server daemon start
+```
+
+- Default log: `~/.remnote-mcp-server/remnote-mcp-server.log`
+- Duplicate starts are treated as already running when the daemon PID is alive.
+- If the configured HTTP or WebSocket port is already occupied, startup fails before spawning a second server.
+- Use `remnote-mcp-server daemon stop` for graceful shutdown.
+- Use `remnote-mcp-server daemon install-launchd` on macOS to keep the server running across login and unexpected
+  exits.
+
+See [remnote-mcp-server Command Reference](docs/guides/remnote-mcp-server-command-reference.md) for all options.
 
 ## Troubleshooting
 

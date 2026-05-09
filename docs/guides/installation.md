@@ -111,6 +111,24 @@ Expected output:
 RemNote MCP Server v0.14.1 listening { wsPort: 3002, httpPort: 3001 }
 ```
 
+### Background Daemon
+
+For everyday local use, daemon mode keeps the server running after the launching terminal closes and writes logs to
+`~/.remnote-mcp-server/remnote-mcp-server.log`.
+
+```bash
+remnote-mcp-server daemon start
+remnote-mcp-server daemon status
+remnote-mcp-server daemon logs
+```
+
+On macOS, install a user LaunchAgent when you want the server to start at login and be restarted by `launchd` if it
+exits:
+
+```bash
+remnote-mcp-server daemon install-launchd
+```
+
 ### With Custom Ports
 
 ```bash
@@ -129,13 +147,15 @@ remnote-mcp-server --verbose
 remnote-mcp-server --log-file /tmp/remnote-mcp.log --log-level-file debug
 ```
 
-**Important:** The server must remain running for AI agents to connect. Keep the terminal open.
+**Important:** The server must remain running for AI agents to connect. Keep the terminal open when using foreground
+mode, or use daemon mode for a detached local server.
 
-For more CLI options, see [CLI Options Reference](cli-options.md).
+For server startup and daemon options, see
+[remnote-mcp-server Command Reference](remnote-mcp-server-command-reference.md).
 
 ### Recommended Startup Order
 
-1. Start `remnote-mcp-server`
+1. Start `remnote-mcp-server` in foreground mode or with `remnote-mcp-server daemon start`
 2. Open RemNote
 3. Wait for the bridge to connect automatically in the background
 4. Open the Automation Bridge panel only if you want to confirm status

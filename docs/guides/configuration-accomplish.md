@@ -228,7 +228,7 @@ All models can access the RemNote MCP Server through the same configuration.
 
 - [Tools Reference](tools-reference.md) - Available MCP tools and usage
 - [Troubleshooting](troubleshooting.md) - Common issues and solutions
-- [CLI Options Reference](cli-options.md) - Server configuration options
+- [remnote-mcp-server Command Reference](remnote-mcp-server-command-reference.md) - Server configuration options
 
 ## Need Help?
 

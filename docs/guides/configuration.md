@@ -20,6 +20,12 @@ The RemNote MCP Server uses Streamable HTTP transport, which means:
 remnote-mcp-server
 ```
 
+For an everyday local setup that survives terminal close:
+
+```bash
+remnote-mcp-server daemon start
+```
+
 **2. Open RemNote and let the bridge auto-connect:**
 
 - Open RemNote with the Automation Bridge plugin enabled
@@ -84,7 +90,8 @@ Use `remnote-mcp-stdio` for local MCP clients that can spawn stdio MCP servers b
 directly.
 
 Prerequisite: before any stdio client can use RemNote, `remnote-mcp-server` must already be running and the RemNote
-Automation Bridge must be connected to it.
+Automation Bridge must be connected to it. For local desktop use, `remnote-mcp-server daemon start` is usually the
+least fussy way to keep that server available.
 
 ```text
 stdio client -> remnote-mcp-stdio -> remnote-mcp-server :3001 -> RemNote bridge :3002 -> RemNote
@@ -288,6 +295,13 @@ If not running, start the server:
 remnote-mcp-server
 ```
 
+Or use daemon mode:
+
+```bash
+remnote-mcp-server daemon start
+remnote-mcp-server daemon status
+```
+
 Then wait for the RemNote bridge to connect automatically before retrying the MCP client, or use the panel's
 **Reconnect** button if you want an immediate retry.
 
@@ -389,7 +403,7 @@ remnote-mcp-server --http-port 3005
   - [Accomplish Configuration](configuration-accomplish.md)
   - [Claude Desktop / Cowork Configuration](configuration-claude-desktop-cowork.md)
 - **Server Configuration:**
-  - [CLI Options Reference](cli-options.md) - Complete CLI flag documentation
+  - [remnote-mcp-server Command Reference](remnote-mcp-server-command-reference.md) - Server executable flags and daemon commands
   - [Remote Access Setup](remote-access.md) - Expose server for cloud-based clients
 - **Usage:**
   - [Tools Reference](tools-reference.md) - Available MCP tools

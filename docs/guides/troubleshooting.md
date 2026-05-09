@@ -9,6 +9,7 @@ Before diving into specific issues, verify the basic setup:
 ```bash
 # 1. Check server is running
 ps aux | grep remnote-mcp-server
+remnote-mcp-server daemon status
 
 # 2. Check ports are listening
 lsof -i :3001  # HTTP MCP port
@@ -16,6 +17,7 @@ lsof -i :3002  # WebSocket port
 
 # 3. Check server logs
 # (if using --log-file, check that file)
+remnote-mcp-server daemon logs
 
 # 4. Check MCP client configuration
 cat ~/.claude.json | grep -A 5 remnote
@@ -78,6 +80,9 @@ remnote-mcp-server --version
 **Solution:**
 
 ```bash
+# If using daemon mode, first check whether the server is already running
+remnote-mcp-server daemon status
+
 # Find what's using the ports
 lsof -i :3001
 lsof -i :3002
@@ -88,6 +93,9 @@ kill -9 <PID>
 # Or use different ports
 remnote-mcp-server --http-port 3003 --ws-port 3004
 ```
+
+`remnote-mcp-server daemon start` treats an already-running daemon as success. If no managed daemon is recorded but a
+configured port is occupied, it fails before spawning another server.
 
 **For custom ports:**
 
@@ -678,7 +686,7 @@ Include in your bug report:
 
 - [Installation Guide](installation.md) - Installation instructions
 - [Configuration Guide](configuration.md) - Configuration details
-- [CLI Options Reference](cli-options.md) - Command-line options
+- [remnote-mcp-server Command Reference](remnote-mcp-server-command-reference.md) - Server executable options
 - [Tools Reference](tools-reference.md) - Tool usage details
 - [Remote Access Guide](remote-access.md) - Remote access setup
 
@@ -686,11 +694,11 @@ Include in your bug report:
 
 | Issue | Quick Fix |
 |-------|-----------|
-| Port already in use | `kill $(lsof -t -i:3001); kill $(lsof -t -i:3002)` |
+| Port already in use | Check `remnote-mcp-server daemon status`, then inspect `lsof -i :3001` / `lsof -i :3002` |
 | Plugin won't connect | Check URL: `ws://127.0.0.1:3002` |
 | Tools not appearing | `claude mcp list` then restart Claude Code |
 | `Invalid session ID` after restart | Restart Claude Code (refresh MCP session), then retry |
 | Configuration ignored | Verify `~/.claude.json` format, restart client |
-| Connection timeout | Verify server running: `lsof -i :3001` |
+| Connection timeout | Verify server running: `remnote-mcp-server daemon status` or `lsof -i :3001` |
 | Remote access failing | Use HTTPS ngrok URL with `/mcp` path |
 | Slow responses | Reduce `depth`/`limit` parameters |

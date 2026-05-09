@@ -252,7 +252,7 @@ If ngrok free-tier limits are hit:
 - [Claude Desktop / Cowork Remote Connector Configuration](configuration-claude-desktop-cowork.md) - Anthropic remote
   connector setup
 - [ChatGPT Configuration](configuration-chatgpt.md) - ChatGPT Apps setup steps
-- [CLI Options Reference](cli-options.md) - Server configuration options
+- [remnote-mcp-server Command Reference](remnote-mcp-server-command-reference.md) - Server configuration options
 - [Troubleshooting](troubleshooting.md) - Common issues
 - [Demo](../demo.md) - See remote access in action
 

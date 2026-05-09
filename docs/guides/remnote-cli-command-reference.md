@@ -1,4 +1,4 @@
-# Command Reference
+# remnote-cli Command Reference
 
 `remnote-cli` is automation-first: JSON is the default output mode. Use `--text` for human-readable output.
 
