@@ -19,7 +19,10 @@ JSON in a top-level `content` text block for compatibility with older clients an
 | `remnote_search` | Search knowledge base | Finding existing notes, exploring topics |
 | `remnote_search_by_tag` | Search by tag | Finding ancestor context for tagged notes |
 | `remnote_read_note` | Read note content | Retrieving details, reading hierarchies |
-| `remnote_update_note` | Modify existing notes | Appending content, adding tags, renaming |
+| `remnote_update_note` | Update note metadata | Renaming |
+| `remnote_insert_children` | Insert child Rems | Ordered hierarchy maintenance, tag descriptions |
+| `remnote_replace_children` | Replace direct child Rems | Explicitly approved destructive rewrites |
+| `remnote_update_tags` | Mutate tags by exact Rem ID | Production tagging workflows |
 | `remnote_append_journal` | Add to daily document | Journaling, logging, daily notes |
 | `remnote_read_table` | Read Advanced Tables | Fetching tabular rows, schema metadata, and filtered columns |
 | `remnote_get_playbook` | Get operating playbook | Session preflight, traversal defaults, write safety guidance |
@@ -297,26 +300,20 @@ instead of markdown `content`.
 
 ## remnote_update_note
 
-Update an existing note - change title, append content, or modify tags.
+Update note metadata. This tool is intentionally limited to title changes.
 
 ### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `remId` | string | Yes | The Rem ID to update |
-| `title` | string | No | New title for the note |
-| `appendContent` | string | No | Content to append as children (newline-separated) |
-| `replaceContent` | string | No | Replace direct children (newline-separated; empty string clears all direct children) |
-| `addTags` | string[] | No | Tags to add |
-| `removeTags` | string[] | No | Tags to remove |
+| `title` | string | Yes | New title for the note |
 
 **Notes:**
 
-- At least one of `title`, `appendContent`, `replaceContent`, `addTags`, or `removeTags` must be provided.
-- `appendContent` and `replaceContent` are mutually exclusive in one request.
-- Replace calls can be rejected by bridge policy settings:
-  - `acceptWriteOperations=false` blocks all update operations.
-  - `acceptReplaceOperation=false` blocks replace operations.
+- Use `remnote_insert_children` for ordered child creation.
+- Use `remnote_replace_children` for explicitly approved direct-child replacement.
+- Use `remnote_update_tags` for exact-ID tag mutation.
 
 ### Usage
 
@@ -325,65 +322,47 @@ Update an existing note - change title, append content, or modify tags.
 Rename note abc123 to "Updated Project Name"
 ```
 
-**Append content:**
+## remnote_insert_children
+
+Insert new child Rems under a parent without replacing existing children.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `parentRemId` | string | Yes | Parent Rem ID |
+| `content` | string | Yes | Markdown content to insert as child Rems |
+| `position` | `"first" \| "last" \| "before" \| "after"` | Yes | Insert position |
+| `siblingRemId` | string | For `before`/`after` | Sibling Rem ID to insert before or after |
+
+Use this for tag description nodes, for example:
+
 ```
-Add to note def456:
-- New task
-- Another item
+Insert under tag cEZH8DJYED3RQIB7k at first:
+description: Use for Codex app/CLI/skills/ExecPlans notes.
 ```
 
-**Replace content:**
-```
-Replace note def456 content with:
-- Fresh item 1
-- Fresh item 2
-```
+## remnote_replace_children
 
-**Clear direct children:**
-```
-Replace content of note def456 with an empty string
-```
+Replace all direct children under a parent Rem. This is destructive because existing child Rem IDs are removed.
 
-**Add tags:**
-```
-Add tags "important" and "review" to note xyz789
-```
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `parentRemId` | string | Yes | Parent Rem ID whose direct children will be replaced |
+| `content` | string | Yes | Markdown replacement content; empty string clears direct children |
 
-**Remove tags:**
-```
-Remove tag "draft" from note abc123
-```
+Bridge policy can reject this tool when `acceptReplaceOperation=false`.
 
-**Multiple updates:**
-```
-Update note def456: rename to "Completed Project", add tag "done", append "Final notes"
-```
+## remnote_update_tags
 
-### Response
+Add or remove tags using exact tag Rem IDs.
 
-Returns confirmation of updates:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `remId` | string | Yes | Rem ID whose tags should change |
+| `addTagRemIds` | string[] | No | Exact tag Rem IDs to add |
+| `removeTagRemIds` | string[] | No | Exact tag Rem IDs to remove |
 
-```json
-{
-  "remId": "abc123",
-  "updated": true,
-  "changes": {
-    "title": "Updated Project Name",
-    "contentAppended": true,
-    "tagsAdded": ["important"],
-    "tagsRemoved": []
-  }
-}
-```
-
-### Tips
-
-- You can update multiple properties in one call
-- `appendContent` adds to the end and keeps existing content.
-- `replaceContent` rewrites direct child bullets under the note.
-- `replaceContent: ""` clears all direct children.
-- Tags are case-sensitive
-- New tags are created automatically when added
+Use this for production tagging workflows. Name-based tag mutation is intentionally absent from the write tool surface
+because same-name Rems can exist in different branches.
 
 ## remnote_append_journal
 
@@ -626,7 +605,7 @@ AI agents can chain multiple tools:
 
 1. `remnote_search` - Find "tasks" note
 2. `remnote_read_note` - Read current tasks
-3. `remnote_update_note` - Append completed items
+3. `remnote_insert_children` - Insert completed items
 
 ## Error Handling
 

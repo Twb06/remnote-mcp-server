@@ -32,14 +32,23 @@ export const validReadNoteInput = {
 export const validUpdateNoteInput = {
   remId: 'rem-id-456',
   title: 'Updated Title',
-  appendContent: 'New content',
-  addTags: ['newtag'],
-  removeTags: ['oldtag'],
 };
 
-export const validUpdateReplaceInput = {
+export const validInsertChildrenInput = {
+  parentRemId: 'rem-id-456',
+  content: 'Inserted content',
+  position: 'last',
+};
+
+export const validReplaceChildrenInput = {
+  parentRemId: 'rem-id-456',
+  content: 'Replacement content',
+};
+
+export const validUpdateTagsInput = {
   remId: 'rem-id-456',
-  replaceContent: 'Replacement content',
+  addTagRemIds: ['tag-rem-id-1'],
+  removeTagRemIds: ['tag-rem-id-2'],
 };
 
 export const validAppendJournalInput = {

@@ -106,7 +106,7 @@ export async function errorCasesWorkflow(
     }
   }
 
-  // Step 5: Update rejects append + replace conflict
+  // Step 5: Update rejects removed content flags
   {
     const start = Date.now();
     try {
@@ -115,23 +115,17 @@ export async function errorCasesWorkflow(
         'conflict-id-00000',
         '--append',
         'Append body',
-        '--replace',
-        'Replace body',
       ]);
       assertTruthy(result.exitCode !== 0, 'should have non-zero exit code');
-      assertContains(
-        result.stderr,
-        'Cannot combine append and replace content options',
-        'stderr should explain append/replace conflict'
-      );
+      assertContains(result.stderr, '--append', 'stderr should mention removed append flag');
       steps.push({
-        label: 'Update append/replace conflict returns error',
+        label: 'Update rejects removed content flags',
         passed: true,
         durationMs: Date.now() - start,
       });
     } catch (e) {
       steps.push({
-        label: 'Update append/replace conflict returns error',
+        label: 'Update rejects removed content flags',
         passed: false,
         durationMs: Date.now() - start,
         error: (e as Error).message,
@@ -170,12 +164,12 @@ export async function errorCasesWorkflow(
   {
     const start = Date.now();
     try {
-      // Missing value for --title causes it to swallow --append
+      // Missing value for --title causes it to swallow the next flag-looking token.
       const result = await ctx.cli.runExpectError([
         'update',
         'abc123',
         '--title',
-        '--append',
+        '--content',
         'More text',
       ]);
       assertTruthy(result.exitCode !== 0, 'should have non-zero exit code');

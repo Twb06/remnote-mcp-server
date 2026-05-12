@@ -165,12 +165,6 @@ async function ensureIntegrationParentNote(
     const selected = exactSearchMatches[0];
     state.integrationParentRemId = selected.remId as string;
     state.integrationParentTitle = selected.title as string;
-    await cli.runExpectSuccess([
-      'update',
-      selected.remId as string,
-      '--add-tags',
-      INTEGRATION_PARENT_TAG,
-    ]);
     return {
       status: 'reused',
       strategy: 'search',

@@ -2,7 +2,6 @@ import { Command } from 'commander';
 import { createCommandClient } from '../client/command-client.js';
 import { formatResult, formatError, type OutputFormat } from '../output/formatter.js';
 import { EXIT } from '../config.js';
-import { resolveUpdateContent } from './content-input.js';
 import { validateNotFlag } from './arg-utils.js';
 
 export function registerUpdateCommand(program: Command): void {
@@ -10,45 +9,22 @@ export function registerUpdateCommand(program: Command): void {
   const validate = (val: string) => validateNotFlag(val, subprogram);
 
   subprogram
-    .description('Update an existing note')
+    .description('Update note metadata')
     .option('--title <text>', 'New title', validate)
-    .option('--append <text>', 'Append content', validate)
-    .option(
-      '--append-file <path>',
-      'Read appended content from UTF-8 file ("-" for stdin)',
-      validate
-    )
-    .option(
-      '--replace <text>',
-      'Replace direct child content (empty string clears all children)',
-      validate
-    )
-    .option(
-      '--replace-file <path>',
-      'Read replacement content from UTF-8 file ("-" for stdin; empty file clears all children)',
-      validate
-    )
-    .option('--add-tags <tags...>', 'Tags to add')
-    .option('--remove-tags <tags...>', 'Tags to remove')
     .action(async (remId: string, opts) => {
       const globalOpts = program.opts();
       const format: OutputFormat = globalOpts.text ? 'text' : 'json';
       const client = createCommandClient(program);
 
       try {
-        const { appendContent, replaceContent } = await resolveUpdateContent({
-          appendText: opts.append as string | undefined,
-          appendFile: opts.appendFile as string | undefined,
-          replaceText: opts.replace as string | undefined,
-          replaceFile: opts.replaceFile as string | undefined,
-        });
+        if (!opts.title) {
+          throw new Error(
+            'Provide --title for update. Use insert-children, replace-children, or update-tags for other writes.'
+          );
+        }
 
         const payload: Record<string, unknown> = { remId };
-        if (opts.title) payload.title = opts.title;
-        if (appendContent !== undefined) payload.appendContent = appendContent;
-        if (replaceContent !== undefined) payload.replaceContent = replaceContent;
-        if (opts.addTags && opts.addTags.length > 0) payload.addTags = opts.addTags;
-        if (opts.removeTags && opts.removeTags.length > 0) payload.removeTags = opts.removeTags;
+        payload.title = opts.title;
 
         const result = await client.execute('update_note', payload);
         console.log(

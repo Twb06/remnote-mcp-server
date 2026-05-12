@@ -75,7 +75,7 @@ Behavior rules:
 - Content input from `-c`/`--content`/`--content-file` supports RemNote's native markdown syntax for creating nested hierarchies and flashcards inline.
 - `--content` and `--content-file` are mutually exclusive.
 - Content loaded from file/stdin is passed verbatim (no templating/interpolation).
-- Write content from `--content-file`/`--append-file`/`--replace-file`/stdin is capped at 100 KB.
+- Write content from `--content-file` and stdin is capped at 100 KB.
 - If `parent-id` is not provided, the note will be created under the default root rem in the setting.
 - Tags are applied only to the top-level Rems created.
 
@@ -221,48 +221,73 @@ remnote-cli read-table --title "Projects" --properties "Status,Owner" --text
 
 ## update
 
-Update an existing note.
+Update note metadata.
 
 ```bash
 remnote-cli update <rem-id> [options]
 ```
 
-| Option                   | Default | Description                                                                                     |
-| ------------------------ | ------- | ----------------------------------------------------------------------------------------------- |
-| `--title <text>`         | none    | Replace title/headline                                                                          |
-| `--append <text>`        | none    | Append content                                                                                  |
-| `--append-file <path>`   | none    | Read appended content from UTF-8 file (`-` for stdin)                                           |
-| `--replace <text>`       | none    | Replace direct child content (empty string clears all direct children)                          |
-| `--replace-file <path>`  | none    | Read replacement content from UTF-8 file (`-` for stdin; empty file clears all direct children) |
-| `--add-tags <tag...>`    | none    | Add one or more tags                                                                            |
-| `--remove-tags <tag...>` | none    | Remove one or more tags                                                                         |
+| Option           | Default | Description            |
+| ---------------- | ------- | ---------------------- |
+| `--title <text>` | none    | Replace title/headline |
 
-Behavior rules:
-
-- Options can be combined in one call (title/content/tag updates in one request).
-- At least one update field should be provided.
-- Input from `--append`/`--append-file`/`--replace`/`--replace-file` supports RemNote's native markdown syntax for creating nested hierarchies and flashcards inline.
-- `--append` and `--append-file` are mutually exclusive.
-- `--replace` and `--replace-file` are mutually exclusive.
-- Append and replace are mutually exclusive in a single command:
-  - Do not combine `--append/--append-file` with `--replace/--replace-file`.
-- Replace behavior updates direct child bullets of the target note:
-  - `--replace ""` (or `--replace-file` with an empty file) clears all direct children.
-- Bridge write policy can reject update commands:
-  - If bridge setting **Accept write operations** is disabled, all `update` operations fail.
-  - If write operations are enabled but **Accept replace operation** is disabled, replace flags fail.
+Use the dedicated commands below for child content and tag writes.
 
 Examples:
 
 ```bash
 remnote-cli update abc123def --title "Updated Title"
-remnote-cli update abc123def --title "Final" --append "Shipped" --add-tags important --remove-tags draft --text
-remnote-cli update abc123def --append-file /tmp/follow-up.md --text
-remnote-cli update abc123def --replace-file /tmp/new-body.md --text
-remnote-cli update abc123def --replace "" --text
-cat /tmp/follow-up.md | remnote-cli update abc123def --append-file - --text
-cat /tmp/new-body.md | remnote-cli update abc123def --replace-file - --text
 ```
+
+## insert-children
+
+Insert child Rems under a parent at an explicit position.
+
+```bash
+remnote-cli insert-children <parent-rem-id> --content <text> --position <first|last|before|after>
+```
+
+| Option                    | Default | Description                                      |
+| ------------------------- | ------- | ------------------------------------------------ |
+| `--content <text>`        | none    | Content to insert                                |
+| `--content-file <path>`   | none    | Read inserted content from UTF-8 file (`-` stdin) |
+| `--position <position>`   | none    | `first`, `last`, `before`, or `after`             |
+| `--sibling-rem-id <id>`   | none    | Required for `before` and `after`                 |
+
+Examples:
+
+```bash
+remnote-cli insert-children cEZH8DJYED3RQIB7k --content "description: Use for Codex app/CLI/skills/ExecPlans notes." --position first
+remnote-cli insert-children cEZH8DJYED3RQIB7k --content-file /tmp/child.md --position before --sibling-rem-id abc123def
+```
+
+## replace-children
+
+Replace all direct child Rems under a parent. This is destructive and can be blocked by bridge policy.
+
+```bash
+remnote-cli replace-children <parent-rem-id> --content-file <path>
+```
+
+| Option                  | Default | Description                                                                      |
+| ----------------------- | ------- | -------------------------------------------------------------------------------- |
+| `--content <text>`      | none    | Replacement content                                                              |
+| `--content-file <path>` | none    | Read replacement content from UTF-8 file (`-` stdin; empty file clears children) |
+
+## update-tags
+
+Add or remove tags by exact tag Rem ID.
+
+```bash
+remnote-cli update-tags <rem-id> --add-tag-ids <tag-rem-id...>
+```
+
+| Option                          | Default | Description              |
+| ------------------------------- | ------- | ------------------------ |
+| `--add-tag-ids <tag-rem-id...>`    | none    | Exact tag Rem IDs to add |
+| `--remove-tag-ids <tag-rem-id...>` | none    | Exact tag Rem IDs to remove |
+
+Use exact IDs for production tagging workflows. Name-based tag mutation is intentionally not exposed.
 
 ## journal
 

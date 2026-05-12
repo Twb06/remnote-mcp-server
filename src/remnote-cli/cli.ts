@@ -5,6 +5,11 @@ import { registerCreateCommand } from './commands/create.js';
 import { registerSearchByTagCommand, registerSearchCommand } from './commands/search.js';
 import { registerReadCommand } from './commands/read.js';
 import { registerUpdateCommand } from './commands/update.js';
+import {
+  registerInsertChildrenCommand,
+  registerReplaceChildrenCommand,
+  registerUpdateTagsCommand,
+} from './commands/write-actions.js';
 import { registerJournalCommand } from './commands/journal.js';
 import { registerStatusCommand } from './commands/status.js';
 import { registerReadTableCommand } from './commands/table.js';
@@ -33,6 +38,9 @@ export function createProgram(version: string): Command {
   registerSearchByTagCommand(program);
   registerReadCommand(program);
   registerUpdateCommand(program);
+  registerInsertChildrenCommand(program);
+  registerReplaceChildrenCommand(program);
+  registerUpdateTagsCommand(program);
   registerJournalCommand(program);
   registerStatusCommand(program);
   registerReadTableCommand(program);

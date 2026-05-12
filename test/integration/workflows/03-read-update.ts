@@ -133,6 +133,7 @@ export async function readUpdateWorkflow(
   }
 
   const acceptReplaceOperation = state.acceptReplaceOperation ?? false;
+  let tagVerificationRemId: string | undefined;
 
   // Step 1: Read simple note
   {
@@ -271,20 +272,21 @@ export async function readUpdateWorkflow(
     }
   }
 
-  // Step 4: Append content
+  // Step 4: Insert content
   {
     const start = Date.now();
     try {
-      const result = (await ctx.client.callTool('remnote_update_note', {
-        remId: state.noteAId,
-        appendContent: 'Appended via integration test',
+      const result = (await ctx.client.callTool('remnote_insert_children', {
+        parentRemId: state.noteAId,
+        content: 'Inserted via integration test',
+        position: 'last',
       })) as { remIds: string[] };
-      assertHasField(result, 'remIds', 'append content should succeed');
-      assertIsArray(result.remIds, 'append content remIds');
-      steps.push({ label: 'Append content', passed: true, durationMs: Date.now() - start });
+      assertHasField(result, 'remIds', 'insert content should succeed');
+      assertIsArray(result.remIds, 'insert content remIds');
+      steps.push({ label: 'Insert content', passed: true, durationMs: Date.now() - start });
     } catch (e) {
       steps.push({
-        label: 'Append content',
+        label: 'Insert content',
         passed: false,
         durationMs: Date.now() - start,
         error: (e as Error).message,
@@ -298,9 +300,9 @@ export async function readUpdateWorkflow(
     try {
       if (acceptReplaceOperation) {
         const replaceBody = `[MCP-TEST] Replaced via integration test ${ctx.runId}`;
-        const result = (await ctx.client.callTool('remnote_update_note', {
-          remId: state.noteAId,
-          replaceContent: replaceBody,
+        const result = (await ctx.client.callTool('remnote_replace_children', {
+          parentRemId: state.noteAId,
+          content: replaceBody,
         })) as { remIds: string[] };
         assertHasField(result, 'remIds', 'replace content should succeed when enabled');
         assertIsArray(result.remIds, 'replace content remIds');
@@ -318,9 +320,9 @@ export async function readUpdateWorkflow(
         );
         steps.push({ label: 'Replace content', passed: true, durationMs: Date.now() - start });
       } else {
-        const errorText = await ctx.client.callToolExpectError('remnote_update_note', {
-          remId: state.noteAId,
-          replaceContent: 'Should be blocked',
+        const errorText = await ctx.client.callToolExpectError('remnote_replace_children', {
+          parentRemId: state.noteAId,
+          content: 'Should be blocked',
         });
         assertContains(
           errorText,
@@ -347,9 +349,9 @@ export async function readUpdateWorkflow(
   if (acceptReplaceOperation) {
     const start = Date.now();
     try {
-      const result = (await ctx.client.callTool('remnote_update_note', {
-        remId: state.noteAId,
-        replaceContent: '',
+      const result = (await ctx.client.callTool('remnote_replace_children', {
+        parentRemId: state.noteAId,
+        content: '',
       })) as { remIds: string[] };
       assertHasField(result, 'remIds', 'empty replace should succeed');
       assertIsArray(result.remIds, 'empty replace remIds');
@@ -383,13 +385,21 @@ export async function readUpdateWorkflow(
   {
     const start = Date.now();
     try {
+      const tagResult = (await ctx.client.callTool('remnote_create_note', {
+        title: tagVerificationName,
+        parentId: state.integrationParentRemId,
+      })) as { remIds: string[] };
+      assertHasField(tagResult, 'remIds', 'create tag rem should succeed');
+      assertIsArray(tagResult.remIds, 'create tag remIds');
+      tagVerificationRemId = tagResult.remIds[0];
+
       const expectedTargetRemId = await resolveExpectedSearchByTagTarget(
         ctx,
         state.noteAId as string
       );
-      const result = (await ctx.client.callTool('remnote_update_note', {
+      const result = (await ctx.client.callTool('remnote_update_tags', {
         remId: state.noteAId,
-        addTags: [tagVerificationName],
+        addTagRemIds: [tagVerificationRemId],
       })) as { remIds: string[] };
       assertHasField(result, 'remIds', 'add tag should succeed');
       assertIsArray(result.remIds, 'add tag remIds');
@@ -422,13 +432,14 @@ export async function readUpdateWorkflow(
   {
     const start = Date.now();
     try {
+      assertTruthy(tagVerificationRemId, 'tag Rem ID should be available for remove tag');
       const expectedTargetRemId = await resolveExpectedSearchByTagTarget(
         ctx,
         state.noteAId as string
       );
-      const result = (await ctx.client.callTool('remnote_update_note', {
+      const result = (await ctx.client.callTool('remnote_update_tags', {
         remId: state.noteAId,
-        removeTags: [tagVerificationName],
+        removeTagRemIds: [tagVerificationRemId as string],
       })) as { remIds: string[] };
       assertHasField(result, 'remIds', 'remove tag should succeed');
       assertIsArray(result.remIds, 'remove tag remIds');
@@ -488,9 +499,10 @@ export async function readUpdateWorkflow(
     const start = Date.now();
     try {
       const markdownTree = `[MCP-TEST] Markdown Tree ${ctx.runId}\n- Branch 1\n  - Leaf 1\n- Branch 2`;
-      const result = (await ctx.client.callTool('remnote_update_note', {
-        remId: state.noteAId,
-        appendContent: markdownTree,
+      const result = (await ctx.client.callTool('remnote_insert_children', {
+        parentRemId: state.noteAId,
+        content: markdownTree,
+        position: 'last',
       })) as { remIds: string[] };
       assertHasField(result, 'remIds', 'update with markdown tree');
       assertIsArray(result.remIds, 'markdown tree remIds');

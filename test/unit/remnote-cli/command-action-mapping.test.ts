@@ -191,50 +191,81 @@ describe('command bridge action mapping', () => {
   });
 
   it('maps update command with --title flag', async () => {
-    const executeSpy = await runCommand([
-      'update',
-      'abc123',
-      '--title',
-      'New Title',
-      '--append',
-      'More text',
-      '--add-tags',
-      'important',
-    ]);
+    const executeSpy = await runCommand(['update', 'abc123', '--title', 'New Title']);
     expect(executeSpy).toHaveBeenCalledWith('update_note', {
       remId: 'abc123',
       title: 'New Title',
-      appendContent: 'More text',
-      addTags: ['important'],
     });
     executeSpy.mockRestore();
   });
 
-  it('maps update --append-file to update_note appendContent payload', async () => {
-    const filePath = await createTempContentFile('Append from file');
-    const executeSpy = await runCommand(['update', 'abc123', '--append-file', filePath]);
-    expect(executeSpy).toHaveBeenCalledWith('update_note', {
-      remId: 'abc123',
-      appendContent: 'Append from file',
+  it('maps insert-children to insert_children payload', async () => {
+    const executeSpy = await runCommand([
+      'insert-children',
+      'parent123',
+      '--content',
+      'Inserted content',
+      '--position',
+      'first',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('insert_children', {
+      parentRemId: 'parent123',
+      content: 'Inserted content',
+      position: 'first',
     });
     executeSpy.mockRestore();
   });
 
-  it('maps update --replace to update_note replaceContent payload', async () => {
-    const executeSpy = await runCommand(['update', 'abc123', '--replace', 'Replaced content']);
-    expect(executeSpy).toHaveBeenCalledWith('update_note', {
-      remId: 'abc123',
-      replaceContent: 'Replaced content',
+  it('maps insert-children --content-file before sibling to insert_children payload', async () => {
+    const filePath = await createTempContentFile('Insert from file');
+    const executeSpy = await runCommand([
+      'insert-children',
+      'parent123',
+      '--content-file',
+      filePath,
+      '--position',
+      'before',
+      '--sibling-rem-id',
+      'sibling123',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('insert_children', {
+      parentRemId: 'parent123',
+      content: 'Insert from file',
+      position: 'before',
+      siblingRemId: 'sibling123',
     });
     executeSpy.mockRestore();
   });
 
-  it('maps update --replace-file to update_note replaceContent payload', async () => {
+  it('maps replace-children --content-file to replace_children payload', async () => {
     const filePath = await createTempContentFile('Replace from file');
-    const executeSpy = await runCommand(['update', 'abc123', '--replace-file', filePath]);
-    expect(executeSpy).toHaveBeenCalledWith('update_note', {
+    const executeSpy = await runCommand([
+      'replace-children',
+      'parent123',
+      '--content-file',
+      filePath,
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('replace_children', {
+      parentRemId: 'parent123',
+      content: 'Replace from file',
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('maps update-tags to update_tags payload', async () => {
+    const executeSpy = await runCommand([
+      'update-tags',
+      'abc123',
+      '--add-tag-ids',
+      'tag1',
+      'tag2',
+      '--remove-tag-ids',
+      'tag3',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('update_tags', {
       remId: 'abc123',
-      replaceContent: 'Replace from file',
+      addTagRemIds: ['tag1', 'tag2'],
+      removeTagRemIds: ['tag3'],
     });
     executeSpy.mockRestore();
   });

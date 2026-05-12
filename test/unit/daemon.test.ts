@@ -6,9 +6,9 @@ import {
   DAEMON_PID_FILE_NAME,
   DAEMON_STATE_FILE_NAME,
   LAUNCHD_LABEL,
-  handleDaemonCommand,
+  handleDaemonCommand as handleDaemonCommandBase,
   getDefaultDaemonPaths,
-  runDaemonCommand,
+  runDaemonCommand as runDaemonCommandBase,
   type DaemonRuntime,
   type DaemonState,
 } from '../../src/daemon.js';
@@ -27,6 +27,20 @@ describe('daemon commands', () => {
   afterEach(async () => {
     await rm(stateDir, { recursive: true, force: true });
   });
+
+  function runDaemonCommand(
+    command: Parameters<typeof runDaemonCommandBase>[0],
+    runtime: Parameters<typeof runDaemonCommandBase>[1] = {}
+  ): ReturnType<typeof runDaemonCommandBase> {
+    return runDaemonCommandBase(command, { homeDir: stateDir, ...runtime });
+  }
+
+  function handleDaemonCommand(
+    argv: string[],
+    runtime: Parameters<typeof handleDaemonCommandBase>[1] = {}
+  ): ReturnType<typeof handleDaemonCommandBase> {
+    return handleDaemonCommandBase(argv, { homeDir: stateDir, ...runtime });
+  }
 
   it('starts a detached server process and records daemon state', async () => {
     const canBind = vi

@@ -100,21 +100,61 @@ export const ReadNoteSchema = z.object({
     .describe('Maximum character length for rendered content'),
 });
 
+export const InsertChildrenPositionSchema = z.enum(['first', 'last', 'before', 'after']);
+
 export const UpdateNoteSchema = z
   .object({
     remId: z.string().describe('The Rem ID to update'),
     title: z.string().optional().describe('New title'),
-    appendContent: z.string().optional().describe('Content to append as children'),
-    replaceContent: z
-      .string()
-      .optional()
-      .describe('Content to replace direct children (empty string clears children)'),
-    addTags: z.array(z.string()).optional().describe('Tags to add'),
-    removeTags: z.array(z.string()).optional().describe('Tags to remove'),
   })
-  .refine((value) => !(value.appendContent !== undefined && value.replaceContent !== undefined), {
-    message: 'appendContent and replaceContent cannot be used together',
-    path: ['replaceContent'],
+  .strict()
+  .refine((value) => value.title !== undefined, {
+    message: 'remnote_update_note requires title',
+    path: ['title'],
+  });
+
+export const InsertChildrenSchema = z
+  .object({
+    parentRemId: z.string().describe('Parent Rem ID that will receive the new children'),
+    content: z.string().describe('Markdown content to insert as child Rems'),
+    position: InsertChildrenPositionSchema.describe('Where to insert the new child Rems'),
+    siblingRemId: z.string().optional().describe('Sibling Rem ID required for before/after'),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if ((value.position === 'before' || value.position === 'after') && !value.siblingRemId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `siblingRemId is required when position is ${value.position}`,
+        path: ['siblingRemId'],
+      });
+    }
+    if ((value.position === 'first' || value.position === 'last') && value.siblingRemId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `siblingRemId must not be provided when position is ${value.position}`,
+        path: ['siblingRemId'],
+      });
+    }
+  });
+
+export const ReplaceChildrenSchema = z
+  .object({
+    parentRemId: z.string().describe('Parent Rem ID whose direct children will be replaced'),
+    content: z.string().describe('Markdown content to use as replacement children'),
+  })
+  .strict();
+
+export const UpdateTagsSchema = z
+  .object({
+    remId: z.string().describe('The Rem ID whose tags should change'),
+    addTagRemIds: z.array(z.string()).optional().describe('Exact tag Rem IDs to add'),
+    removeTagRemIds: z.array(z.string()).optional().describe('Exact tag Rem IDs to remove'),
+  })
+  .strict()
+  .refine((value) => Boolean(value.addTagRemIds?.length || value.removeTagRemIds?.length), {
+    message: 'remnote_update_tags requires addTagRemIds or removeTagRemIds',
+    path: ['addTagRemIds'],
   });
 
 export const AppendJournalSchema = z.object({

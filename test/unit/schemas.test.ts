@@ -10,6 +10,9 @@ import {
   SearchByTagSchema,
   ReadNoteSchema,
   UpdateNoteSchema,
+  InsertChildrenSchema,
+  ReplaceChildrenSchema,
+  UpdateTagsSchema,
   AppendJournalSchema,
   ReadTableSchema,
 } from '../../src/schemas/remnote-schemas.js';
@@ -198,57 +201,108 @@ describe('SearchByTagSchema', () => {
 });
 
 describe('UpdateNoteSchema', () => {
-  it('should validate with only required remId field', () => {
-    const result = UpdateNoteSchema.parse({ remId: 'rem-456' });
+  it('should validate title update fields', () => {
+    const result = UpdateNoteSchema.parse({ remId: 'rem-456', title: 'New Title' });
     expect(result.remId).toBe('rem-456');
-    expect(result.title).toBeUndefined();
-    expect(result.appendContent).toBeUndefined();
-    expect(result.replaceContent).toBeUndefined();
-    expect(result.addTags).toBeUndefined();
-    expect(result.removeTags).toBeUndefined();
+    expect(result.title).toBe('New Title');
   });
 
-  it('should validate append-based update fields', () => {
-    const input = {
-      remId: 'rem-456',
-      title: 'New Title',
-      appendContent: 'More content',
-      addTags: ['tag1'],
-      removeTags: ['tag2'],
-    };
-    const result = UpdateNoteSchema.parse(input);
-    expect(result).toEqual(input);
+  it('should reject missing title', () => {
+    expect(() => UpdateNoteSchema.parse({ remId: 'rem-456' })).toThrow(
+      'remnote_update_note requires title'
+    );
   });
 
-  it('should validate replaceContent updates', () => {
-    const input = {
-      remId: 'rem-456',
-      replaceContent: 'Replacement body',
-    };
-    const result = UpdateNoteSchema.parse(input);
-    expect(result).toEqual(input);
-  });
-
-  it('should reject appendContent and replaceContent together', () => {
+  it('should reject old mixed update fields', () => {
     expect(() =>
       UpdateNoteSchema.parse({
         remId: 'rem-456',
+        title: 'New Title',
         appendContent: 'Append',
-        replaceContent: 'Replace',
       })
-    ).toThrow('appendContent and replaceContent cannot be used together');
+    ).toThrow();
   });
 
   it('should reject missing remId', () => {
     expect(() => UpdateNoteSchema.parse({ title: 'New Title' })).toThrow();
   });
+});
 
-  it('should reject non-array addTags', () => {
-    expect(() => UpdateNoteSchema.parse({ remId: 'rem-456', addTags: 'not-array' })).toThrow();
+describe('InsertChildrenSchema', () => {
+  it('should validate first and last insertion', () => {
+    expect(
+      InsertChildrenSchema.parse({
+        parentRemId: 'parent',
+        content: 'description: text',
+        position: 'first',
+      })
+    ).toEqual({ parentRemId: 'parent', content: 'description: text', position: 'first' });
   });
 
-  it('should reject non-array removeTags', () => {
-    expect(() => UpdateNoteSchema.parse({ remId: 'rem-456', removeTags: 'not-array' })).toThrow();
+  it('should validate before and after insertion with siblingRemId', () => {
+    expect(
+      InsertChildrenSchema.parse({
+        parentRemId: 'parent',
+        content: 'description: text',
+        position: 'before',
+        siblingRemId: 'sibling',
+      })
+    ).toEqual({
+      parentRemId: 'parent',
+      content: 'description: text',
+      position: 'before',
+      siblingRemId: 'sibling',
+    });
+  });
+
+  it('should reject before without siblingRemId', () => {
+    expect(() =>
+      InsertChildrenSchema.parse({
+        parentRemId: 'parent',
+        content: 'description: text',
+        position: 'before',
+      })
+    ).toThrow('siblingRemId is required when position is before');
+  });
+
+  it('should reject siblingRemId for first', () => {
+    expect(() =>
+      InsertChildrenSchema.parse({
+        parentRemId: 'parent',
+        content: 'description: text',
+        position: 'first',
+        siblingRemId: 'sibling',
+      })
+    ).toThrow('siblingRemId must not be provided when position is first');
+  });
+});
+
+describe('ReplaceChildrenSchema', () => {
+  it('should validate replacement content', () => {
+    expect(
+      ReplaceChildrenSchema.parse({
+        parentRemId: 'parent',
+        content: 'Replacement body',
+      })
+    ).toEqual({ parentRemId: 'parent', content: 'Replacement body' });
+  });
+});
+
+describe('UpdateTagsSchema', () => {
+  it('should validate exact ID tag updates', () => {
+    expect(
+      UpdateTagsSchema.parse({
+        remId: 'note',
+        addTagRemIds: ['tag-1'],
+        removeTagRemIds: ['tag-2'],
+      })
+    ).toEqual({ remId: 'note', addTagRemIds: ['tag-1'], removeTagRemIds: ['tag-2'] });
+  });
+
+  it('should reject empty tag updates', () => {
+    expect(() => UpdateTagsSchema.parse({ remId: 'note' })).toThrow(
+      'remnote_update_tags requires addTagRemIds or removeTagRemIds'
+    );
   });
 });
 

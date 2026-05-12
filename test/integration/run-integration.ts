@@ -196,11 +196,6 @@ async function ensureIntegrationParentNote(
     const selected = exactSearchMatches[0];
     state.integrationParentRemId = selected.remId as string;
     state.integrationParentTitle = selected.title as string;
-    // Ensure deterministic future lookups via dedicated anchor tag.
-    await client.callTool('remnote_update_note', {
-      remId: selected.remId as string,
-      addTags: [INTEGRATION_PARENT_TAG],
-    });
     return {
       status: 'reused',
       strategy: 'search',

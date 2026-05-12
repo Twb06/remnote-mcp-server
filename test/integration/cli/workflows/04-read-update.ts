@@ -90,6 +90,7 @@ export async function readUpdateWorkflow(
   const acceptWriteOperations = state.acceptWriteOperations ?? true;
   const acceptReplaceOperation = acceptWriteOperations && (state.acceptReplaceOperation ?? false);
   const tagVerificationName = `cli-test-added-${ctx.runId.replace(/[^a-zA-Z0-9]/g, '-')}`;
+  let tagVerificationRemId: string | undefined;
 
   function assertTagsInclude(
     note: Record<string, unknown>,
@@ -243,7 +244,7 @@ export async function readUpdateWorkflow(
     }
   }
 
-  // Step 3: Update note A — append content (or validate write gate rejection)
+  // Step 3: Update note A — insert content (or validate write gate rejection)
   {
     const start = Date.now();
     try {
@@ -252,32 +253,36 @@ export async function readUpdateWorkflow(
           'Appended by CLI integration test',
           async (contentPath) =>
             (await ctx.cli.runExpectSuccess([
-              'update',
+              'insert-children',
               state.noteAId as string,
-              '--append-file',
+              '--content-file',
               contentPath,
+              '--position',
+              'last',
             ])) as Record<string, unknown>
         )) as Record<string, unknown>;
         assertHasField(result, 'remIds', 'update note A');
         steps.push({
-          label: 'Update note A (append)',
+          label: 'Update note A (insert)',
           passed: true,
           durationMs: Date.now() - start,
         });
       } else {
         const result = await ctx.cli.runExpectError([
-          'update',
+          'insert-children',
           state.noteAId as string,
-          '--append',
+          '--content',
           'Should be blocked',
+          '--position',
+          'last',
         ]);
         assertContains(
           result.stderr,
           'Write operations are disabled by bridge settings',
-          'append should be blocked when write operations are disabled'
+          'insert should be blocked when write operations are disabled'
         );
         steps.push({
-          label: 'Update note A (append) blocked by write gate',
+          label: 'Update note A (insert) blocked by write gate',
           passed: true,
           durationMs: Date.now() - start,
         });
@@ -285,8 +290,8 @@ export async function readUpdateWorkflow(
     } catch (e) {
       steps.push({
         label: acceptWriteOperations
-          ? 'Update note A (append)'
-          : 'Update note A (append) blocked by write gate',
+          ? 'Update note A (insert)'
+          : 'Update note A (insert) blocked by write gate',
         passed: false,
         durationMs: Date.now() - start,
         error: (e as Error).message,
@@ -299,15 +304,26 @@ export async function readUpdateWorkflow(
     const start = Date.now();
     try {
       if (acceptWriteOperations) {
+        const tagResult = (await ctx.cli.runExpectSuccess([
+          'create',
+          '--title',
+          tagVerificationName,
+          '--parent-id',
+          state.integrationParentRemId as string,
+        ])) as Record<string, unknown>;
+        assertHasField(tagResult, 'remIds', 'create tag rem');
+        assertTruthy(Array.isArray(tagResult.remIds), 'create tag remIds should be array');
+        tagVerificationRemId = (tagResult.remIds as string[])[0];
+
         const expectedTargetRemId = await resolveExpectedSearchByTagTarget(
           ctx,
           state.noteBId as string
         );
         const result = (await ctx.cli.runExpectSuccess([
-          'update',
+          'update-tags',
           state.noteBId as string,
-          '--add-tags',
-          tagVerificationName,
+          '--add-tag-ids',
+          tagVerificationRemId,
         ])) as Record<string, unknown>;
         assertHasField(result, 'remIds', 'update note B add tags');
         const taggedSearch = (await ctx.cli.runExpectSuccess([
@@ -340,10 +356,10 @@ export async function readUpdateWorkflow(
         });
       } else {
         const result = await ctx.cli.runExpectError([
-          'update',
+          'update-tags',
           state.noteBId as string,
-          '--add-tags',
-          tagVerificationName,
+          '--add-tag-ids',
+          'blocked-tag-id',
         ]);
         assertContains(
           result.stderr,
@@ -373,15 +389,16 @@ export async function readUpdateWorkflow(
     const start = Date.now();
     try {
       if (acceptWriteOperations) {
+        assertTruthy(tagVerificationRemId, 'tag Rem ID should be available for remove tag');
         const expectedTargetRemId = await resolveExpectedSearchByTagTarget(
           ctx,
           state.noteBId as string
         );
         const result = (await ctx.cli.runExpectSuccess([
-          'update',
+          'update-tags',
           state.noteBId as string,
-          '--remove-tags',
-          tagVerificationName,
+          '--remove-tag-ids',
+          tagVerificationRemId as string,
         ])) as Record<string, unknown>;
         assertHasField(result, 'remIds', 'update note B remove tags');
         const taggedSearch = (await ctx.cli.runExpectSuccess([
@@ -414,10 +431,10 @@ export async function readUpdateWorkflow(
         });
       } else {
         const result = await ctx.cli.runExpectError([
-          'update',
+          'update-tags',
           state.noteBId as string,
-          '--remove-tags',
-          tagVerificationName,
+          '--remove-tag-ids',
+          'blocked-tag-id',
         ]);
         assertContains(
           result.stderr,
@@ -452,9 +469,9 @@ export async function readUpdateWorkflow(
           replaceBody,
           async (contentPath) =>
             (await ctx.cli.runExpectSuccess([
-              'update',
+              'replace-children',
               state.noteAId as string,
-              '--replace-file',
+              '--content-file',
               contentPath,
             ])) as Record<string, unknown>
         )) as Record<string, unknown>;
@@ -479,9 +496,9 @@ export async function readUpdateWorkflow(
         });
       } else if (acceptWriteOperations) {
         const result = await ctx.cli.runExpectError([
-          'update',
+          'replace-children',
           state.noteAId as string,
-          '--replace',
+          '--content',
           'Should be blocked',
         ]);
         assertContains(
@@ -496,9 +513,9 @@ export async function readUpdateWorkflow(
         });
       } else {
         const result = await ctx.cli.runExpectError([
-          'update',
+          'replace-children',
           state.noteAId as string,
-          '--replace',
+          '--content',
           'Should be blocked',
         ]);
         assertContains(
@@ -531,9 +548,9 @@ export async function readUpdateWorkflow(
     const start = Date.now();
     try {
       const result = (await ctx.cli.runExpectSuccess([
-        'update',
+        'replace-children',
         state.noteAId as string,
-        '--replace',
+        '--content',
         '',
       ])) as Record<string, unknown>;
       assertHasField(result, 'remIds', 'empty replace note A');
@@ -597,10 +614,12 @@ export async function readUpdateWorkflow(
         markdownTree,
         async (contentPath) =>
           (await ctx.cli.runExpectSuccess([
-            'update',
+            'insert-children',
             state.noteAId as string,
-            '--append-file',
+            '--content-file',
             contentPath,
+            '--position',
+            'last',
           ])) as Record<string, unknown>
       )) as Record<string, unknown>;
       assertHasField(result, 'remIds', 'update note A markdown tree');
@@ -631,9 +650,9 @@ export async function readUpdateWorkflow(
         markdownTree,
         async (contentPath) =>
           (await ctx.cli.runExpectSuccess([
-            'update',
+            'replace-children',
             state.noteAId as string,
-            '--replace-file',
+            '--content-file',
             contentPath,
           ])) as Record<string, unknown>
       )) as Record<string, unknown>;

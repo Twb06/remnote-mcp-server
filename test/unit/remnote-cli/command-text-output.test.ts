@@ -41,10 +41,13 @@ describe('command text output', () => {
   });
 
   it('formats update results with and without created Rems', async () => {
-    const withRems = await runTextCommand(['update', 'rem-1', '--append', 'Body'], {
-      remIds: ['child-1'],
-      titles: ['Child'],
-    });
+    const withRems = await runTextCommand(
+      ['insert-children', 'rem-1', '--content', 'Body', '--position', 'last'],
+      {
+        remIds: ['child-1'],
+        titles: ['Child'],
+      }
+    );
     expect(withRems.output).toBe('Updated/Created: Child (ID: child-1)');
     withRems.executeSpy.mockRestore();
 
@@ -53,6 +56,32 @@ describe('command text output', () => {
     });
     expect(withoutRems.output).toBe('Updated note rem-1 (no Rems created)');
     withoutRems.executeSpy.mockRestore();
+  });
+
+  it('formats split write results with created Rems', async () => {
+    const insertResult = await runTextCommand(
+      ['insert-children', 'rem-1', '--content', 'Body', '--position', 'first'],
+      {
+        remIds: ['child-1'],
+        titles: ['Child'],
+      }
+    );
+    expect(insertResult.output).toBe('Updated/Created: Child (ID: child-1)');
+    insertResult.executeSpy.mockRestore();
+
+    const replaceResult = await runTextCommand(['replace-children', 'rem-1', '--content', 'Body'], {
+      remIds: ['child-1'],
+      titles: ['Child'],
+    });
+    expect(replaceResult.output).toBe('Updated/Created: Child (ID: child-1)');
+    replaceResult.executeSpy.mockRestore();
+
+    const tagResult = await runTextCommand(['update-tags', 'rem-1', '--add-tag-ids', 'tag-1'], {
+      remIds: ['rem-1'],
+      titles: [''],
+    });
+    expect(tagResult.output).toBe('Updated/Created: (untitled) (ID: rem-1)');
+    tagResult.executeSpy.mockRestore();
   });
 
   it('formats journal results with and without created Rems', async () => {

@@ -6,6 +6,9 @@ import { SearchSchema } from '../schemas/remnote-schemas.js';
 import { SearchByTagSchema } from '../schemas/remnote-schemas.js';
 import { ReadNoteSchema } from '../schemas/remnote-schemas.js';
 import { UpdateNoteSchema } from '../schemas/remnote-schemas.js';
+import { InsertChildrenSchema } from '../schemas/remnote-schemas.js';
+import { ReplaceChildrenSchema } from '../schemas/remnote-schemas.js';
+import { UpdateTagsSchema } from '../schemas/remnote-schemas.js';
 import { AppendJournalSchema } from '../schemas/remnote-schemas.js';
 import { ReadTableSchema } from '../schemas/remnote-schemas.js';
 import { checkVersionCompatibility } from '../version-compat.js';
@@ -382,26 +385,15 @@ export const READ_NOTE_TOOL = {
 
 export const UPDATE_NOTE_TOOL = {
   name: 'remnote_update_note',
-  description:
-    'Update an existing note in RemNote (change title, append content, replace content, or modify tags). Recommended preflight once per session: remnote_status. appendContent and replaceContent are mutually exclusive. replaceContent may be blocked by bridge policy.',
+  description: 'Update note metadata in RemNote. Use this tool for title changes only.',
   inputSchema: {
     type: 'object' as const,
     properties: {
       remId: { type: 'string', description: 'The Rem ID to update' },
       title: { type: 'string', description: 'New title' },
-      appendContent: {
-        type: 'string',
-        description: 'Content to append as children (markdown supported)',
-      },
-      replaceContent: {
-        type: 'string',
-        description:
-          'Content to replace direct children (markdown supported, empty string clears children)',
-      },
-      addTags: { type: 'array', items: { type: 'string' }, description: 'Tags to add' },
-      removeTags: { type: 'array', items: { type: 'string' }, description: 'Tags to remove' },
     },
-    required: ['remId'],
+    required: ['remId', 'title'],
+    additionalProperties: false,
   },
   outputSchema: {
     type: 'object' as const,
@@ -419,6 +411,82 @@ export const UPDATE_NOTE_TOOL = {
     },
     required: ['remIds', 'titles'],
   },
+};
+
+export const INSERT_CHILDREN_TOOL = {
+  name: 'remnote_insert_children',
+  description:
+    'Insert new child Rems under a parent at a deterministic position without replacing existing children. Use this for tag description nodes and hierarchy maintenance.',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {
+      parentRemId: {
+        type: 'string',
+        description: 'Parent Rem ID that will receive the new children',
+      },
+      content: { type: 'string', description: 'Markdown content to insert as child Rems' },
+      position: {
+        type: 'string',
+        enum: ['first', 'last', 'before', 'after'],
+        description: 'Where to insert the new child Rems',
+      },
+      siblingRemId: {
+        type: 'string',
+        description: 'Sibling Rem ID required when position is before or after',
+      },
+    },
+    required: ['parentRemId', 'content', 'position'],
+    additionalProperties: false,
+  },
+  outputSchema: UPDATE_NOTE_TOOL.outputSchema,
+};
+
+export const REPLACE_CHILDREN_TOOL = {
+  name: 'remnote_replace_children',
+  description:
+    'Replace all direct children under a parent Rem. This is destructive because existing child Rem IDs are removed and may be blocked by bridge policy.',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {
+      parentRemId: {
+        type: 'string',
+        description: 'Parent Rem ID whose direct children will be replaced',
+      },
+      content: {
+        type: 'string',
+        description:
+          'Markdown content to use as replacement children; empty string clears all direct children',
+      },
+    },
+    required: ['parentRemId', 'content'],
+    additionalProperties: false,
+  },
+  outputSchema: UPDATE_NOTE_TOOL.outputSchema,
+};
+
+export const UPDATE_TAGS_TOOL = {
+  name: 'remnote_update_tags',
+  description:
+    'Add or remove tags from a note by exact tag Rem IDs. Use this for production tagging workflows to avoid ambiguous name lookup.',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {
+      remId: { type: 'string', description: 'The Rem ID whose tags should change' },
+      addTagRemIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Exact tag Rem IDs to add',
+      },
+      removeTagRemIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Exact tag Rem IDs to remove',
+      },
+    },
+    required: ['remId'],
+    additionalProperties: false,
+  },
+  outputSchema: UPDATE_NOTE_TOOL.outputSchema,
 };
 
 export const APPEND_JOURNAL_TOOL = {
@@ -474,11 +542,11 @@ export const STATUS_TOOL = {
       },
       acceptWriteOperations: {
         type: 'boolean',
-        description: 'Whether bridge allows write actions (create/update/journal)',
+        description: 'Whether bridge allows write actions',
       },
       acceptReplaceOperation: {
         type: 'boolean',
-        description: 'Whether bridge allows update replaceContent operations',
+        description: 'Whether bridge allows remnote_replace_children operations',
       },
       message: {
         type: 'string',
@@ -702,6 +770,24 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           break;
         }
 
+        case 'remnote_insert_children': {
+          const args = InsertChildrenSchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('insert_children', args);
+          break;
+        }
+
+        case 'remnote_replace_children': {
+          const args = ReplaceChildrenSchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('replace_children', args);
+          break;
+        }
+
+        case 'remnote_update_tags': {
+          const args = UpdateTagsSchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('update_tags', args);
+          break;
+        }
+
         case 'remnote_append_journal': {
           const args = AppendJournalSchema.parse(request.params.arguments);
           result = await wsServer.sendRequest('append_journal', args);
@@ -736,7 +822,9 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
               'Need to traverse a specific branch? Use remnote_read_note on a chosen remId with includeContent="structured", depth=1, childLimit=500, then recurse by child remIds.',
               'Need tabular/structured data from an Advanced Table? Use remnote_read_table with either tableTitle or tableRemId. Use propertyFilter to limit columns for large tables.',
               'Need a human-readable summary? Switch to includeContent="markdown" on search/read results.',
-              'Need to modify content? Check remnote_status: if acceptWriteOperations is false, stop; if using replaceContent, ensure acceptReplaceOperation is true.',
+              'Need to insert children? Use remnote_insert_children with an explicit position.',
+              'Need to replace children? Check remnote_status first; remnote_replace_children requires acceptReplaceOperation=true.',
+              'Need to update tags? Use remnote_update_tags with exact tag Rem IDs.',
             ],
             navigationPresets: {
               orientation: NAVIGATION_PRESET,
@@ -753,9 +841,10 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
               statusTool: 'remnote_status',
               requiredFields: ['acceptWriteOperations', 'acceptReplaceOperation'],
               guidance: [
-                'Create/update/journal require acceptWriteOperations=true.',
-                'replaceContent updates require acceptReplaceOperation=true.',
-                'appendContent and replaceContent cannot be used in the same remnote_update_note call.',
+                'Create/update/insert/replace/tag/journal writes require acceptWriteOperations=true.',
+                'remnote_replace_children requires acceptReplaceOperation=true.',
+                'remnote_insert_children preserves existing child Rem IDs; remnote_replace_children removes them.',
+                'remnote_update_tags uses exact tag Rem IDs and does not resolve names.',
               ],
             },
             currentStatus,
@@ -822,6 +911,9 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
         SEARCH_BY_TAG_TOOL,
         READ_NOTE_TOOL,
         UPDATE_NOTE_TOOL,
+        INSERT_CHILDREN_TOOL,
+        REPLACE_CHILDREN_TOOL,
+        UPDATE_TAGS_TOOL,
         APPEND_JOURNAL_TOOL,
         PLAYBOOK_TOOL,
         STATUS_TOOL,

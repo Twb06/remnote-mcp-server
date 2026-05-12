@@ -8,7 +8,6 @@ import {
   readContentFileOrStdin,
   resolveJournalContent,
   resolveOptionalInlineOrFileContent,
-  resolveUpdateContent,
 } from '../../../src/remnote-cli/commands/content-input.js';
 
 const tempDirs: string[] = [];
@@ -95,31 +94,6 @@ with "quotes" and \`ticks\``;
       fileFlag: '--content-file',
     });
     expect(resolved).toBe('- line 1\n- line 2');
-  });
-
-  it('resolves update replacement content from --replace-file', async () => {
-    const path = await createTempFile('replace body');
-    await expect(
-      resolveUpdateContent({
-        appendText: undefined,
-        appendFile: undefined,
-        replaceText: undefined,
-        replaceFile: path,
-      })
-    ).resolves.toEqual({ appendContent: undefined, replaceContent: 'replace body' });
-  });
-
-  it('rejects combined append and replace content sources for update', async () => {
-    await expect(
-      resolveUpdateContent({
-        appendText: 'append body',
-        appendFile: undefined,
-        replaceText: 'replace body',
-        replaceFile: undefined,
-      })
-    ).rejects.toThrow(
-      'Cannot combine append and replace content options (--append/--append-file with --replace/--replace-file)'
-    );
   });
 
   it('accepts positional journal content for backward compatibility', async () => {

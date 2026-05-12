@@ -108,34 +108,33 @@ export async function errorCasesWorkflow(
     }
   }
 
-  // Step 4: Update append+replace conflict returns validation error
+  // Step 4: Old mixed update fields return validation error
   {
     const start = Date.now();
     try {
       const errorText = await ctx.client.callToolExpectError('remnote_update_note', {
         remId: 'rem-123',
         appendContent: 'append',
-        replaceContent: 'replace',
       });
       assertTruthy(
-        errorText.includes('appendContent and replaceContent cannot be used together'),
-        'should reject append+replace conflict'
+        errorText.includes('Unrecognized') || errorText.includes('appendContent'),
+        'should reject old mixed update fields'
       );
       steps.push({
-        label: 'Update append+replace conflict returns validation error',
+        label: 'Old mixed update fields return validation error',
         passed: true,
         durationMs: Date.now() - start,
       });
     } catch (e) {
       if (e instanceof ToolError) {
         steps.push({
-          label: 'Update append+replace conflict returns validation error',
+          label: 'Old mixed update fields return validation error',
           passed: true,
           durationMs: Date.now() - start,
         });
       } else {
         steps.push({
-          label: 'Update append+replace conflict returns validation error',
+          label: 'Old mixed update fields return validation error',
           passed: false,
           durationMs: Date.now() - start,
           error: (e as Error).message,

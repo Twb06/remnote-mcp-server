@@ -11,6 +11,9 @@ import {
   SEARCH_BY_TAG_TOOL,
   READ_NOTE_TOOL,
   UPDATE_NOTE_TOOL,
+  INSERT_CHILDREN_TOOL,
+  REPLACE_CHILDREN_TOOL,
+  UPDATE_TAGS_TOOL,
   APPEND_JOURNAL_TOOL,
   PLAYBOOK_TOOL,
   STATUS_TOOL,
@@ -24,7 +27,9 @@ import {
   validSearchByTagInput,
   validReadNoteInput,
   validUpdateNoteInput,
-  validUpdateReplaceInput,
+  validInsertChildrenInput,
+  validReplaceChildrenInput,
+  validUpdateTagsInput,
   validAppendJournalInput,
   validReadTableInput,
   sampleMutatingResult,
@@ -183,11 +188,21 @@ describe('Tool Definitions', () => {
 
   it('should have required remId field for UPDATE_NOTE_TOOL', () => {
     expect(UPDATE_NOTE_TOOL.inputSchema.required).toContain('remId');
+    expect(UPDATE_NOTE_TOOL.inputSchema.required).toContain('title');
   });
 
-  it('should advertise replaceContent in UPDATE_NOTE_TOOL input schema', () => {
+  it('should not advertise old mixed update fields in UPDATE_NOTE_TOOL input schema', () => {
     const properties = UPDATE_NOTE_TOOL.inputSchema.properties as Record<string, unknown>;
-    expect(properties.replaceContent).toBeDefined();
+    expect(properties.appendContent).toBeUndefined();
+    expect(properties.replaceContent).toBeUndefined();
+    expect(properties.addTags).toBeUndefined();
+    expect(properties.removeTags).toBeUndefined();
+  });
+
+  it('should expose split write tools', () => {
+    expect(INSERT_CHILDREN_TOOL.name).toBe('remnote_insert_children');
+    expect(REPLACE_CHILDREN_TOOL.name).toBe('remnote_replace_children');
+    expect(UPDATE_TAGS_TOOL.name).toBe('remnote_update_tags');
   });
 
   it('should have plural remIds and titles in UPDATE_NOTE_TOOL output schema', () => {
@@ -265,14 +280,14 @@ describe('Tool Registration', () => {
     expect(mockServer.hasHandler(ListToolsRequestSchema)).toBe(true);
   });
 
-  it('should return all 9 tools in list', async () => {
+  it('should return all 12 tools in list', async () => {
     registerAllTools(mockServer as never, mockWsServer as never, createMockLogger());
 
     const result = (await mockServer.callHandler(ListToolsRequestSchema, {})) as {
       tools: unknown[];
     };
 
-    expect(result.tools).toHaveLength(9);
+    expect(result.tools).toHaveLength(12);
   });
 
   it('should include all tool names in list', async () => {
@@ -288,6 +303,9 @@ describe('Tool Registration', () => {
     expect(names).toContain('remnote_search_by_tag');
     expect(names).toContain('remnote_read_note');
     expect(names).toContain('remnote_update_note');
+    expect(names).toContain('remnote_insert_children');
+    expect(names).toContain('remnote_replace_children');
+    expect(names).toContain('remnote_update_tags');
     expect(names).toContain('remnote_append_journal');
     expect(names).toContain('remnote_get_playbook');
     expect(names).toContain('remnote_status');
@@ -549,22 +567,6 @@ describe('Tool Handlers - update_note', () => {
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('update_note', validUpdateNoteInput);
   });
 
-  it('should allow update with only remId', async () => {
-    await mockServer.callHandler(CallToolRequestSchema, {
-      params: { name: 'remnote_update_note', arguments: { remId: 'rem-456' } },
-    });
-
-    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('update_note', { remId: 'rem-456' });
-  });
-
-  it('should pass through replaceContent updates', async () => {
-    await mockServer.callHandler(CallToolRequestSchema, {
-      params: { name: 'remnote_update_note', arguments: validUpdateReplaceInput },
-    });
-
-    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('update_note', validUpdateReplaceInput);
-  });
-
   it('should return formatted JSON result with plural fields', async () => {
     const result = (await mockServer.callHandler(CallToolRequestSchema, {
       params: { name: 'remnote_update_note', arguments: validUpdateNoteInput },
@@ -573,7 +575,7 @@ describe('Tool Handlers - update_note', () => {
     expectStructuredToolResult(result, sampleMutatingResult);
   });
 
-  it('should reject update requests that include both appendContent and replaceContent', async () => {
+  it('should reject old mixed update fields', async () => {
     const result = (await mockServer.callHandler(CallToolRequestSchema, {
       params: {
         name: 'remnote_update_note',
@@ -586,9 +588,62 @@ describe('Tool Handlers - update_note', () => {
     })) as { isError: boolean; content: { text: string }[] };
 
     expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain(
-      'appendContent and replaceContent cannot be used together'
+    expect(result.content[0].text).toContain('Unrecognized');
+  });
+});
+
+describe('Tool Handlers - split write tools', () => {
+  let mockServer: MockMCPServer;
+  let mockWsServer: { sendRequest: ReturnType<typeof vi.fn> };
+
+  beforeEach(() => {
+    mockServer = new MockMCPServer();
+    mockWsServer = {
+      sendRequest: vi.fn().mockResolvedValue(sampleMutatingResult),
+    };
+    registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never);
+  });
+
+  it('should call wsServer.sendRequest with insert_children action', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_insert_children', arguments: validInsertChildrenInput },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith(
+      'insert_children',
+      validInsertChildrenInput
     );
+  });
+
+  it('should call wsServer.sendRequest with replace_children action', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_replace_children', arguments: validReplaceChildrenInput },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith(
+      'replace_children',
+      validReplaceChildrenInput
+    );
+  });
+
+  it('should call wsServer.sendRequest with update_tags action', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_update_tags', arguments: validUpdateTagsInput },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('update_tags', validUpdateTagsInput);
+  });
+
+  it('should reject insert before without siblingRemId', async () => {
+    const result = (await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_insert_children',
+        arguments: { parentRemId: 'parent', content: 'Inserted', position: 'before' },
+      },
+    })) as { isError: boolean; content: { text: string }[] };
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('siblingRemId is required when position is before');
   });
 });
 

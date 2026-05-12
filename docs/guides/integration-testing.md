@@ -159,8 +159,8 @@ custom lightweight assertions rather than Vitest to stay independent from the mo
 Tag coverage:
 
 - The shared live suites assert `tags` on plain `remnote_search` and `remnote_read_note` for notes created with tags.
-- They also verify `remnote_update_note` tag add/remove flows through both `remnote_search_by_tag` and direct
-  `remnote_read_note` readback.
+- They also verify exact-ID tag add/remove flows through both `remnote_search_by_tag` and direct `remnote_read_note`
+  readback.
 
 ## Read Table Configuration
 
