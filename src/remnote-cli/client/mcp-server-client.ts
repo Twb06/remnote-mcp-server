@@ -1,6 +1,10 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { createRequire } from 'node:module';
 import { checkVersionCompatibility } from '../version-compat.js';
+
+const require = createRequire(import.meta.url);
+const packageJson = require('../../../package.json') as { version: string };
 
 const ACTION_TO_TOOL: Record<string, string> = {
   create_note: 'remnote_create_note',
@@ -27,7 +31,7 @@ export class McpServerClient {
   private client: Client | null = null;
   private transport: StreamableHTTPClientTransport | null = null;
 
-  constructor(mcpUrl: string, clientInfo = { name: 'remnote-cli', version: '0.14.1' }) {
+  constructor(mcpUrl: string, clientInfo = { name: 'remnote-cli', version: packageJson.version }) {
     this.mcpUrl = normalizeMcpUrl(mcpUrl);
     this.clientInfo = clientInfo;
   }

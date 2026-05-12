@@ -108,7 +108,7 @@ remnote-mcp-server
 
 Expected output:
 ```
-RemNote MCP Server v0.14.1 listening { wsPort: 3002, httpPort: 3001 }
+RemNote MCP Server v<version> listening { wsPort: 3002, httpPort: 3001 }
 ```
 
 ### Background Daemon

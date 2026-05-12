@@ -1,5 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createRequire } from 'node:module';
 import { McpServerClient } from '../../../src/remnote-cli/client/mcp-server-client.js';
+
+const require = createRequire(import.meta.url);
+const packageJson = require('../../../package.json') as { version: string };
+const SAME_LINE_SERVER_VERSION = packageJson.version;
+const MISMATCH_SERVER_VERSION = packageJson.version.replace(
+  /^(\d+)\.(\d+)\.(\d+)$/,
+  (_version, major: string, minor: string) => `${major}.${Number(minor) + 1}.0`
+);
 
 const mocks = vi.hoisted(() => ({
   connect: vi.fn(),
@@ -54,29 +63,36 @@ describe('McpServerClient', () => {
 
   it('parses JSON text content when structured content is absent', async () => {
     mocks.callTool.mockResolvedValue({
-      content: [{ type: 'text', text: '{"connected":true,"serverVersion":"0.14.1"}' }],
+      content: [
+        {
+          type: 'text',
+          text: `{"connected":true,"serverVersion":"${SAME_LINE_SERVER_VERSION}"}`,
+        },
+      ],
     });
 
     const client = new McpServerClient('http://127.0.0.1:3001/mcp');
     await expect(client.execute('get_status', {})).resolves.toEqual({
       connected: true,
-      serverVersion: '0.14.1',
-      cliVersion: '0.14.1',
+      serverVersion: SAME_LINE_SERVER_VERSION,
+      cliVersion: packageJson.version,
     });
   });
 
   it('adds a status warning when CLI and MCP server versions mismatch', async () => {
     mocks.callTool.mockResolvedValue({
-      structuredContent: { connected: true, serverVersion: '0.15.0' },
-      content: [{ type: 'text', text: '{"connected":true,"serverVersion":"0.15.0"}' }],
+      structuredContent: { connected: true, serverVersion: MISMATCH_SERVER_VERSION },
+      content: [
+        { type: 'text', text: `{"connected":true,"serverVersion":"${MISMATCH_SERVER_VERSION}"}` },
+      ],
     });
 
     const client = new McpServerClient('http://127.0.0.1:3001/mcp');
     await expect(client.execute('get_status', {})).resolves.toMatchObject({
       connected: true,
-      serverVersion: '0.15.0',
-      cliVersion: '0.14.1',
-      version_warning: expect.stringContaining('MCP server v0.15.0'),
+      serverVersion: MISMATCH_SERVER_VERSION,
+      cliVersion: packageJson.version,
+      version_warning: expect.stringContaining(`MCP server v${MISMATCH_SERVER_VERSION}`),
     });
   });
 

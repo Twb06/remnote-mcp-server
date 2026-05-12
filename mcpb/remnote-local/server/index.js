@@ -2,6 +2,7 @@
 
 import process from 'node:process';
 import { realpathSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { fileURLToPath, URL, pathToFileURL } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
@@ -10,7 +11,9 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 export const DEFAULT_MCP_URL = 'http://127.0.0.1:3001/mcp';
-export const SERVER_INFO = { name: 'remnote-mcp-stdio', version: '0.14.1' };
+const require = createRequire(import.meta.url);
+const packageJson = require('../package.json');
+export const SERVER_INFO = { name: 'remnote-mcp-stdio', version: packageJson.version };
 
 export const FALLBACK_TOOLS = [
   {

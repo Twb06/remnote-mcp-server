@@ -6,6 +6,7 @@ import {
   DEFAULT_MCP_URL,
   FALLBACK_TOOLS,
   RemNoteLocalProxy,
+  SERVER_INFO,
   formatUsage,
   handleUtilityCommand,
   isInteractiveTerminalInvocation,
@@ -14,6 +15,8 @@ import {
 } from '../../../mcpb/remnote-local/server/index.js';
 
 describe('RemNoteLocalProxy', () => {
+  const REMOTE_SERVER_VERSION = '1.2.3';
+
   it('normalizes MCP URLs to the /mcp endpoint', () => {
     expect(normalizeMcpUrl('http://127.0.0.1:3001')).toBe(DEFAULT_MCP_URL);
     expect(normalizeMcpUrl('http://127.0.0.1:3001/')).toBe(DEFAULT_MCP_URL);
@@ -33,7 +36,7 @@ describe('RemNoteLocalProxy', () => {
 
     expect(createClient).toHaveBeenCalledWith('http://localhost:4000/mcp', {
       name: 'remnote-mcp-stdio',
-      version: '0.14.1',
+      version: SERVER_INFO.version,
     });
     expect(client.connect).toHaveBeenCalledWith(transport);
     expect(client.listTools).toHaveBeenCalled();
@@ -50,8 +53,10 @@ describe('RemNoteLocalProxy', () => {
 
   it('forwards tool calls and preserves the remote MCP result', async () => {
     const callToolResult = {
-      structuredContent: { connected: true, serverVersion: '0.14.1' },
-      content: [{ type: 'text', text: '{"connected":true,"serverVersion":"0.14.1"}' }],
+      structuredContent: { connected: true, serverVersion: REMOTE_SERVER_VERSION },
+      content: [
+        { type: 'text', text: `{"connected":true,"serverVersion":"${REMOTE_SERVER_VERSION}"}` },
+      ],
     };
     const { createClient, client } = createMockClient({ callToolResult });
     const proxy = new RemNoteLocalProxy({ createClient });
@@ -83,7 +88,7 @@ describe('RemNoteLocalProxy', () => {
     const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
     expect(handleUtilityCommand(['node', 'remnote-mcp-stdio', '--version'])).toBe(true);
-    expect(stdout).toHaveBeenCalledWith('0.14.1\n');
+    expect(stdout).toHaveBeenCalledWith(`${SERVER_INFO.version}\n`);
     expect(handleUtilityCommand(['node', 'remnote-mcp-stdio', '-V'])).toBe(true);
 
     stdout.mockRestore();

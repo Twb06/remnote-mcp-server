@@ -22,6 +22,9 @@ async function runTextCommand(
 }
 
 describe('command text output', () => {
+  const TEST_PLUGIN_VERSION = '1.2.3';
+  const TEST_CLI_VERSION = '1.2.3-test';
+
   it('formats create results with created Rem IDs', async () => {
     const { output, executeSpy } = await runTextCommand(['create', 'Inbox'], {
       remIds: ['rem-1', 'rem-2'],
@@ -100,13 +103,13 @@ describe('command text output', () => {
   it('formats status results with optional metadata', async () => {
     const { output, executeSpy } = await runTextCommand(['status'], {
       connected: true,
-      pluginVersion: '0.14.1',
-      cliVersion: '0.14.1-test',
+      pluginVersion: TEST_PLUGIN_VERSION,
+      cliVersion: TEST_CLI_VERSION,
       version_warning: 'minor versions differ',
     });
 
-    expect(output).toContain('Bridge: Connected (plugin v0.14.1)');
-    expect(output).toContain('CLI: v0.14.1-test');
+    expect(output).toContain(`Bridge: Connected (plugin v${TEST_PLUGIN_VERSION})`);
+    expect(output).toContain(`CLI: v${TEST_CLI_VERSION}`);
     expect(output).toContain('WARNING: minor versions differ');
     executeSpy.mockRestore();
   });
