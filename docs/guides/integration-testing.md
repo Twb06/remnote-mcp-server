@@ -28,8 +28,8 @@ RemNote's bridge surface does not expose delete operations, so cleanup stays man
 ## Prerequisites
 
 1. RemNote running with the RemNote Automation Bridge plugin installed
-2. MCP server available, either already running (`npm run dev`, `npm start`, or `remnote-mcp-server`) or started by
-   the agent wrapper
+2. MCP server available if using `run-integration-test.sh` directly. For the agent wrapper, port `3001` must be free so
+   it can start its own repo-local server.
 3. Bridge connected to the WebSocket server
 
 If the bridge is connected correctly, the server logs show the plugin connection and RemNote shows the Automation
@@ -48,17 +48,17 @@ Bridge as connected.
 # Non-interactive — skips confirmation
 ./run-integration-test.sh --yes
 
-# Agent-assisted — starts the server if needed, waits for bridge connection, then runs all suites
+# Agent-assisted — requires port 3001 to be free, starts its own server, waits for bridge connection, then runs all suites
 ./run-agent-integration-test.sh
 ./run-agent-integration-test.sh --yes
 ```
 
 `npm run test:integration` delegates to `./run-integration-test.sh`, so it also runs all suites by default.
 
-On macOS, the agent-assisted wrapper checks for a running launchd-managed `remnote-mcp-server` before probing server
-status. If launchd is running, the wrapper stops it, starts the freshly built repo-local server for the test run, and
-then restarts launchd during cleanup. This prevents integration tests from accidentally validating an older globally
-installed server.
+The agent-assisted wrapper does not control existing MCP server processes. It first checks whether the configured HTTP
+MCP port is already occupied (`3001` by default). If anything is listening there, including a macOS launchd-managed
+`remnote-mcp-server`, the wrapper exits with a clear error. Stop that server yourself, then rerun the wrapper. During
+cleanup, the wrapper stops only the repo-local server process it started for the current test run.
 
 ### Targeted Reruns
 

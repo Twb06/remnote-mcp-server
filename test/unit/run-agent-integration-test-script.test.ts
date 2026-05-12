@@ -3,6 +3,9 @@ import { mkdtempSync, chmodSync, cpSync, mkdirSync, writeFileSync, readFileSync 
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createServer, type Server } from 'node:net';
+
+let nextTestPort = 37001;
 
 function setupServerWrapperSandbox(
   runExitCode: number,
@@ -21,44 +24,13 @@ function setupServerWrapperSandbox(
   const commandLogPath = join(tempRoot, 'commands.log');
   const statusCountPath = join(tempRoot, 'status-count');
   const serverPidPath = join(tempRoot, 'server.pid');
-  const launchdRunningPath = join(tempRoot, 'launchd-running');
+  const httpPort = String(nextTestPort++);
 
   cpSync(resolve(process.cwd(), 'run-agent-integration-test.sh'), scriptPath);
   chmodSync(scriptPath, 0o755);
 
   writeFileSync(nodeCheckPath, '#!/usr/bin/env bash\nreturn 0\n');
   chmodSync(nodeCheckPath, 0o755);
-
-  writeFileSync(
-    join(distDir, 'index.js'),
-    `const fs = require('node:fs');
-const args = process.argv.slice(2);
-fs.appendFileSync(${JSON.stringify(commandLogPath)}, \`daemon:\${args.join(' ')}\\n\`);
-if (args[0] !== 'daemon') process.exit(1);
-if (args[1] === 'status') {
-  if (fs.existsSync(${JSON.stringify(launchdRunningPath)})) {
-    console.log('launchd=installed loaded=true running=true pid=2468');
-    process.exit(0);
-  }
-  console.log('launchd=installed loaded=false running=false');
-  process.exit(1);
-}
-if (args[1] === 'stop') {
-  fs.rmSync(${JSON.stringify(launchdRunningPath)}, { force: true });
-  console.log('launchd service stopped');
-  process.exit(0);
-}
-if (args[1] === 'start') {
-  fs.writeFileSync(${JSON.stringify(launchdRunningPath)}, 'running');
-  console.log('launchd service started');
-  process.exit(0);
-}
-process.exit(0);
-`
-  );
-
-  writeFileSync(join(binDir, 'uname'), '#!/usr/bin/env bash\necho Darwin\n');
-  chmodSync(join(binDir, 'uname'), 0o755);
 
   writeFileSync(
     integrationScriptPath,
@@ -123,27 +95,15 @@ exit 1
     scriptPath,
     commandLogPath,
     serverPidPath,
-    launchdRunningPath,
-    launchAgentPath: join(tempRoot, 'Library', 'LaunchAgents', 'com.remnote.mcp-server.plist'),
     env: {
       ...process.env,
       PATH: `${binDir}:${process.env.PATH ?? ''}`,
       HOME: tempRoot,
+      REMNOTE_HTTP_PORT: httpPort,
       REMNOTE_AGENT_POLL_INTERVAL: '0',
       REMNOTE_AGENT_WAIT_TIMEOUT: '5',
     },
   };
-}
-
-function installLaunchAgent(
-  sandbox: ReturnType<typeof setupServerWrapperSandbox>,
-  running: boolean
-) {
-  mkdirSync(join(sandbox.env.HOME, 'Library', 'LaunchAgents'), { recursive: true });
-  writeFileSync(sandbox.launchAgentPath, '<plist />');
-  if (running) {
-    writeFileSync(sandbox.launchdRunningPath, 'running');
-  }
 }
 
 function isProcessAlive(pid: number): boolean {
@@ -153,6 +113,26 @@ function isProcessAlive(pid: number): boolean {
   } catch {
     return false;
   }
+}
+
+async function listenOnLoopback(port: number): Promise<Server> {
+  const server = createServer();
+  return new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen({ host: '127.0.0.1', port }, () => resolve(server));
+  });
+}
+
+async function closeServer(server: Server): Promise<void> {
+  return new Promise((resolve, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
 }
 
 describe('run-agent-integration-test.sh', () => {
@@ -223,47 +203,24 @@ describe('run-agent-integration-test.sh', () => {
     expect(isProcessAlive(serverPid)).toBe(false);
   });
 
-  it('stops a running launchd-managed server before starting its local test server and restores it after', () => {
-    const sandbox = setupServerWrapperSandbox(0, ['connected', 'fail', 'connected']);
-    installLaunchAgent(sandbox, true);
-
-    const result = spawnSync('bash', [sandbox.scriptPath, '--yes'], {
-      cwd: resolve(process.cwd()),
-      encoding: 'utf-8',
-      env: sandbox.env,
-    });
-
-    const commandLog = readFileSync(sandbox.commandLogPath, 'utf-8');
-    const serverPid = Number.parseInt(readFileSync(sandbox.serverPidPath, 'utf-8').trim(), 10);
-
-    expect(result.status).toBe(0);
-    expect(commandLog).toContain('daemon:daemon status');
-    expect(commandLog).toContain('daemon:daemon stop');
-    expect(commandLog).toContain('run start -- --log-level warn --log-file');
-    expect(commandLog).toContain('integration:--yes --suite all');
-    expect(commandLog).toContain('daemon:daemon start');
-    expect(isProcessAlive(serverPid)).toBe(false);
-    expect(readFileSync(sandbox.launchdRunningPath, 'utf-8')).toBe('running');
-  });
-
-  it('leaves an installed but stopped launchd service stopped after integration tests', () => {
+  it('refuses to run when the MCP HTTP port is already occupied', async () => {
     const sandbox = setupServerWrapperSandbox(0);
-    installLaunchAgent(sandbox, false);
+    const occupiedPort = Number.parseInt(sandbox.env.REMNOTE_HTTP_PORT, 10);
+    const portServer = await listenOnLoopback(occupiedPort);
 
-    const result = spawnSync('bash', [sandbox.scriptPath, '--yes'], {
-      cwd: resolve(process.cwd()),
-      encoding: 'utf-8',
-      env: sandbox.env,
-    });
+    try {
+      const result = spawnSync('bash', [sandbox.scriptPath, '--yes'], {
+        cwd: resolve(process.cwd()),
+        encoding: 'utf-8',
+        env: sandbox.env,
+      });
 
-    const commandLog = readFileSync(sandbox.commandLogPath, 'utf-8');
-    const serverPid = Number.parseInt(readFileSync(sandbox.serverPidPath, 'utf-8').trim(), 10);
-
-    expect(result.status).toBe(0);
-    expect(commandLog).toContain('daemon:daemon status');
-    expect(commandLog).not.toContain('daemon:daemon stop');
-    expect(commandLog).not.toContain('daemon:daemon start');
-    expect(commandLog).toContain('run start -- --log-level warn --log-file');
-    expect(isProcessAlive(serverPid)).toBe(false);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('already in use');
+      expect(result.stderr).toContain(`${sandbox.env.REMNOTE_HTTP_PORT}`);
+      expect(() => readFileSync(sandbox.commandLogPath, 'utf-8')).toThrow();
+    } finally {
+      await closeServer(portServer);
+    }
   });
 });

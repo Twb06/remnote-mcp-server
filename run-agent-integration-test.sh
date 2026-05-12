@@ -8,6 +8,8 @@ source "${SCRIPT_DIR}/node-check.sh" || exit 1
 WAIT_TIMEOUT_SECONDS="${REMNOTE_AGENT_WAIT_TIMEOUT:-45}"
 POLL_INTERVAL_SECONDS="${REMNOTE_AGENT_POLL_INTERVAL:-2}"
 LOG_FILE="${REMNOTE_AGENT_SERVER_LOG:-${TMPDIR:-/tmp}/remnote-mcp-server-agent.log}"
+HTTP_HOST="${REMNOTE_HTTP_HOST:-127.0.0.1}"
+HTTP_PORT="${REMNOTE_HTTP_PORT:-3001}"
 
 suite="all"
 forwarded_args=()
@@ -17,16 +19,14 @@ deadline=$((SECONDS + WAIT_TIMEOUT_SECONDS))
 built_server=0
 test_exit_code=0
 cleanup_ran=0
-launchd_was_running=0
-must_start_local_server=0
 
 usage() {
   cat <<'EOF'
 Usage: ./run-agent-integration-test.sh [--yes] [--suite all|mcp|mcpb|cli]
 
-Agent-safe live integration wrapper. Builds once, starts remnote-mcp-server if
-needed, waits for a connected RemNote bridge, then runs the selected suite.
-Default suite is "all".
+Agent-safe live integration wrapper. Refuses to run if the MCP HTTP port is
+already occupied, then builds once, starts its own repo-local server, waits for
+a connected RemNote bridge, and runs the selected suite. Default suite is "all".
 
 Options:
   --yes                 Accepted for compatibility; agent wrapper is always non-interactive
@@ -86,51 +86,48 @@ status_output() {
   "${SCRIPT_DIR}/run-status-check.sh" 2>&1
 }
 
-daemon_cli() {
-  node "${SCRIPT_DIR}/dist/index.js" daemon "$@"
-}
-
-is_macos() {
-  [[ "$(uname -s)" == "Darwin" ]]
-}
-
-launchd_status_output() {
-  daemon_cli status 2>&1
-}
-
-stop_running_launchd_server() {
-  if ! is_macos; then
-    return
-  fi
-
-  if ! [[ -f "${HOME}/Library/LaunchAgents/com.remnote.mcp-server.plist" ]]; then
-    return
-  fi
-
-  local output
+assert_http_port_free() {
+  local check_output
   local status_code
+
   set +e
-  output="$(launchd_status_output)"
+  check_output="$(
+    REMNOTE_AGENT_HTTP_HOST="${HTTP_HOST}" REMNOTE_AGENT_HTTP_PORT="${HTTP_PORT}" node -e "
+const net = require('node:net');
+const host = process.env.REMNOTE_AGENT_HTTP_HOST || '127.0.0.1';
+const port = Number.parseInt(process.env.REMNOTE_AGENT_HTTP_PORT || '3001', 10);
+const server = net.createServer();
+server.once('error', (error) => {
+  console.log(error && error.code ? error.code : String(error));
+  process.exit(error && error.code === 'EADDRINUSE' ? 2 : 1);
+});
+server.listen({ host, port, exclusive: true }, () => {
+  server.close(() => process.exit(0));
+});
+"
+  )"
   status_code=$?
   set -e
 
-  if (( status_code == 0 )) && grep -q 'launchd=installed' <<<"${output}" && grep -q 'running=true' <<<"${output}"; then
-    echo "Detected running launchd-managed remnote-mcp-server. Stopping it before integration tests..."
-    daemon_cli stop
-    launchd_was_running=1
-    must_start_local_server=1
-  elif grep -q 'launchd=installed' <<<"${output}"; then
-    echo "launchd-managed remnote-mcp-server is installed but not running; leaving it stopped."
-  else
-    echo "Unable to determine launchd-managed remnote-mcp-server state; refusing to run integration tests against an unknown server." >&2
-    echo "${output}" >&2
-    exit 1
+  if (( status_code == 0 )); then
+    return
   fi
+
+  if (( status_code == 2 )); then
+    cat >&2 <<EOF
+Refusing to run agent-assisted integration tests because ${HTTP_HOST}:${HTTP_PORT} is already in use.
+Stop the running remnote-mcp-server process or macOS launchd service yourself, then rerun this wrapper.
+This wrapper only stops the repo-local server process that it starts for the current test run.
+EOF
+  else
+    echo "Unable to verify that ${HTTP_HOST}:${HTTP_PORT} is free: ${check_output}" >&2
+  fi
+  exit 1
 }
 
 start_server() {
   ensure_built_server
-  echo "MCP server not reachable. Starting a background server..."
+  echo "Starting repo-local MCP server for integration tests..."
   nohup npm run start -- --log-level warn --log-file "${LOG_FILE}" >"${LOG_FILE}" 2>&1 &
   server_pid="$!"
   started_server=1
@@ -150,26 +147,16 @@ cleanup() {
       wait "${server_pid}" 2>/dev/null || true
     fi
   fi
-
-  if (( launchd_was_running == 1 )); then
-    echo "Restarting launchd-managed remnote-mcp-server that was running before integration tests..."
-    daemon_cli start || true
-  fi
 }
 
 trap cleanup EXIT INT TERM
 
+assert_http_port_free
 ensure_built_server
-stop_running_launchd_server
+start_server
 
 while (( SECONDS < deadline )); do
   if output="$(status_output)"; then
-    if (( must_start_local_server == 1 )) && (( started_server == 0 )); then
-      echo "Waiting for stopped launchd-managed MCP server to become unreachable before starting repo-local server..."
-      sleep "${POLL_INTERVAL_SECONDS}"
-      continue
-    fi
-
     if grep -q '"connected": true' <<<"${output}"; then
       echo "Bridge connected. Running integration test suite: ${suite}"
       set +e
@@ -185,12 +172,7 @@ while (( SECONDS < deadline )); do
 
     echo "MCP server is up, but the RemNote bridge is not connected yet. Waiting..."
   else
-    if (( started_server == 0 )); then
-      start_server
-      must_start_local_server=0
-    else
-      echo "Waiting for MCP server to become reachable..."
-    fi
+    echo "Waiting for MCP server to become reachable..."
   fi
 
   sleep "${POLL_INTERVAL_SECONDS}"
