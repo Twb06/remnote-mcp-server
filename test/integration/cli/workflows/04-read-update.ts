@@ -308,8 +308,6 @@ export async function readUpdateWorkflow(
           'create',
           '--title',
           tagVerificationName,
-          '--parent-id',
-          state.integrationParentRemId as string,
         ])) as Record<string, unknown>;
         assertHasField(tagResult, 'remIds', 'create tag rem');
         assertTruthy(Array.isArray(tagResult.remIds), 'create tag remIds should be array');

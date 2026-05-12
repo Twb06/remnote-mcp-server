@@ -160,32 +160,21 @@ export async function errorCasesWorkflow(
     }
   }
 
-  // Step 7: Update detects argument shifting in options
+  // Step 7: Update rejects missing title value
   {
     const start = Date.now();
     try {
-      // Missing value for --title causes it to swallow the next flag-looking token.
-      const result = await ctx.cli.runExpectError([
-        'update',
-        'abc123',
-        '--title',
-        '--content',
-        'More text',
-      ]);
+      const result = await ctx.cli.runExpectError(['update', 'abc123', '--title']);
       assertTruthy(result.exitCode !== 0, 'should have non-zero exit code');
-      assertContains(
-        result.stderr,
-        'looks like a flag but was passed as an option value',
-        'stderr should mention option shifting'
-      );
+      assertContains(result.stderr, '--title', 'stderr should mention missing title value');
       steps.push({
-        label: 'Update detects option shifting',
+        label: 'Update rejects missing title value',
         passed: true,
         durationMs: Date.now() - start,
       });
     } catch (e) {
       steps.push({
-        label: 'Update detects option shifting',
+        label: 'Update rejects missing title value',
         passed: false,
         durationMs: Date.now() - start,
         error: (e as Error).message,

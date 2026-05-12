@@ -387,7 +387,6 @@ export async function readUpdateWorkflow(
     try {
       const tagResult = (await ctx.client.callTool('remnote_create_note', {
         title: tagVerificationName,
-        parentId: state.integrationParentRemId,
       })) as { remIds: string[] };
       assertHasField(tagResult, 'remIds', 'create tag rem should succeed');
       assertIsArray(tagResult.remIds, 'create tag remIds');
