@@ -13,6 +13,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   matching `remnote-cli` commands for ordered child insertion, destructive child replacement, and exact-ID tag mutation.
 - Add exact-ID tag assignment to `remnote_append_journal` and `remnote-cli journal --tag-ids`.
 - Add generated MCPB tool metadata checks so manifest and fallback tool drift fails routine quality verification.
+- Add a docs index and agent-agnostic manual prompt for testing the RemNote MCP note-create/update/tag flow.
 - Add `remnote-mcp-server daemon` lifecycle commands for detached background startup, status, logs, graceful shutdown,
   duplicate-start protection, stable log routing, and macOS `launchd` login persistence.
 - Add `~/.remnote-mcp-server/config.toml` for persistent server and daemon defaults, including ports, host, log levels,
