@@ -11,12 +11,15 @@ plugin](https://github.com/robert7/remnote-mcp-bridge).
 
 > If you run into any issues, please [report them here](https://github.com/robert7/remnote-mcp-server/issues).
 
-> **Connection issue? Check the RemNote plugin first.** The RemNote Marketplace may show multiple similarly named
-> `MCP Bridge` plugins. For this server, install the official **MCP/OpenClaw Automation Bridge** plugin by Robert
-> Spiegel and keep it on the same `0.x` minor version line as `remnote-mcp-server` (for example `0.14.x` with
-> `0.14.x`). Wrong plugin flavors or incompatible marketplace copies can connect briefly and then disconnect with a
-> `1008` compatibility message. See the related upstream marketplace confusion report:
-> [quentintou/remnote-mcp-bridge#8](https://github.com/quentintou/remnote-mcp-bridge/issues/8).
+> **Connection issue? Check the RemNote bridge plugin and server versions.** Use the official
+> **MCP/OpenClaw Automation Bridge** by Robert Spiegel in RemNote, and run a compatible `remnote-mcp-server` on the same
+> `0.x` minor line (for example, `0.15.x` with `0.15.x`). Wrong plugin flavors or mismatched versions can disconnect
+> with a `1008` compatibility message. If Marketplace and npm releases are temporarily out of sync, pin the matching
+> server package or run the matching bridge/server checkout from source. See the
+> [version compatibility guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/bridge-consumer-version-compatibility.md),
+> [plugin install guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/install-plugin-via-marketplace-beginner.md),
+> [local plugin guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/development-run-plugin-locally.md), and
+> [server installation guide](docs/guides/installation.md).
 
 ## What is This?
 
