@@ -721,6 +721,21 @@ export const PLAYBOOK_TOOL = {
   },
 };
 
+export const ALL_TOOLS = [
+  CREATE_NOTE_TOOL,
+  SEARCH_TOOL,
+  SEARCH_BY_TAG_TOOL,
+  READ_NOTE_TOOL,
+  UPDATE_NOTE_TOOL,
+  INSERT_CHILDREN_TOOL,
+  REPLACE_CHILDREN_TOOL,
+  UPDATE_TAGS_TOOL,
+  APPEND_JOURNAL_TOOL,
+  PLAYBOOK_TOOL,
+  STATUS_TOOL,
+  READ_TABLE_TOOL,
+] as const;
+
 export function registerAllTools(server: Server, wsServer: WebSocketServer, logger: Logger) {
   const toolLogger = logger.child({ context: 'tools' });
 
@@ -932,21 +947,6 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     toolLogger.debug('Listing available tools');
 
-    return {
-      tools: [
-        CREATE_NOTE_TOOL,
-        SEARCH_TOOL,
-        SEARCH_BY_TAG_TOOL,
-        READ_NOTE_TOOL,
-        UPDATE_NOTE_TOOL,
-        INSERT_CHILDREN_TOOL,
-        REPLACE_CHILDREN_TOOL,
-        UPDATE_TAGS_TOOL,
-        APPEND_JOURNAL_TOOL,
-        PLAYBOOK_TOOL,
-        STATUS_TOOL,
-        READ_TABLE_TOOL,
-      ],
-    };
+    return { tools: [...ALL_TOOLS] };
   });
 }

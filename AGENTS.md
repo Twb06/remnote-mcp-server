@@ -24,13 +24,16 @@ When changing action names, payloads, or response semantics, validate this repo 
 
 ## Contract Map (Current)
 
-### External MCP Tool Surface (9)
+### External MCP Tool Surface (12)
 
 - `remnote_create_note`
 - `remnote_search`
 - `remnote_search_by_tag`
 - `remnote_read_note`
 - `remnote_update_note`
+- `remnote_insert_children`
+- `remnote_replace_children`
+- `remnote_update_tags`
 - `remnote_append_journal`
 - `remnote_read_table`
 - `remnote_get_playbook`
@@ -43,6 +46,9 @@ When changing action names, payloads, or response semantics, validate this repo 
 - `remnote-cli search-tag`
 - `remnote-cli read`
 - `remnote-cli update`
+- `remnote-cli insert-children`
+- `remnote-cli replace-children`
+- `remnote-cli update-tags`
 - `remnote-cli journal`
 - `remnote-cli status`
 - `remnote-cli read-table`
@@ -67,6 +73,10 @@ Projects are still `0.x`; prefer the same minor line across bridge and server pa
 - `src/schemas/remnote-schemas.ts` - Zod input/output schema contracts
 - `src/remnote-cli/` - bundled CLI command parser, MCP client, command payload mapping, and output formatting
 - `mcpb/remnote-local/server/index.js` - stdio MCP proxy used by `remnote-mcp-stdio` and the Claude Desktop MCPB
+- `mcpb/remnote-local/server/fallback-tools.generated.js` - generated fallback tool metadata for MCPB startup when the
+  local HTTP server is unavailable
+- `scripts/generate-mcpb-tools.mjs` - generates MCPB manifest tools and fallback metadata from canonical server tool
+  definitions
 - `src/version-compat.ts` - 0.x compatibility checks
 
 Primary docs for deeper context:
@@ -89,6 +99,7 @@ Core commands:
 ```bash
 npm run dev
 npm run build
+npm run check:mcpb-tools
 npm run typecheck
 npm test
 npm run test:coverage
@@ -140,6 +151,9 @@ wrapper.
 - Before docs edits, read `.agents/dev-documentation.md`.
 - Any functional or documentation change must be recorded in `CHANGELOG.md`.
 - Keep AGENTS/docs map-level: contracts, rationale, and navigation.
+- When changing MCP tool names, descriptions, or input schemas, update `src/tools/index.ts` first, then run
+  `npm run generate:mcpb-tools`. Do not hand-edit `mcpb/remnote-local/server/fallback-tools.generated.js`.
+  `./code-quality.sh` runs `npm run check:mcpb-tools` and must fail if generated MCPB metadata is stale.
 
 ## Release and Publishing Map
 

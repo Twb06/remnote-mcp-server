@@ -10,8 +10,10 @@
     "remnote-mcp-stdio": "mcpb/remnote-local/server/index.js"
   },
   "scripts": {
-    "build": "tsc && node scripts/chmod-bins.mjs && node scripts/build-mcpb.mjs",
-    "build:mcpb": "node scripts/build-mcpb.mjs",
+    "build": "tsc && node scripts/chmod-bins.mjs && node scripts/generate-mcpb-tools.mjs && node scripts/build-mcpb.mjs",
+    "build:mcpb": "npm run generate:mcpb-tools && node scripts/build-mcpb.mjs",
+    "generate:mcpb-tools": "tsc && node scripts/generate-mcpb-tools.mjs",
+    "check:mcpb-tools": "tsc && node scripts/generate-mcpb-tools.mjs --check",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",

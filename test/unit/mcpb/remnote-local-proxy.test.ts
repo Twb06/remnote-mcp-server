@@ -13,6 +13,7 @@ import {
   isMainModule,
   normalizeMcpUrl,
 } from '../../../mcpb/remnote-local/server/index.js';
+import { ALL_TOOLS } from '../../../src/tools/index.js';
 
 describe('RemNoteLocalProxy', () => {
   const REMOTE_SERVER_VERSION = '1.2.3';
@@ -53,6 +54,8 @@ describe('RemNoteLocalProxy', () => {
 
   it('keeps MCPB fallback tools aligned with the split write contract', () => {
     const fallbackNames = FALLBACK_TOOLS.map((tool) => tool.name);
+    const canonicalNames = ALL_TOOLS.map((tool) => tool.name);
+    expect(fallbackNames).toEqual(canonicalNames);
     expect(fallbackNames).toContain('remnote_insert_children');
     expect(fallbackNames).toContain('remnote_replace_children');
     expect(fallbackNames).toContain('remnote_update_tags');
@@ -78,13 +81,23 @@ describe('RemNoteLocalProxy', () => {
       tools: Array<{ name: string; description: string }>;
     };
     const names = manifest.tools.map((tool) => tool.name);
+    const canonicalNames = ALL_TOOLS.map((tool) => tool.name);
 
+    expect(names).toEqual(canonicalNames);
     expect(names).toContain('remnote_insert_children');
     expect(names).toContain('remnote_replace_children');
     expect(names).toContain('remnote_update_tags');
     expect(
       manifest.tools.find((tool) => tool.name === 'remnote_update_note')?.description
     ).toContain('metadata');
+  });
+
+  it('keeps MCPB runtime decoupled from server source and build output', () => {
+    const source = readFileSync('mcpb/remnote-local/server/index.js', 'utf8');
+
+    expect(source).toContain('./fallback-tools.generated.js');
+    expect(source).not.toContain('src/tools');
+    expect(source).not.toContain('dist/tools');
   });
 
   it('forwards tool calls and preserves the remote MCP result', async () => {
