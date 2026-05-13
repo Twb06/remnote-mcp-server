@@ -818,7 +818,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           }
 
           result = {
-            playbookVersion: '1.0.0',
+            playbookVersion: '1.1.0',
             summary:
               'Use this playbook to navigate RemNote efficiently via remIds, and to apply write-safety checks before mutations.',
             recommendedStatusCheck: {
@@ -833,9 +833,12 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
               'Need to traverse a specific branch? Use remnote_read_note on a chosen remId with includeContent="structured", depth=1, childLimit=500, then recurse by child remIds.',
               'Need tabular/structured data from an Advanced Table? Use remnote_read_table with either tableTitle or tableRemId. Use propertyFilter to limit columns for large tables.',
               'Need a human-readable summary? Switch to includeContent="markdown" on search/read results.',
+              'Need to rename a note? Use remnote_update_note with remId and title only.',
+              'Need to create a note? Use remnote_create_note; pass tagRemIds for exact-ID tag assignment.',
+              'Need to append to today journal? Use remnote_append_journal; pass tagRemIds when the journal entry should be tagged.',
               'Need to insert children? Use remnote_insert_children with an explicit position.',
               'Need to replace children? Check remnote_status first; remnote_replace_children requires acceptReplaceOperation=true.',
-              'Need to update tags? Use remnote_update_tags with exact tag Rem IDs.',
+              'Need to update tags on an existing note? Use remnote_update_tags with exact tag Rem IDs.',
             ],
             navigationPresets: {
               orientation: NAVIGATION_PRESET,
@@ -853,9 +856,10 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
               requiredFields: ['acceptWriteOperations', 'acceptReplaceOperation'],
               guidance: [
                 'Create/update/insert/replace/tag/journal writes require acceptWriteOperations=true.',
+                'remnote_update_note is metadata-only; use insert_children, replace_children, and update_tags for structural or tag writes.',
                 'remnote_replace_children requires acceptReplaceOperation=true.',
                 'remnote_insert_children preserves existing child Rem IDs; remnote_replace_children removes them.',
-                'remnote_update_tags uses exact tag Rem IDs and does not resolve names.',
+                'All production tag writes use exact tag Rem IDs: create_note.tagRemIds, append_journal.tagRemIds, and update_tags add/remove arrays.',
               ],
             },
             currentStatus,

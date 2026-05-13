@@ -899,9 +899,18 @@ describe('Tool Handlers - get_playbook', () => {
       params: { name: 'remnote_get_playbook', arguments: {} },
     })) as ToolSuccessResult;
 
-    expect(result.structuredContent?.playbookVersion).toBe('1.0.0');
+    expect(result.structuredContent?.playbookVersion).toBe('1.1.0');
     expect(Array.isArray(result.structuredContent?.decisionTree)).toBe(true);
     expect((result.structuredContent?.decisionTree as unknown[])?.length).toBeGreaterThan(0);
+    expect(result.structuredContent?.decisionTree).toContain(
+      'Need to rename a note? Use remnote_update_note with remId and title only.'
+    );
+    expect(result.structuredContent?.decisionTree).toContain(
+      'Need to create a note? Use remnote_create_note; pass tagRemIds for exact-ID tag assignment.'
+    );
+    expect(result.structuredContent?.decisionTree).toContain(
+      'Need to append to today journal? Use remnote_append_journal; pass tagRemIds when the journal entry should be tagged.'
+    );
     expect(result.structuredContent?.navigationPresets).toMatchObject({
       orientation: {
         includeContent: 'structured',
@@ -911,6 +920,11 @@ describe('Tool Handlers - get_playbook', () => {
     });
     expect(result.structuredContent?.contentModes).toMatchObject({
       structured: expect.stringContaining('contentStructured'),
+    });
+    expect(result.structuredContent?.writePolicy).toMatchObject({
+      guidance: expect.arrayContaining([
+        'All production tag writes use exact tag Rem IDs: create_note.tagRemIds, append_journal.tagRemIds, and update_tags add/remove arrays.',
+      ]),
     });
   });
 

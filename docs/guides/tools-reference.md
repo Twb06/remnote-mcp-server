@@ -512,12 +512,14 @@ Returns a structured playbook object, including:
 - `decisionTree` - short natural-language operating decisions.
 - `navigationPresets.orientation` - recommended traversal defaults (`structured`, `depth: 1`, `childLimit: 500`).
 - `contentModes` - when to use `structured` vs `markdown` vs `none`.
-- `writePolicy` - how to interpret `acceptWriteOperations` / `acceptReplaceOperation`.
+- `writePolicy` - how to interpret `acceptWriteOperations` / `acceptReplaceOperation` and exact-ID tag writes.
 - `currentStatus` - live `remnote_status` snapshot when available.
 
 ### Tips
 
 - Treat this as guidance, not rigid policy.
+- Use the playbook's write guidance to choose between metadata updates, ordered child insertion, destructive replacement,
+  and exact-ID tag writes without overloading `remnote_update_note`.
 - Call `remnote_status` once per session (recommended) and before high-risk writes.
 - For whole-KB orientation, start shallow and ID-first:
   - `structured` mode, `depth: 1`, `childLimit: 500`.

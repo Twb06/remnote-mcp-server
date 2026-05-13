@@ -17,6 +17,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Update `remnote_get_playbook` guidance for the split write tools and exact-ID tag fields without expanding the
+  playbook shape.
 - Limit `remnote_update_note` and `remnote-cli update` to metadata title updates so child and tag writes use focused
   non-duplicative interfaces.
 - Change `remnote_create_note` and `remnote-cli create` to use exact tag Rem IDs via `tagRemIds` / `--tag-ids` instead
