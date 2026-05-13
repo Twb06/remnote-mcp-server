@@ -55,10 +55,16 @@ Bridge as connected.
 
 `npm run test:integration` delegates to `./run-integration-test.sh`, so it also runs all suites by default.
 
-The agent-assisted wrapper does not control existing MCP server processes. It first checks whether the configured HTTP
-MCP port is already occupied (`3001` by default). If anything is listening there, including a macOS launchd-managed
-`remnote-mcp-server`, the wrapper exits with a clear error. Stop that server yourself, then rerun the wrapper. During
-cleanup, the wrapper stops only the repo-local server process it started for the current test run.
+The agent-assisted wrapper does not control existing MCP server processes. Before an AI agent invokes any live
+integration command, it must explicitly probe the configured HTTP MCP port (`127.0.0.1:3001` by default). If anything is
+listening there, including a macOS launchd-managed `remnote-mcp-server`, the agent must refuse to run tests and report
+that the existing server needs to be stopped manually. The wrapper repeats this port check and exits with a clear error
+if the port is occupied. During cleanup, the wrapper stops only the repo-local server process it started for the current
+test run.
+
+AI agents must run the agent-assisted wrapper outside the Codex sandbox. The TypeScript runners use `tsx`, which creates
+local IPC pipes under macOS temp directories such as `/var/folders/...`; inside the sandbox this can fail before tests
+start with `listen EPERM`.
 
 ### Targeted Reruns
 
@@ -85,8 +91,9 @@ direct HTTP OAuth workflow remains direct-MCP-only because OAuth metadata is an 
 behavior.
 
 The CLI suite uses the same MCP server endpoint as MCP clients. It does not start or require a separate CLI server.
-The agent-assisted wrapper is the only approved live-test entrypoint for AI agents; it times out with a clear message
-when the RemNote bridge never connects.
+The agent-assisted wrapper is the only approved live-test entrypoint for AI agents; `run-integration-test.sh` and
+`npm run test:integration*` are manual/human entrypoints. The agent wrapper times out with a clear message when the
+RemNote bridge never connects.
 Agent-assisted flow still has one manual gate: the agent should ask the human collaborator to start the bridge first,
 and must ask for a bridge restart before reruns if bridge code changed since the current RemNote bridge session
 started.

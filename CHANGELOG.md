@@ -30,6 +30,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   control surface.
 - Update the agent integration wrapper to fail fast when the MCP HTTP port is already occupied instead of stopping or
   restarting existing daemon/launchd-managed servers.
+- Clarify AI-agent live integration policy: agents must preflight port `3001`, refuse to run when it is occupied, use
+  `run-agent-integration-test.sh`, and run live integration outside the Codex sandbox.
 
 ## [0.14.2] - 2026-05-08
 
