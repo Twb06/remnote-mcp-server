@@ -185,36 +185,6 @@ export const FALLBACK_TOOLS = [
         },
       },
       required: ['parentRemId', 'content', 'position'],
-      allOf: [
-        {
-          if: {
-            properties: {
-              position: {
-                enum: ['before', 'after'],
-              },
-            },
-            required: ['position'],
-          },
-          then: {
-            required: ['parentRemId', 'content', 'position', 'siblingRemId'],
-          },
-        },
-        {
-          if: {
-            properties: {
-              position: {
-                enum: ['first', 'last'],
-              },
-            },
-            required: ['position'],
-          },
-          then: {
-            not: {
-              required: ['siblingRemId'],
-            },
-          },
-        },
-      ],
       additionalProperties: false,
     },
   },
@@ -268,14 +238,6 @@ export const FALLBACK_TOOLS = [
         },
       },
       required: ['remId'],
-      anyOf: [
-        {
-          required: ['addTagRemIds'],
-        },
-        {
-          required: ['removeTagRemIds'],
-        },
-      ],
       additionalProperties: false,
     },
   },

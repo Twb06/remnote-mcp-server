@@ -441,16 +441,6 @@ export const INSERT_CHILDREN_TOOL = {
       },
     },
     required: ['parentRemId', 'content', 'position'],
-    allOf: [
-      {
-        if: { properties: { position: { enum: ['before', 'after'] } }, required: ['position'] },
-        then: { required: ['parentRemId', 'content', 'position', 'siblingRemId'] },
-      },
-      {
-        if: { properties: { position: { enum: ['first', 'last'] } }, required: ['position'] },
-        then: { not: { required: ['siblingRemId'] } },
-      },
-    ],
     additionalProperties: false,
   },
   outputSchema: UPDATE_NOTE_TOOL.outputSchema,
@@ -501,7 +491,6 @@ export const UPDATE_TAGS_TOOL = {
       },
     },
     required: ['remId'],
-    anyOf: [{ required: ['addTagRemIds'] }, { required: ['removeTagRemIds'] }],
     additionalProperties: false,
   },
   outputSchema: UPDATE_NOTE_TOOL.outputSchema,

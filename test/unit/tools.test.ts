@@ -18,6 +18,7 @@ import {
   PLAYBOOK_TOOL,
   STATUS_TOOL,
   READ_TABLE_TOOL,
+  ALL_TOOLS,
 } from '../../src/tools/index.js';
 import { WebSocketServer } from '../../src/websocket-server.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
@@ -76,6 +77,20 @@ function expectStructuredToolResult(result: ToolSuccessResult, expected: Record<
 }
 
 describe('Tool Definitions', () => {
+  it('should advertise OpenAI-compatible top-level input schemas', () => {
+    const disallowedTopLevelKeywords = ['anyOf', 'oneOf', 'allOf', 'enum', 'not'];
+
+    for (const tool of ALL_TOOLS) {
+      const schema = tool.inputSchema as Record<string, unknown>;
+
+      expect(schema.type, `${tool.name} inputSchema.type`).toBe('object');
+      expect(schema.properties, `${tool.name} inputSchema.properties`).toBeDefined();
+      for (const keyword of disallowedTopLevelKeywords) {
+        expect(schema, `${tool.name} inputSchema top-level ${keyword}`).not.toHaveProperty(keyword);
+      }
+    }
+  });
+
   it('should have correct name for CREATE_NOTE_TOOL', () => {
     expect(CREATE_NOTE_TOOL.name).toBe('remnote_create_note');
   });
@@ -211,38 +226,23 @@ describe('Tool Definitions', () => {
     expect(UPDATE_TAGS_TOOL.name).toBe('remnote_update_tags');
   });
 
-  it('should advertise insert sibling constraints in INSERT_CHILDREN_TOOL input schema', () => {
+  it('should advertise insert children as a plain top-level object schema', () => {
     const schema = INSERT_CHILDREN_TOOL.inputSchema as {
-      allOf?: Array<Record<string, unknown>>;
+      properties: Record<string, unknown>;
+      required: string[];
     };
 
-    expect(schema.allOf).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          then: expect.objectContaining({
-            required: expect.arrayContaining(['siblingRemId']),
-          }),
-        }),
-        expect.objectContaining({
-          then: expect.objectContaining({
-            not: expect.objectContaining({
-              required: ['siblingRemId'],
-            }),
-          }),
-        }),
-      ])
-    );
+    expect(schema.properties.siblingRemId).toBeDefined();
+    expect(schema.required).toEqual(['parentRemId', 'content', 'position']);
   });
 
-  it('should advertise non-empty tag mutations in UPDATE_TAGS_TOOL input schema', () => {
+  it('should advertise tag mutation arrays without top-level composition keywords', () => {
     const schema = UPDATE_TAGS_TOOL.inputSchema as {
-      anyOf?: Array<Record<string, string[]>>;
       properties: Record<string, { minItems?: number }>;
+      required: string[];
     };
 
-    expect(schema.anyOf).toEqual(
-      expect.arrayContaining([{ required: ['addTagRemIds'] }, { required: ['removeTagRemIds'] }])
-    );
+    expect(schema.required).toEqual(['remId']);
     expect(schema.properties.addTagRemIds.minItems).toBe(1);
     expect(schema.properties.removeTagRemIds.minItems).toBe(1);
   });

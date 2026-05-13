@@ -259,7 +259,7 @@ describe('InsertChildrenSchema', () => {
     });
   });
 
-  it('should reject before without siblingRemId', () => {
+  it('should reject before and after without siblingRemId', () => {
     expect(() =>
       InsertChildrenSchema.parse({
         parentRemId: 'parent',
@@ -267,9 +267,17 @@ describe('InsertChildrenSchema', () => {
         position: 'before',
       })
     ).toThrow('siblingRemId is required when position is before');
+
+    expect(() =>
+      InsertChildrenSchema.parse({
+        parentRemId: 'parent',
+        content: 'description: text',
+        position: 'after',
+      })
+    ).toThrow('siblingRemId is required when position is after');
   });
 
-  it('should reject siblingRemId for first', () => {
+  it('should reject siblingRemId for first and last', () => {
     expect(() =>
       InsertChildrenSchema.parse({
         parentRemId: 'parent',
@@ -278,6 +286,15 @@ describe('InsertChildrenSchema', () => {
         siblingRemId: 'sibling',
       })
     ).toThrow('siblingRemId must not be provided when position is first');
+
+    expect(() =>
+      InsertChildrenSchema.parse({
+        parentRemId: 'parent',
+        content: 'description: text',
+        position: 'last',
+        siblingRemId: 'sibling',
+      })
+    ).toThrow('siblingRemId must not be provided when position is last');
   });
 });
 

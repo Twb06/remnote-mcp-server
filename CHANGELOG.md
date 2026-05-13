@@ -44,10 +44,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Fix OpenAI/Codex tool registration compatibility by removing top-level JSON Schema composition keywords from
+  advertised MCP tool input schemas while keeping server-side validation strict.
 - Align MCPB manifest and fallback tool metadata with the split write tools so local Claude Desktop/MCPB clients no
   longer see stale `remnote_update_note` content/tag fields or name-based create tags.
-- Tighten advertised MCP JSON schemas for split child insertion and tag updates so tool discovery matches runtime
-  validation.
+- Tighten runtime validation for split child insertion and tag updates while keeping advertised MCP JSON schemas
+  client-compatible.
 
 ## [0.14.2] - 2026-05-08
 
