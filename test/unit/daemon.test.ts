@@ -166,6 +166,64 @@ describe('daemon commands', () => {
     );
   });
 
+  it('starts with server options from a TOML config file', async () => {
+    const configPath = join(stateDir, 'config.toml');
+    await writeFile(
+      configPath,
+      [
+        '[server]',
+        'httpPort = 4101',
+        'wsPort = 4102',
+        'httpHost = "0.0.0.0"',
+        'logLevel = "debug"',
+        'requestLog = "/tmp/requests.jsonl"',
+        'responseLog = "/tmp/responses.jsonl"',
+        '',
+      ].join('\n'),
+      'utf8'
+    );
+    const canBind = vi
+      .fn<DaemonRuntime['canBind']>()
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(true)
+      .mockResolvedValue(false);
+    const spawnProcess = vi.fn().mockReturnValue({ pid: 4142, unref: vi.fn() });
+
+    const exitCode = await runDaemonCommand(
+      { action: 'start', cliOptions: { config: configPath }, stateDir, timeoutMs: 50 },
+      {
+        entrypointPath: '/opt/remnote-mcp-server/dist/index.js',
+        execPath: '/usr/local/bin/node',
+        canBind,
+        isProcessAlive: () => true,
+        spawnProcess: spawnProcess as never,
+        stdout,
+        stderr,
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(spawnProcess).toHaveBeenCalledWith(
+      '/usr/local/bin/node',
+      [
+        '/opt/remnote-mcp-server/dist/index.js',
+        '--http-port',
+        '4101',
+        '--ws-port',
+        '4102',
+        '--http-host',
+        '0.0.0.0',
+        '--log-level',
+        'debug',
+        '--request-log',
+        '/tmp/requests.jsonl',
+        '--response-log',
+        '/tmp/responses.jsonl',
+      ],
+      expect.any(Object)
+    );
+  });
+
   it('fails before spawning when the configured port is occupied', async () => {
     const canBind = vi.fn<DaemonRuntime['canBind']>().mockResolvedValue(false);
     const spawnProcess = vi.fn();
@@ -488,6 +546,53 @@ describe('daemon commands', () => {
     expect(plist).toContain('<string>4001</string>');
     expect(plist).toContain('<string>4002</string>');
     expect(plist).toContain(join(stateDir, 'remnote-mcp-server.log'));
+  });
+
+  it('installs a macOS LaunchAgent with TOML server logging defaults', async () => {
+    const configPath = join(stateDir, 'config.toml');
+    const daemonLog = join(stateDir, 'daemon-debug.log');
+    await writeFile(
+      configPath,
+      [
+        '[server]',
+        'logLevel = "debug"',
+        'requestLog = "/tmp/requests.jsonl"',
+        'responseLog = "/tmp/responses.jsonl"',
+        '',
+        '[daemon]',
+        `logFile = "${daemonLog}"`,
+        '',
+      ].join('\n'),
+      'utf8'
+    );
+    const execFile = vi.fn().mockResolvedValue({ stdout: '', stderr: '' });
+
+    const exitCode = await runDaemonCommand(
+      { action: 'install-launchd', cliOptions: { config: configPath }, stateDir },
+      {
+        platform: 'darwin',
+        uid: 501,
+        homeDir: stateDir,
+        entrypointPath: '/opt/remnote-mcp-server/dist/index.js',
+        execPath: '/usr/local/bin/node',
+        execFile: execFile as never,
+        stdout,
+        stderr,
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    const plist = await readFile(
+      join(stateDir, 'Library', 'LaunchAgents', `${LAUNCHD_LABEL}.plist`),
+      'utf8'
+    );
+    expect(plist).toContain('<string>--log-level</string>');
+    expect(plist).toContain('<string>debug</string>');
+    expect(plist).toContain('<string>--request-log</string>');
+    expect(plist).toContain('<string>/tmp/requests.jsonl</string>');
+    expect(plist).toContain('<string>--response-log</string>');
+    expect(plist).toContain('<string>/tmp/responses.jsonl</string>');
+    expect(plist).toContain(daemonLog);
   });
 
   it('uses launchd for status when the macOS LaunchAgent is installed', async () => {

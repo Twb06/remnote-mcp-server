@@ -7,6 +7,7 @@ const require = createRequire(import.meta.url);
 const packageJson = require('../package.json');
 
 export interface CliOptions {
+  config?: string;
   wsPort?: number;
   httpPort?: number;
   httpHost?: string;
@@ -68,6 +69,7 @@ export function parseCliArgs(): CliOptions {
       'HTTP server bind address (default: 127.0.0.1, env: REMNOTE_HTTP_HOST). Use 0.0.0.0 for Docker/VPS deployments',
       validateHost
     )
+    .option('--config <path>', 'TOML config file path (default: ~/.remnote-mcp-server/config.toml)')
     .option(
       '--log-level <level>',
       `Console log level: ${validLogLevels.join(', ')} (default: info)`,

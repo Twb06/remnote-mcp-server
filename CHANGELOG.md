@@ -15,6 +15,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Add generated MCPB tool metadata checks so manifest and fallback tool drift fails routine quality verification.
 - Add `remnote-mcp-server daemon` lifecycle commands for detached background startup, status, logs, graceful shutdown,
   duplicate-start protection, stable log routing, and macOS `launchd` login persistence.
+- Add `~/.remnote-mcp-server/config.toml` for persistent server and daemon defaults, including ports, host, log levels,
+  file logs, and WebSocket request/response JSON Lines logs.
 
 ### Changed
 

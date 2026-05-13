@@ -6,7 +6,7 @@ import { homedir, platform as osPlatform } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import type { CliOptions } from './cli.js';
-import { getConfig, type ServerConfig } from './config.js';
+import { getConfig, loadConfigFileOptions, type ServerConfig } from './config.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -157,7 +157,7 @@ Daemon options:
 
 Server options accepted by start/restart/install-launchd:
   --http-port <number> --ws-port <number> --http-host <host>
-  --log-level <level> --verbose --request-log <path> --response-log <path>
+  --config <path> --log-level <level> --verbose --request-log <path> --response-log <path>
 `;
 }
 
@@ -263,6 +263,9 @@ function parseDaemonCommand(argv: string[]): ParsedDaemonOptions {
       case '--http-host':
         cliOptions.httpHost = validateHost(next());
         break;
+      case '--config':
+        cliOptions.config = next();
+        break;
       case '--log-level':
         cliOptions.logLevel = validateLogLevel(next());
         break;
@@ -338,12 +341,15 @@ async function startDaemon(
 
     await cleanupStaleState(paths);
 
-    const config = getConfig({
-      ...command.cliOptions,
-      logFile: undefined,
-      logLevelFile: undefined,
-    });
-    const logFile = resolveTilde(command.cliOptions.logFile ?? paths.logFile, runtime.homeDir);
+    const config = getConfig(
+      {
+        ...command.cliOptions,
+        logFile: undefined,
+        logLevelFile: undefined,
+      },
+      { homeDir: runtime.homeDir }
+    );
+    const logFile = getDaemonLogFile(command, paths, runtime);
 
     const bindCheck = runtime.canBind ?? canBind;
     await assertPortAvailable(config.httpHost, config.httpPort, 'HTTP', bindCheck);
@@ -352,7 +358,7 @@ async function startDaemon(
     await mkdir(dirname(logFile), { recursive: true });
     const logHandle = await open(logFile, 'a');
     const entrypointPath = resolveEntrypointPath(runtime);
-    const childArgs = [entrypointPath, ...serverArgsFromConfig(config, command.cliOptions)];
+    const childArgs = [entrypointPath, ...serverArgsFromConfig(config)];
     const child = (runtime.spawnProcess ?? spawn)(runtime.execPath ?? process.execPath, childArgs, {
       detached: true,
       stdio: ['ignore', logHandle.fd, logHandle.fd],
@@ -516,8 +522,11 @@ async function installLaunchd(
     throw new Error('launchd permanence is only available on macOS');
   }
 
-  const config = getConfig({ ...command.cliOptions, logFile: undefined, logLevelFile: undefined });
-  const logFile = resolveTilde(command.cliOptions.logFile ?? paths.logFile, runtime.homeDir);
+  const config = getConfig(
+    { ...command.cliOptions, logFile: undefined, logLevelFile: undefined },
+    { homeDir: runtime.homeDir }
+  );
+  const logFile = getDaemonLogFile(command, paths, runtime);
   await mkdir(paths.stateDir, { recursive: true });
   await mkdir(dirname(paths.launchAgentFile), { recursive: true });
   await mkdir(dirname(logFile), { recursive: true });
@@ -527,7 +536,7 @@ async function installLaunchd(
     label: LAUNCHD_LABEL,
     execPath: runtime.execPath ?? process.execPath,
     entrypointPath,
-    args: serverArgsFromConfig(config, command.cliOptions),
+    args: serverArgsFromConfig(config),
     logFile,
     workingDirectory: dirname(entrypointPath),
   });
@@ -694,7 +703,7 @@ ${programArguments}
 `;
 }
 
-function serverArgsFromConfig(config: ServerConfig, originalOptions: CliOptions): string[] {
+function serverArgsFromConfig(config: ServerConfig): string[] {
   const args = [
     '--http-port',
     String(config.httpPort),
@@ -706,14 +715,26 @@ function serverArgsFromConfig(config: ServerConfig, originalOptions: CliOptions)
     config.logLevel,
   ];
 
-  if (originalOptions.requestLog) {
-    args.push('--request-log', originalOptions.requestLog);
+  if (config.requestLog) {
+    args.push('--request-log', config.requestLog);
   }
-  if (originalOptions.responseLog) {
-    args.push('--response-log', originalOptions.responseLog);
+  if (config.responseLog) {
+    args.push('--response-log', config.responseLog);
   }
 
   return args;
+}
+
+function getDaemonLogFile(
+  command: DaemonCommand,
+  paths: DaemonPaths,
+  runtime: DaemonRuntime
+): string {
+  const configFile = loadConfigFileOptions(command.cliOptions.config, { homeDir: runtime.homeDir });
+  return resolveTilde(
+    command.cliOptions.logFile ?? configFile.daemon?.logFile ?? paths.logFile,
+    runtime.homeDir
+  );
 }
 
 async function acquireLock(lockFile: string): Promise<AcquiredLock> {

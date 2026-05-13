@@ -160,6 +160,8 @@ mode, or use daemon mode for a detached local server.
 
 For server startup and daemon options, see
 [remnote-mcp-server Command Reference](remnote-mcp-server-command-reference.md).
+For persistent defaults such as debug logging and request/response JSON Lines logs, see the
+[configuration file reference](remnote-mcp-server-command-reference.md#configuration-file).
 
 ### Recommended Startup Order
 

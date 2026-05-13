@@ -1,18 +1,25 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { getConfig } from '../../src/config.js';
+import { writeFileSync } from 'node:fs';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { getConfig, parseConfigToml } from '../../src/config.js';
 
 describe('Config', () => {
   const originalEnv = process.env;
+  let tempDir: string;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Reset environment variables
     process.env = { ...originalEnv };
     delete process.env.REMNOTE_WS_PORT;
     delete process.env.REMNOTE_HTTP_PORT;
     delete process.env.REMNOTE_HTTP_HOST;
+    tempDir = await mkdtemp(join(tmpdir(), 'remnote-config-test-'));
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await rm(tempDir, { recursive: true, force: true });
     process.env = originalEnv;
   });
 
@@ -186,4 +193,116 @@ describe('Config', () => {
       });
     });
   });
+
+  describe('TOML Configuration File', () => {
+    it('ignores the default config path when it does not exist', () => {
+      const config = getConfig({}, { homeDir: tempDir });
+
+      expect(config.wsPort).toBe(3002);
+      expect(config.httpPort).toBe(3001);
+      expect(config.logLevel).toBe('info');
+    });
+
+    it('fails when an explicit config path does not exist', () => {
+      expect(() => getConfig({ config: join(tempDir, 'missing.toml') })).toThrow(
+        'Config file not found'
+      );
+    });
+
+    it('loads all supported server options from TOML', async () => {
+      const configPath = join(tempDir, 'config.toml');
+      await writeFile(
+        configPath,
+        [
+          '[server]',
+          'wsPort = 4102',
+          'httpPort = 4101',
+          'httpHost = "0.0.0.0"',
+          'logLevel = "warn"',
+          'logLevelFile = "debug"',
+          'verbose = false',
+          'logFile = "/tmp/remnote.log"',
+          'requestLog = "/tmp/requests.jsonl"',
+          'responseLog = "/tmp/responses.jsonl"',
+          '',
+        ].join('\n'),
+        'utf8'
+      );
+
+      const config = getConfig({ config: configPath });
+
+      expect(config).toMatchObject({
+        wsPort: 4102,
+        httpPort: 4101,
+        httpHost: '0.0.0.0',
+        logLevel: 'warn',
+        logLevelFile: 'debug',
+        logFile: '/tmp/remnote.log',
+        requestLog: '/tmp/requests.jsonl',
+        responseLog: '/tmp/responses.jsonl',
+      });
+    });
+
+    it('uses TOML verbose as a default debug shorthand', () => {
+      const parsed = parseConfigToml('[server]\nverbose = true\n');
+      expect(parsed.server?.verbose).toBe(true);
+
+      const config = getConfigFromToml('[server]\nverbose = true\n');
+      expect(config.logLevel).toBe('debug');
+    });
+
+    it('applies precedence as CLI over environment over TOML', async () => {
+      const configPath = join(tempDir, 'config.toml');
+      await writeFile(
+        configPath,
+        '[server]\nwsPort = 3102\nhttpPort = 3101\nhttpHost = "0.0.0.0"\nlogLevel = "warn"\n',
+        'utf8'
+      );
+      process.env.REMNOTE_WS_PORT = '4202';
+      process.env.REMNOTE_HTTP_PORT = '4201';
+      process.env.REMNOTE_HTTP_HOST = '192.168.1.20';
+
+      const config = getConfig({ config: configPath, httpPort: 5201, logLevel: 'debug' });
+
+      expect(config.wsPort).toBe(4202);
+      expect(config.httpPort).toBe(5201);
+      expect(config.httpHost).toBe('192.168.1.20');
+      expect(config.logLevel).toBe('debug');
+    });
+
+    it('lets CLI log level override TOML verbose', () => {
+      const config = getConfigFromToml('[server]\nverbose = true\nlogLevel = "warn"\n', {
+        logLevel: 'error',
+      });
+
+      expect(config.logLevel).toBe('error');
+    });
+
+    it('rejects unknown sections and keys', () => {
+      expect(() => parseConfigToml('[unknown]\nlogLevel = "debug"\n')).toThrow(
+        'Unknown config section'
+      );
+      expect(() => parseConfigToml('[server]\nnoisy = true\n')).toThrow(
+        'Unknown server config key'
+      );
+      expect(() => parseConfigToml('[daemon]\nhttpPort = 3001\n')).toThrow(
+        'Unknown daemon config key'
+      );
+    });
+
+    it('rejects invalid value types', () => {
+      expect(() => parseConfigToml('[server]\nhttpPort = "3001"\n')).toThrow('must be a number');
+      expect(() => parseConfigToml('[server]\nverbose = "true"\n')).toThrow('must be a boolean');
+      expect(() => parseConfigToml('[server]\nlogLevel = "trace"\n')).toThrow('Invalid log level');
+    });
+  });
+
+  function getConfigFromToml(
+    toml: string,
+    cliOptions: Parameters<typeof getConfig>[0] = {}
+  ): ReturnType<typeof getConfig> {
+    const configPath = join(tempDir, 'inline.toml');
+    writeFileSync(configPath, toml, 'utf8');
+    return getConfig({ ...cliOptions, config: configPath });
+  }
 });

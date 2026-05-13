@@ -94,11 +94,59 @@ remnote-mcp-server daemon start
 remnote-mcp-server daemon restart
 ```
 
+To change persisted launchd server arguments, rerun `install-launchd` with the desired options. For example, this
+enables debug-level server logs plus WebSocket request/response JSON Lines logs:
+
+```bash
+remnote-mcp-server daemon install-launchd \
+  --log-level debug \
+  --request-log ~/.remnote-mcp-server/requests.jsonl \
+  --response-log ~/.remnote-mcp-server/responses.jsonl
+```
+
 To remove it:
 
 ```bash
 remnote-mcp-server daemon uninstall-launchd
 ```
+
+## Configuration File
+
+Default server options can be stored in `~/.remnote-mcp-server/config.toml`. The file is optional; if it does not
+exist, built-in defaults are used.
+
+```toml
+[server]
+wsPort = 3002
+httpPort = 3001
+httpHost = "127.0.0.1"
+logLevel = "debug"
+logLevelFile = "debug"
+verbose = false
+logFile = "~/.remnote-mcp-server/server.log"
+requestLog = "~/.remnote-mcp-server/requests.jsonl"
+responseLog = "~/.remnote-mcp-server/responses.jsonl"
+
+[daemon]
+logFile = "~/.remnote-mcp-server/remnote-mcp-server.log"
+```
+
+`[server].logFile` applies to foreground server startup. `[daemon].logFile` controls daemon stdout/stderr routing for
+`daemon start` and `daemon install-launchd`.
+
+Use `--config <path>` to load a different TOML file:
+
+```bash
+remnote-mcp-server --config ~/tmp/remnote-debug.toml
+remnote-mcp-server daemon install-launchd --config ~/tmp/remnote-debug.toml
+```
+
+**Precedence (highest to lowest):**
+
+1. CLI flags
+2. Environment variables (`REMNOTE_HTTP_PORT`, `REMNOTE_HTTP_HOST`, `REMNOTE_WS_PORT`)
+3. `~/.remnote-mcp-server/config.toml`
+4. Built-in defaults
 
 ## Server Configuration Options
 
@@ -290,7 +338,7 @@ Output:
 
 ## Environment Variables
 
-All server configuration options can be set via environment variables as an alternative to CLI flags.
+Port and HTTP host options can be set via environment variables as an alternative to CLI flags or the TOML config file.
 
 | Environment Variable | CLI Flag | Default |
 |---------------------|----------|---------|
@@ -302,7 +350,8 @@ All server configuration options can be set via environment variables as an alte
 
 1. CLI flags
 2. Environment variables
-3. Default values
+3. `~/.remnote-mcp-server/config.toml`
+4. Default values
 
 **Example using environment variables:**
 

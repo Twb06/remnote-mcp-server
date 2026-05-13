@@ -170,6 +170,14 @@ describe('CLI Argument Parsing', () => {
     });
   });
 
+  describe('Config File Argument', () => {
+    it('should parse config file path', () => {
+      process.argv = ['node', 'remnote-mcp-server', '--config', '/tmp/remnote-config.toml'];
+      const options = parseCliArgs();
+      expect(options.config).toBe('/tmp/remnote-config.toml');
+    });
+  });
+
   describe('File Logging Arguments', () => {
     it('should parse log file path', () => {
       process.argv = ['node', 'remnote-mcp-server', '--log-file', '/tmp/test.log'];

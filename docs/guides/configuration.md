@@ -378,13 +378,14 @@ This is a RemNote plugin limitation, not an MCP server limitation.
 
 ## Configuration Precedence
 
-When using CLI flags, environment variables, and default values:
+When using CLI flags, environment variables, the TOML config file, and default values:
 
 **Precedence (highest to lowest):**
 
 1. CLI flags (`--http-port 3003`)
 2. Environment variables (`REMNOTE_HTTP_PORT=3003`)
-3. Default values (3001 for HTTP, 3002 for WebSocket)
+3. `~/.remnote-mcp-server/config.toml`
+4. Default values (3001 for HTTP, 3002 for WebSocket)
 
 **Example:**
 
@@ -397,6 +398,9 @@ remnote-mcp-server --http-port 3005
 
 # Server uses 3005 (CLI flag wins)
 ```
+
+For persistent local defaults, including debug request/response logs for daemon or launchd startup, see
+[remnote-mcp-server Command Reference](remnote-mcp-server-command-reference.md#configuration-file).
 
 ## Next Steps
 
