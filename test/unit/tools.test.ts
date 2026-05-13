@@ -78,6 +78,8 @@ function expectStructuredToolResult(result: ToolSuccessResult, expected: Record<
 
 describe('Tool Definitions', () => {
   it('should advertise OpenAI-compatible top-level input schemas', () => {
+    // OpenAI/Codex rejects MCP tool input schemas with top-level JSON Schema
+    // composition keywords. Keep runtime-only constraints in Zod schemas instead.
     const disallowedTopLevelKeywords = ['anyOf', 'oneOf', 'allOf', 'enum', 'not'];
 
     for (const tool of ALL_TOOLS) {
