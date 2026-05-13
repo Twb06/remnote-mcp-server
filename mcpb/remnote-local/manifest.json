@@ -46,7 +46,19 @@
     },
     {
       "name": "remnote_update_note",
-      "description": "Update an existing note in RemNote."
+      "description": "Update note metadata in RemNote."
+    },
+    {
+      "name": "remnote_insert_children",
+      "description": "Insert child Rems at deterministic positions."
+    },
+    {
+      "name": "remnote_replace_children",
+      "description": "Replace direct child Rems when destructive replacement is enabled."
+    },
+    {
+      "name": "remnote_update_tags",
+      "description": "Add or remove tags by exact tag Rem ID."
     },
     {
       "name": "remnote_append_journal",

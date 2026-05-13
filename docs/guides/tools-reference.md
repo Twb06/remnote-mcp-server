@@ -594,7 +594,7 @@ names.
 | "Create a note about X" | `remnote_create_note` |
 | "Search for Y" | `remnote_search` |
 | "Show me note abc123" | `remnote_read_note` |
-| "Add Z to note def456" | `remnote_update_note` |
+| "Add Z to note def456" | `remnote_insert_children` |
 | "Log today's progress" | `remnote_append_journal` |
 | "How should I navigate this KB?" | `remnote_get_playbook` |
 | "Is RemNote connected?" | `remnote_status` |

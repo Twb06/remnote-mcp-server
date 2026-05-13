@@ -211,6 +211,42 @@ describe('Tool Definitions', () => {
     expect(UPDATE_TAGS_TOOL.name).toBe('remnote_update_tags');
   });
 
+  it('should advertise insert sibling constraints in INSERT_CHILDREN_TOOL input schema', () => {
+    const schema = INSERT_CHILDREN_TOOL.inputSchema as {
+      allOf?: Array<Record<string, unknown>>;
+    };
+
+    expect(schema.allOf).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          then: expect.objectContaining({
+            required: expect.arrayContaining(['siblingRemId']),
+          }),
+        }),
+        expect.objectContaining({
+          then: expect.objectContaining({
+            not: expect.objectContaining({
+              required: ['siblingRemId'],
+            }),
+          }),
+        }),
+      ])
+    );
+  });
+
+  it('should advertise non-empty tag mutations in UPDATE_TAGS_TOOL input schema', () => {
+    const schema = UPDATE_TAGS_TOOL.inputSchema as {
+      anyOf?: Array<Record<string, string[]>>;
+      properties: Record<string, { minItems?: number }>;
+    };
+
+    expect(schema.anyOf).toEqual(
+      expect.arrayContaining([{ required: ['addTagRemIds'] }, { required: ['removeTagRemIds'] }])
+    );
+    expect(schema.properties.addTagRemIds.minItems).toBe(1);
+    expect(schema.properties.removeTagRemIds.minItems).toBe(1);
+  });
+
   it('should have plural remIds and titles in UPDATE_NOTE_TOOL output schema', () => {
     const properties = UPDATE_NOTE_TOOL.outputSchema.properties as Record<string, unknown>;
     expect(properties.remIds).toBeDefined();

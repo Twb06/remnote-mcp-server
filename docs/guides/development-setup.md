@@ -189,7 +189,8 @@ describe('Component Name', () => {
    - `remnote_search` - Search your knowledge base
    - `remnote_create_note` - Create a test note
    - `remnote_read_note` - Read the created note
-   - `remnote_update_note` - Update the test note
+   - `remnote_update_note` - Rename the test note
+   - `remnote_insert_children` - Add child content to the test note
 
 ## Code Quality Checks
 

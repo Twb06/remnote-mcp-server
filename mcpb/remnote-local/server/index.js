@@ -19,15 +19,20 @@ export const FALLBACK_TOOLS = [
   {
     name: 'remnote_create_note',
     description:
-      'Create a new note in RemNote with optional content, parent, and tags. Supports hierarchical markdown in content and flashcard syntax.',
+      'Create a new note in RemNote with optional content, parent, and exact tag Rem IDs. Supports hierarchical markdown in content and flashcard syntax.',
     inputSchema: {
       type: 'object',
       properties: {
         title: { type: 'string', description: 'The title of the note' },
         content: { type: 'string', description: 'Content as plain text or hierarchical markdown' },
         parentId: { type: 'string', description: 'Parent Rem ID' },
-        tags: { type: 'array', items: { type: 'string' }, description: 'Tags to apply' },
+        tagRemIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Exact tag Rem IDs to apply',
+        },
       },
+      additionalProperties: false,
     },
   },
   {
@@ -79,30 +84,107 @@ export const FALLBACK_TOOLS = [
   },
   {
     name: 'remnote_update_note',
-    description: 'Update an existing note in RemNote.',
+    description: 'Update note metadata in RemNote.',
     inputSchema: {
       type: 'object',
       properties: {
         remId: { type: 'string', description: 'The Rem ID to update' },
         title: { type: 'string', description: 'New title' },
-        appendContent: { type: 'string', description: 'Content to append as children' },
-        replaceContent: { type: 'string', description: 'Content to replace direct children' },
-        addTags: { type: 'array', items: { type: 'string' }, description: 'Tags to add' },
-        removeTags: { type: 'array', items: { type: 'string' }, description: 'Tags to remove' },
+      },
+      required: ['remId', 'title'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'remnote_insert_children',
+    description: 'Insert new child Rems under a parent at a deterministic position.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        parentRemId: { type: 'string', description: 'Parent Rem ID' },
+        content: { type: 'string', description: 'Markdown content to insert as child Rems' },
+        position: {
+          type: 'string',
+          enum: ['first', 'last', 'before', 'after'],
+          description: 'Where to insert the new child Rems',
+        },
+        siblingRemId: {
+          type: 'string',
+          description: 'Sibling Rem ID required when position is before or after',
+        },
+      },
+      required: ['parentRemId', 'content', 'position'],
+      additionalProperties: false,
+      allOf: [
+        {
+          if: { properties: { position: { enum: ['before', 'after'] } }, required: ['position'] },
+          then: { required: ['parentRemId', 'content', 'position', 'siblingRemId'] },
+        },
+        {
+          if: { properties: { position: { enum: ['first', 'last'] } }, required: ['position'] },
+          then: { not: { required: ['siblingRemId'] } },
+        },
+      ],
+    },
+  },
+  {
+    name: 'remnote_replace_children',
+    description: 'Replace all direct children under a parent Rem.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        parentRemId: { type: 'string', description: 'Parent Rem ID' },
+        content: {
+          type: 'string',
+          description: 'Markdown content to use as replacement children',
+        },
+      },
+      required: ['parentRemId', 'content'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'remnote_update_tags',
+    description: 'Add or remove tags from a note by exact tag Rem IDs.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        remId: { type: 'string', description: 'The Rem ID whose tags should change' },
+        addTagRemIds: {
+          type: 'array',
+          items: { type: 'string' },
+          minItems: 1,
+          description: 'Exact tag Rem IDs to add',
+        },
+        removeTagRemIds: {
+          type: 'array',
+          items: { type: 'string' },
+          minItems: 1,
+          description: 'Exact tag Rem IDs to remove',
+        },
       },
       required: ['remId'],
+      anyOf: [{ required: ['addTagRemIds'] }, { required: ['removeTagRemIds'] }],
+      additionalProperties: false,
     },
   },
   {
     name: 'remnote_append_journal',
-    description: "Append content to today's daily document in RemNote.",
+    description:
+      "Append content to today's daily document in RemNote with optional exact tag Rem IDs.",
     inputSchema: {
       type: 'object',
       properties: {
         content: { type: 'string', description: "Content to append to today's daily document" },
         timestamp: { type: 'boolean', description: 'Include timestamp' },
+        tagRemIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Exact tag Rem IDs to apply',
+        },
       },
       required: ['content'],
+      additionalProperties: false,
     },
   },
   {

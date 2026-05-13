@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, readFileSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -49,6 +49,42 @@ describe('RemNoteLocalProxy', () => {
     const proxy = new RemNoteLocalProxy({ createClient });
 
     await expect(proxy.listTools()).resolves.toEqual({ tools: FALLBACK_TOOLS });
+  });
+
+  it('keeps MCPB fallback tools aligned with the split write contract', () => {
+    const fallbackNames = FALLBACK_TOOLS.map((tool) => tool.name);
+    expect(fallbackNames).toContain('remnote_insert_children');
+    expect(fallbackNames).toContain('remnote_replace_children');
+    expect(fallbackNames).toContain('remnote_update_tags');
+
+    const createNote = FALLBACK_TOOLS.find((tool) => tool.name === 'remnote_create_note');
+    const updateNote = FALLBACK_TOOLS.find((tool) => tool.name === 'remnote_update_note');
+    const appendJournal = FALLBACK_TOOLS.find((tool) => tool.name === 'remnote_append_journal');
+    const createProps = createNote?.inputSchema.properties ?? {};
+    const updateProps = updateNote?.inputSchema.properties ?? {};
+    const journalProps = appendJournal?.inputSchema.properties ?? {};
+
+    expect(createProps.tagRemIds).toBeDefined();
+    expect(createProps.tags).toBeUndefined();
+    expect(updateProps.appendContent).toBeUndefined();
+    expect(updateProps.replaceContent).toBeUndefined();
+    expect(updateProps.addTags).toBeUndefined();
+    expect(updateProps.removeTags).toBeUndefined();
+    expect(journalProps.tagRemIds).toBeDefined();
+  });
+
+  it('keeps MCPB manifest tool names aligned with split write tools', () => {
+    const manifest = JSON.parse(readFileSync('mcpb/remnote-local/manifest.json', 'utf8')) as {
+      tools: Array<{ name: string; description: string }>;
+    };
+    const names = manifest.tools.map((tool) => tool.name);
+
+    expect(names).toContain('remnote_insert_children');
+    expect(names).toContain('remnote_replace_children');
+    expect(names).toContain('remnote_update_tags');
+    expect(
+      manifest.tools.find((tool) => tool.name === 'remnote_update_note')?.description
+    ).toContain('metadata');
   });
 
   it('forwards tool calls and preserves the remote MCP result', async () => {

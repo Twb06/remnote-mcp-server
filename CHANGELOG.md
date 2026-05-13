@@ -33,6 +33,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Clarify AI-agent live integration policy: agents must preflight port `3001`, refuse to run when it is occupied, use
   `run-agent-integration-test.sh`, and run live integration outside the Codex sandbox.
 
+### Fixed
+
+- Align MCPB manifest and fallback tool metadata with the split write tools so local Claude Desktop/MCPB clients no
+  longer see stale `remnote_update_note` content/tag fields or name-based create tags.
+- Tighten advertised MCP JSON schemas for split child insertion and tag updates so tool discovery matches runtime
+  validation.
+
 ## [0.14.2] - 2026-05-08
 
 ### Changed
