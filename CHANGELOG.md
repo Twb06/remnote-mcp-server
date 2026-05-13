@@ -11,6 +11,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Add split RemNote write tools: `remnote_insert_children`, `remnote_replace_children`, and `remnote_update_tags`, plus
   matching `remnote-cli` commands for ordered child insertion, destructive child replacement, and exact-ID tag mutation.
+- Add exact-ID tag assignment to `remnote_append_journal` and `remnote-cli journal --tag-ids`.
 - Add `remnote-mcp-server daemon` lifecycle commands for detached background startup, status, logs, graceful shutdown,
   duplicate-start protection, stable log routing, and macOS `launchd` login persistence.
 
@@ -18,6 +19,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Limit `remnote_update_note` and `remnote-cli update` to metadata title updates so child and tag writes use focused
   non-duplicative interfaces.
+- Change `remnote_create_note` and `remnote-cli create` to use exact tag Rem IDs via `tagRemIds` / `--tag-ids` instead
+  of name-based `tags` / `--tags`.
 - Rename CLI guide files so `remnote-mcp-server` and `remnote-cli` documentation targets are explicit.
 - Add daemon startup, status, log, and macOS persistence pointers to installation, configuration, and troubleshooting
   docs.

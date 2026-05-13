@@ -218,25 +218,39 @@ async function ensureIntegrationParentNote(
     };
   }
 
+  const tagResult = (await cli.runExpectSuccess(['create', INTEGRATION_PARENT_TAG])) as Record<
+    string,
+    unknown
+  >;
+  const tagRemIds = Array.isArray(tagResult.remIds) ? (tagResult.remIds as string[]) : [];
+  const tagRemId = tagRemIds[0];
+  if (typeof tagRemId !== 'string') {
+    throw new Error(
+      `Failed to initialize integration parent tag. Response: ${JSON.stringify(tagResult)}`
+    );
+  }
+
   const createResult = (await cli.runExpectSuccess([
     'create',
     INTEGRATION_PARENT_TITLE,
-    '--tags',
-    INTEGRATION_PARENT_TAG,
+    '--tag-ids',
+    tagRemId,
   ])) as Record<string, unknown>;
 
-  if (typeof createResult.remId !== 'string') {
+  const remIds = Array.isArray(createResult.remIds) ? (createResult.remIds as string[]) : [];
+  const remId = remIds[0];
+  if (typeof remId !== 'string') {
     throw new Error(
       `Failed to initialize integration parent note. Response: ${JSON.stringify(createResult)}`
     );
   }
 
-  state.integrationParentRemId = createResult.remId;
+  state.integrationParentRemId = remId;
   state.integrationParentTitle = INTEGRATION_PARENT_TITLE;
   return {
     status: 'created',
     strategy: 'create',
-    remId: createResult.remId,
+    remId,
     title: INTEGRATION_PARENT_TITLE,
     exactMatches: 0,
     candidateCount: searchCandidates.length + tagCandidates.length,

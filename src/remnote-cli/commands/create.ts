@@ -15,7 +15,7 @@ export function registerCreateCommand(program: Command): void {
     .option('-c, --content <text>', 'Note content (markdown/flashcard supported)', validate)
     .option('--content-file <path>', 'Read note content from UTF-8 file ("-" for stdin)', validate)
     .option('--parent-id <id>', 'Parent Rem ID', validate)
-    .option('-t, --tags <tags...>', 'Tags to add')
+    .option('--tag-ids <tagRemIds...>', 'Exact tag Rem IDs to add')
     .action(async (titleArg: string | undefined, opts) => {
       const globalOpts = program.opts();
       const format: OutputFormat = globalOpts.text ? 'text' : 'json';
@@ -38,7 +38,7 @@ export function registerCreateCommand(program: Command): void {
 
         if (content !== undefined) payload.content = content;
         if (opts.parentId) payload.parentId = opts.parentId;
-        if (opts.tags && opts.tags.length > 0) payload.tags = opts.tags;
+        if (opts.tagIds && opts.tagIds.length > 0) payload.tagRemIds = opts.tagIds;
 
         const result = await client.execute('create_note', payload);
         console.log(

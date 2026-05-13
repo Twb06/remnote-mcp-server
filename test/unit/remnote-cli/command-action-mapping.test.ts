@@ -37,14 +37,14 @@ describe('command bridge action mapping', () => {
       'Test Title',
       '--content',
       'Body',
-      '--tags',
-      'tag-a',
-      'tag-b',
+      '--tag-ids',
+      'tag-rem-id-a',
+      'tag-rem-id-b',
     ]);
     expect(executeSpy).toHaveBeenCalledWith('create_note', {
       title: 'Test Title',
       content: 'Body',
-      tags: ['tag-a', 'tag-b'],
+      tagRemIds: ['tag-rem-id-a', 'tag-rem-id-b'],
     });
     executeSpy.mockRestore();
   });
@@ -271,10 +271,17 @@ describe('command bridge action mapping', () => {
   });
 
   it('maps journal command with positional content', async () => {
-    const executeSpy = await runCommand(['journal', 'Positional Entry', '--no-timestamp']);
+    const executeSpy = await runCommand([
+      'journal',
+      'Positional Entry',
+      '--no-timestamp',
+      '--tag-ids',
+      'journal-tag-rem-id',
+    ]);
     expect(executeSpy).toHaveBeenCalledWith('append_journal', {
       content: 'Positional Entry',
       timestamp: false,
+      tagRemIds: ['journal-tag-rem-id'],
     });
     executeSpy.mockRestore();
   });

@@ -5,8 +5,9 @@ export const CreateNoteSchema = z
     title: z.string().optional().describe('The title of the note'),
     content: z.string().optional().describe('Content as child bullets (markdown supported)'),
     parentId: z.string().optional().describe('Parent Rem ID'),
-    tags: z.array(z.string()).optional().describe('Tags to apply'),
+    tagRemIds: z.array(z.string()).optional().describe('Exact tag Rem IDs to apply'),
   })
+  .strict()
   .refine((value) => value.title !== undefined || value.content !== undefined, {
     message: 'create_note requires either title or content',
   });
@@ -157,10 +158,13 @@ export const UpdateTagsSchema = z
     path: ['addTagRemIds'],
   });
 
-export const AppendJournalSchema = z.object({
-  content: z.string().describe("Content to append to today's daily document"),
-  timestamp: z.boolean().default(true).describe('Include timestamp'),
-});
+export const AppendJournalSchema = z
+  .object({
+    content: z.string().describe("Content to append to today's daily document"),
+    timestamp: z.boolean().default(true).describe('Include timestamp'),
+    tagRemIds: z.array(z.string()).optional().describe('Exact tag Rem IDs to apply'),
+  })
+  .strict();
 
 export const ReadTableSchema = z
   .object({

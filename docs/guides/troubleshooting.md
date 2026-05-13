@@ -464,8 +464,9 @@ Invalid session ID: ...
 **Solutions:**
 
 1. **Check parameters are correct:**
-   - Title is required
-   - Content, parentId, tags are optional
+   - Title or content is required
+   - Content, parentId, and tagRemIds are optional
+   - Use exact tag Rem IDs in `tagRemIds`; tag names are not accepted for create writes
    - See [Tools Reference](tools-reference.md)
 2. **Verify RemNote is responsive:**
    - Check RemNote app isn't frozen

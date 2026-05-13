@@ -176,6 +176,40 @@ export async function createSearchWorkflow(
   if (!state.searchByTagTag) {
     state.searchByTagTag = `mcp-test-tag-${sanitizedRunId}`;
   }
+
+  let mdTreeRootOnlyTagRemId: string | undefined;
+
+  // Step 0: Create tag Rems used by exact-ID create_note tagging
+  {
+    const start = Date.now();
+    try {
+      if (!state.searchByTagTagRemId) {
+        const result = (await ctx.client.callTool('remnote_create_note', {
+          title: state.searchByTagTag,
+        })) as { remIds: string[] };
+        assertHasField(result, 'remIds', 'create search tag rem');
+        assertIsArray(result.remIds, 'search tag remIds');
+        state.searchByTagTagRemId = result.remIds[0];
+      }
+
+      const mdTagResult = (await ctx.client.callTool('remnote_create_note', {
+        title: mdTreeRootOnlyTag,
+      })) as { remIds: string[] };
+      assertHasField(mdTagResult, 'remIds', 'create markdown tree tag rem');
+      assertIsArray(mdTagResult.remIds, 'markdown tree tag remIds');
+      mdTreeRootOnlyTagRemId = mdTagResult.remIds[0];
+
+      steps.push({ label: 'Create tag Rems', passed: true, durationMs: Date.now() - start });
+    } catch (e) {
+      steps.push({
+        label: 'Create tag Rems',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
   // Step 1: Create simple note
   {
     const start = Date.now();
@@ -206,7 +240,7 @@ export async function createSearchWorkflow(
         title: `[MCP-TEST] Rich Note ${ctx.runId}`,
         parentId: state.integrationParentRemId,
         content: 'Bullet one\nBullet two\nBullet three',
-        tags: [state.searchByTagTag],
+        tagRemIds: [state.searchByTagTagRemId],
       })) as { remIds: string[] };
       assertHasField(result, 'remIds', 'create rich note');
       assertIsArray(result.remIds, 'remIds should be an array');
@@ -234,7 +268,7 @@ export async function createSearchWorkflow(
         title: `[MCP-TEST] Flashcard Note ${ctx.runId}`,
         parentId: state.integrationParentRemId,
         content: 'Front :: Back',
-        tags: [state.searchByTagTag as string],
+        tagRemIds: [state.searchByTagTagRemId as string],
       })) as { remIds: string[] };
       assertHasField(result, 'remIds', 'create flashcard note');
       assertIsArray(result.remIds, 'remIds should be an array');
@@ -280,7 +314,7 @@ export async function createSearchWorkflow(
         content: markdownContent,
         title: `[MCP-TEST] Flashcard Tree ${ctx.runId}`,
         parentId: state.integrationParentRemId,
-        tags: [state.searchByTagTag as string, mdTreeRootOnlyTag],
+        tagRemIds: [state.searchByTagTagRemId as string, mdTreeRootOnlyTagRemId as string],
       })) as { remIds: string[] };
 
       assertHasField(result, 'remIds', 'create markdown tree');

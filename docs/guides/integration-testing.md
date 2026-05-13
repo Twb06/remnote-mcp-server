@@ -124,9 +124,9 @@ The direct MCP and MCPB stdio proxy suites follow the same RemNote tool workflow
 
 1. **Status Check** — Verifies the live consumer path is connected to the bridge. If this fails, all subsequent workflows are
    skipped.
-2. **Create & Search** — Creates two notes (simple and rich with content/tags), waits for RemNote indexing, then
+2. **Create & Search** — Creates notes and exact-ID tag Rems, waits for RemNote indexing, then
    validates search and tag-search behavior across the supported content modes.
-3. **Read & Update** — Reads the created notes, updates title/content/tags, and re-reads to verify persistence.
+3. **Read & Update** — Reads the created notes, updates title/content/tags by exact Rem ID, and re-reads to verify persistence.
 4. **Journal** — Appends entries to today's daily document with and without timestamps.
 5. **Error Cases** — Sends invalid inputs (nonexistent IDs, missing required fields) and verifies the server handles
    them gracefully.
@@ -158,7 +158,8 @@ custom lightweight assertions rather than Vitest to stay independent from the mo
 
 Tag coverage:
 
-- The shared live suites assert `tags` on plain `remnote_search` and `remnote_read_note` for notes created with tags.
+- The shared live suites assert readable `tags` on plain `remnote_search` and `remnote_read_note` for notes created with
+  exact tag Rem IDs.
 - They also verify exact-ID tag add/remove flows through both `remnote_search_by_tag` and direct `remnote_read_note`
   readback.
 

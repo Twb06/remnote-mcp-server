@@ -199,6 +199,41 @@ export async function createSearchWorkflow(
     state.searchByTagTag = `cli-test-tag-${sanitizedRunId}`;
   }
 
+  let mdTreeRootOnlyTagRemId: string | undefined;
+
+  // Step 0: Create tag Rems used by exact-ID create tagging
+  {
+    const start = Date.now();
+    try {
+      if (!state.searchByTagTagRemId) {
+        const result = (await ctx.cli.runExpectSuccess(['create', state.searchByTagTag])) as Record<
+          string,
+          unknown
+        >;
+        assertHasField(result, 'remIds', 'create search tag rem');
+        assertIsArray(result.remIds, 'search tag remIds');
+        state.searchByTagTagRemId = (result.remIds as string[])[0];
+      }
+
+      const mdTagResult = (await ctx.cli.runExpectSuccess(['create', mdTreeRootOnlyTag])) as Record<
+        string,
+        unknown
+      >;
+      assertHasField(mdTagResult, 'remIds', 'create markdown tree tag rem');
+      assertIsArray(mdTagResult.remIds, 'markdown tree tag remIds');
+      mdTreeRootOnlyTagRemId = (mdTagResult.remIds as string[])[0];
+
+      steps.push({ label: 'Create tag Rems', passed: true, durationMs: Date.now() - start });
+    } catch (e) {
+      steps.push({
+        label: 'Create tag Rems',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
   // Step 1: Create simple note (title-only)
   {
     const start = Date.now();
@@ -235,8 +270,8 @@ export async function createSearchWorkflow(
           state.integrationParentRemId,
           '--content-file',
           contentPath,
-          '--tags',
-          state.searchByTagTag,
+          '--tag-ids',
+          state.searchByTagTagRemId as string,
         ])) as Record<string, unknown>;
       })) as Record<string, unknown>;
       assertHasField(result, 'remIds', 'create rich note');
@@ -264,8 +299,8 @@ export async function createSearchWorkflow(
         'Front :: Back',
         '--parent-id',
         state.integrationParentRemId as string,
-        '--tags',
-        state.searchByTagTag as string,
+        '--tag-ids',
+        state.searchByTagTagRemId as string,
       ])) as Record<string, unknown>;
       assertHasField(result, 'remIds', 'create flashcard note');
       assertIsArray(result.remIds, 'remIds should be an array');
@@ -321,9 +356,9 @@ export async function createSearchWorkflow(
           contentPath,
           '--title',
           `[CLI-TEST] Flashcard Tree ${ctx.runId}`,
-          '--tags',
-          state.searchByTagTag as string,
-          mdTreeRootOnlyTag,
+          '--tag-ids',
+          state.searchByTagTagRemId as string,
+          mdTreeRootOnlyTagRemId as string,
         ])) as Record<string, unknown>;
       })) as Record<string, unknown>;
 

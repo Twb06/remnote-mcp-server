@@ -9,7 +9,7 @@ export const validCreateNoteInput = {
   title: 'Test Note',
   content: 'Line 1\nLine 2',
   parentId: 'parent-id-123',
-  tags: ['tag1', 'tag2'],
+  tagRemIds: ['tag-rem-id-1', 'tag-rem-id-2'],
 };
 
 export const validSearchInput = {
@@ -54,6 +54,7 @@ export const validUpdateTagsInput = {
 export const validAppendJournalInput = {
   content: 'Journal entry',
   timestamp: false,
+  tagRemIds: ['journal-tag-rem-id'],
 };
 
 export const validReadTableInput = {

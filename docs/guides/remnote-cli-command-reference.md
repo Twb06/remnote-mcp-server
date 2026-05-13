@@ -66,7 +66,7 @@ remnote-cli create [title] [options]
 | `-c, --content <text>`  | none    | Initial content (markdown supported)                 |
 | `--content-file <path>` | none    | Read initial content from UTF-8 file (`-` for stdin) |
 | `--parent-id <id>`      | none    | Parent Rem ID                                        |
-| `-t, --tags <tag...>`   | none    | One or more tags                                     |
+| `--tag-ids <id...>`     | none    | Exact tag Rem IDs to add                             |
 
 Behavior rules:
 
@@ -77,7 +77,7 @@ Behavior rules:
 - Content loaded from file/stdin is passed verbatim (no templating/interpolation).
 - Write content from `--content-file` and stdin is capped at 100 KB.
 - If `parent-id` is not provided, the note will be created under the default root rem in the setting.
-- Tags are applied only to the top-level Rems created.
+- Tag Rem IDs are applied only to the top-level Rems created. Tag names are not accepted.
 
 Examples:
 
@@ -89,8 +89,8 @@ remnote-cli create --title "Meeting Notes"
 # Create a new note under a specific parent rem id
 remnote-cli create --title "Meeting Notes" --parent-id <parent-rem-id>
 
-# Create a new note with title and content
-remnote-cli create --title "Project Plan" --content "Phase 1" --tags planning work
+# Create a new note with title, content, and exact tag Rem IDs
+remnote-cli create --title "Project Plan" --content "Phase 1" --tag-ids <tag-rem-id>
 
 # Create a new note with markdown content directly under parent rem id
 # Note: if the content is in markdown format, --content/--content-file must be used to avoid misinterpretation of the content as command options
@@ -301,6 +301,7 @@ remnote-cli journal [content] [options]
 | ----------------------- | ----------------- | -------------------------------------------------- |
 | `--content <text>`      | none              | Journal entry content                              |
 | `--content-file <path>` | none              | Read journal entry from UTF-8 file (`-` for stdin) |
+| `--tag-ids <id...>`     | none              | Exact tag Rem IDs to add                           |
 | `--no-timestamp`        | timestamp enabled | Disable `[HH:MM:SS]` prefix                        |
 
 Behavior rules:
@@ -310,12 +311,13 @@ Behavior rules:
   - `--content <text>`
   - `--content-file <path|->`
 - Content input from `--content`/`--content-file` supports RemNote's native markdown syntax for creating nested hierarchies and flashcards inline.
+- `--tag-ids` applies exact tag Rem IDs to the created journal entry root/top-level Rems. Tag names are not accepted.
 
 Examples:
 
 ```bash
 remnote-cli journal "Finished sprint review"
-remnote-cli journal --content "Quick thought" --no-timestamp --text
+remnote-cli journal --content "Quick thought" --no-timestamp --tag-ids <tag-rem-id> --text
 remnote-cli journal --content-file /tmp/entry.md --text
 cat /tmp/entry.md | remnote-cli journal --content-file - --text
 ```

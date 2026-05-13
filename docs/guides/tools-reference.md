@@ -15,7 +15,7 @@ JSON in a top-level `content` text block for compatibility with older clients an
 
 | Tool | Description | Use Case |
 |------|-------------|----------|
-| `remnote_create_note` | Create new notes or flashcards | Adding new knowledge, ideas, references, or flashcards. Supports hierarchical markdown and flashcard syntax. |
+| `remnote_create_note` | Create new notes or flashcards | Adding new knowledge, ideas, references, or flashcards. Supports hierarchical markdown, flashcard syntax, and exact tag Rem IDs. |
 | `remnote_search` | Search knowledge base | Finding existing notes, exploring topics |
 | `remnote_search_by_tag` | Search by tag | Finding ancestor context for tagged notes |
 | `remnote_read_note` | Read note content | Retrieving details, reading hierarchies |
@@ -23,14 +23,14 @@ JSON in a top-level `content` text block for compatibility with older clients an
 | `remnote_insert_children` | Insert child Rems | Ordered hierarchy maintenance, tag descriptions |
 | `remnote_replace_children` | Replace direct child Rems | Explicitly approved destructive rewrites |
 | `remnote_update_tags` | Mutate tags by exact Rem ID | Production tagging workflows |
-| `remnote_append_journal` | Add to daily document | Journaling, logging, daily notes |
+| `remnote_append_journal` | Add to daily document | Journaling, logging, daily notes, optional exact tag Rem IDs |
 | `remnote_read_table` | Read Advanced Tables | Fetching tabular rows, schema metadata, and filtered columns |
 | `remnote_get_playbook` | Get operating playbook | Session preflight, traversal defaults, write safety guidance |
 | `remnote_status` | Check connection health | Verifying setup, debugging |
 
 ## remnote_create_note
 
-Create a new note/flashcard in RemNote with optional parent hierarchy and tags.
+Create a new note/flashcard in RemNote with optional parent hierarchy and exact tag Rem IDs.
 
 ### Parameters
 
@@ -39,7 +39,7 @@ Create a new note/flashcard in RemNote with optional parent hierarchy and tags.
 | `title` | string | No | The title of the note (optional if content is provided) |
 | `content` | string | No | Child content as bullet points or hierarchical markdown |
 | `parentId` | string | No | Parent Rem ID to nest this note under |
-| `tags` | string[] | No | Array of tag names to apply |
+| `tagRemIds` | string[] | No | Exact tag Rem IDs to apply |
 
 ### Usage
 
@@ -61,9 +61,9 @@ Create a note "Shopping List" with content:
 Create a note "Chapter 1" under the note with ID abc123
 ```
 
-**Create with tags:**
+**Create with tag Rem IDs:**
 ```
-Create a note "Important Meeting" with tags "work" and "urgent"
+Create a note "Important Meeting" with tagRemIds ["workTagRemId", "urgentTagRemId"]
 ```
 
 **Create a flashcard:**
@@ -110,9 +110,9 @@ Returns an array of remIds containing the title (if provided) and each generated
 - Use descriptive titles for better searchability
 - Structure content with bullets (`-` or `•`) for RemNote hierarchy
 - Use `parentId` to organize notes within existing hierarchies
-- Tags can be existing or new - new tags are created automatically
+- Use `tagRemIds` for production tagging workflows. Create or resolve the tag Rem first, then pass its exact Rem ID.
 - Flashcards are created via markdown syntax in `content`, not separate create-note fields
-- Tags apply to the created root Rem when `title` is provided, or to top-level created Rems when `title` is omitted
+- Tag Rem IDs apply to the created root Rem when `title` is provided, or to top-level created Rems when `title` is omitted
 
 
 ## remnote_search
@@ -366,7 +366,7 @@ because same-name Rems can exist in different branches.
 
 ## remnote_append_journal
 
-Append content to today's daily document in RemNote.
+Append content to today's daily document in RemNote with optional exact tag Rem IDs.
 
 ### Parameters
 
@@ -374,6 +374,7 @@ Append content to today's daily document in RemNote.
 |-----------|------|----------|-------------|
 | `content` | string | Yes | Content to append to today's daily document |
 | `timestamp` | boolean | No | Include timestamp (default: true) |
+| `tagRemIds` | string[] | No | Exact tag Rem IDs to apply |
 
 ### Usage
 
@@ -385,6 +386,11 @@ Add to my journal: "Completed the MCP integration today"
 **Add without timestamp:**
 ```
 Add to my journal without timestamp: "Project milestone reached"
+```
+
+**Add with tag Rem IDs:**
+```
+Add to my journal with tagRemIds ["dailyLogTagRemId"]: "Completed the MCP integration today"
 ```
 
 ### Response
@@ -645,7 +651,7 @@ AI agents can chain multiple tools:
 
 - Use descriptive titles for better searchability
 - Structure content hierarchically with bullet points
-- Use tags for categorization and filtering
+- Use `tagRemIds` for exact tag assignment; name-based tag mutation is intentionally avoided in production writes
 - Set parent relationships to maintain organization
 
 ### Searching
@@ -663,10 +669,9 @@ AI agents can chain multiple tools:
 
 ### Updating Notes
 
-- Combine multiple updates in one call for efficiency
 - Use descriptive titles after renaming
-- Add tags for better organization
-- Append content for logging or adding details
+- Use `remnote_update_tags` with exact tag Rem IDs for tag changes
+- Use `remnote_insert_children` for additive content and `remnote_replace_children` only when destructive replacement is explicitly intended
 
 ### Journaling
 

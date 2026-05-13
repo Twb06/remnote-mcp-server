@@ -26,6 +26,7 @@ export interface SharedState {
   integrationParentRemId?: string;
   integrationParentTitle?: string;
   searchByTagTag?: string;
+  searchByTagTagRemId?: string;
   noteAId?: string;
   noteBId?: string;
   noteCId?: string;

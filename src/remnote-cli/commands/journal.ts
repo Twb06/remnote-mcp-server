@@ -13,6 +13,7 @@ export function registerJournalCommand(program: Command): void {
     .description("Append an entry to today's journal")
     .option('--content <text>', 'Journal entry content', validate)
     .option('--content-file <path>', 'Read journal entry from UTF-8 file ("-" for stdin)', validate)
+    .option('--tag-ids <tagRemIds...>', 'Exact tag Rem IDs to add')
     .option('--no-timestamp', 'Omit timestamp prefix')
     .action(async (positionalContent: string | undefined, opts) => {
       const globalOpts = program.opts();
@@ -33,6 +34,7 @@ export function registerJournalCommand(program: Command): void {
           content,
           timestamp: opts.timestamp !== false,
         };
+        if (opts.tagIds && opts.tagIds.length > 0) payload.tagRemIds = opts.tagIds;
 
         const result = await client.execute('append_journal', payload);
         console.log(

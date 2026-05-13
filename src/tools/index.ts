@@ -23,7 +23,7 @@ const NAVIGATION_PRESET = {
 export const CREATE_NOTE_TOOL = {
   name: 'remnote_create_note',
   description:
-    'Create a new note in RemNote with optional content, parent, and tags. Supports hierarchical markdown in content and flashcard syntax (e.g. "- Term :: Definition"). At least one of title or content must be provided. Recommended preflight once per session: remnote_status.',
+    'Create a new note in RemNote with optional content, parent, and exact tag Rem IDs. Supports hierarchical markdown in content and flashcard syntax (e.g. "- Term :: Definition"). At least one of title or content must be provided. Recommended preflight once per session: remnote_status.',
   inputSchema: {
     type: 'object' as const,
     properties: {
@@ -36,9 +36,14 @@ export const CREATE_NOTE_TOOL = {
         description: 'Content as plain text, child bullets or hierarchical markdown',
       },
       parentId: { type: 'string', description: 'Parent Rem ID' },
-      tags: { type: 'array', items: { type: 'string' }, description: 'Tags to apply' },
+      tagRemIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Exact tag Rem IDs to apply',
+      },
     },
     required: [],
+    additionalProperties: false,
   },
   outputSchema: {
     type: 'object' as const,
@@ -492,7 +497,7 @@ export const UPDATE_TAGS_TOOL = {
 export const APPEND_JOURNAL_TOOL = {
   name: 'remnote_append_journal',
   description:
-    "Append content to today's daily document in RemNote. Recommended preflight once per session: remnote_status.",
+    "Append content to today's daily document in RemNote with optional exact tag Rem IDs. Recommended preflight once per session: remnote_status.",
   inputSchema: {
     type: 'object' as const,
     properties: {
@@ -501,8 +506,14 @@ export const APPEND_JOURNAL_TOOL = {
         description: "Content to append to today's daily document (markdown supported)",
       },
       timestamp: { type: 'boolean', description: 'Include timestamp (default: true)' },
+      tagRemIds: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Exact tag Rem IDs to apply',
+      },
     },
     required: ['content'],
+    additionalProperties: false,
   },
   outputSchema: {
     type: 'object' as const,

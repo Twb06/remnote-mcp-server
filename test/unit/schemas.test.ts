@@ -23,7 +23,7 @@ describe('CreateNoteSchema', () => {
     expect(result.title).toBe('Test');
     expect(result.content).toBeUndefined();
     expect(result.parentId).toBeUndefined();
-    expect(result.tags).toBeUndefined();
+    expect(result.tagRemIds).toBeUndefined();
   });
 
   it('should validate with only content field', () => {
@@ -37,7 +37,7 @@ describe('CreateNoteSchema', () => {
       title: 'Test Note',
       content: 'Content',
       parentId: 'parent-123',
-      tags: ['tag1', 'tag2'],
+      tagRemIds: ['tag-rem-id-1', 'tag-rem-id-2'],
     };
     const result = CreateNoteSchema.parse(input);
     expect(result).toEqual(input);
@@ -53,8 +53,12 @@ describe('CreateNoteSchema', () => {
     expect(() => CreateNoteSchema.parse({ title: 123 })).toThrow();
   });
 
-  it('should reject non-array tags', () => {
-    expect(() => CreateNoteSchema.parse({ title: 'Test', tags: 'not-array' })).toThrow();
+  it('should reject non-array tagRemIds', () => {
+    expect(() => CreateNoteSchema.parse({ title: 'Test', tagRemIds: 'not-array' })).toThrow();
+  });
+
+  it('should reject old name-based tags field', () => {
+    expect(() => CreateNoteSchema.parse({ title: 'Test', tags: ['tag-name'] })).toThrow();
   });
 });
 
@@ -323,6 +327,14 @@ describe('AppendJournalSchema', () => {
     expect(result.timestamp).toBe(false);
   });
 
+  it('should validate exact tag Rem IDs', () => {
+    const result = AppendJournalSchema.parse({
+      content: 'Test',
+      tagRemIds: ['tag-rem-id-1'],
+    });
+    expect(result.tagRemIds).toEqual(['tag-rem-id-1']);
+  });
+
   it('should reject missing content', () => {
     expect(() => AppendJournalSchema.parse({})).toThrow();
   });
@@ -333,6 +345,10 @@ describe('AppendJournalSchema', () => {
 
   it('should reject non-boolean timestamp', () => {
     expect(() => AppendJournalSchema.parse({ content: 'Test', timestamp: 'yes' })).toThrow();
+  });
+
+  it('should reject unknown fields', () => {
+    expect(() => AppendJournalSchema.parse({ content: 'Test', tags: ['tag-name'] })).toThrow();
   });
 });
 

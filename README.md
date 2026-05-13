@@ -76,8 +76,8 @@ expose the HTTP endpoint securely. The WebSocket connection always stays local f
 - **Create Notes & Flashcards** - Create simple notes, hierarchical markdown trees, or RemNote-native flashcards
 - **Search Knowledge Base** - Run full-text searches or tag-based searches with ancestor context
 - **Read Notes** - Retrieve note content in markdown or structured form with configurable traversal depth
-- **Update Notes** - Modify titles, append or replace hierarchical content, and manage tags
-- **Journal Entries** - Append timestamped daily entries, including hierarchical markdown content
+- **Update Notes** - Modify titles, insert or replace hierarchical content, and manage tags by exact Rem ID
+- **Journal Entries** - Append timestamped daily entries with hierarchical markdown content and optional exact tag Rem IDs
 - **Agent Playbook** - Return built-in navigation and safety guidance for MCP clients
 - **Connection Status** - Check server and plugin connection health
 
@@ -184,16 +184,19 @@ After installing the LaunchAgent, `remnote-mcp-server daemon status|start|stop|r
 
 ## Available MCP Tools
 
-| Tool                      | Description                                    |
-|---------------------------|------------------------------------------------|
-| `remnote_create_note`     | Create notes, markdown trees, or flashcards with title, content, parent, and tags |
+| Tool                      | Description                                                                 |
+|---------------------------|-----------------------------------------------------------------------------|
+| `remnote_create_note`     | Create notes, markdown trees, or flashcards with optional exact tag Rem IDs |
 | `remnote_search`          | Search knowledge base with full-text search and parent-context metadata; `tags` remain optional and SDK-limited |
 | `remnote_search_by_tag`   | Search by tag with ancestor-context resolution |
 | `remnote_read_note`       | Read note by ID with metadata and markdown or structured content; readable `tags` remain SDK-limited |
-| `remnote_update_note`     | Update title, append/replace content, or modify tags |
-| `remnote_append_journal`  | Append hierarchical content to today's daily document |
+| `remnote_update_note`     | Update title |
+| `remnote_insert_children` | Insert child Rems at deterministic positions |
+| `remnote_replace_children` | Replace direct children when destructive replacement is enabled |
+| `remnote_update_tags`     | Add or remove tags by exact tag Rem ID |
+| `remnote_append_journal`  | Append hierarchical content to today's daily document with optional tag Rem IDs |
 | `remnote_read_table`      | Read Advanced Table columns, rows, and typed property metadata |
-| `remnote_get_playbook`    | Get recommended MCP usage/navigation playbook  |
+| `remnote_get_playbook`    | Get recommended MCP usage/navigation playbook |
 | `remnote_status`          | Check connection status and statistics         |
 
 Tools that declare an `outputSchema` return MCP `structuredContent` plus a JSON `content` text block for compatibility.

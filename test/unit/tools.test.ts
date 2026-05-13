@@ -84,6 +84,12 @@ describe('Tool Definitions', () => {
     expect(CREATE_NOTE_TOOL.inputSchema.required).not.toContain('title');
   });
 
+  it('should advertise exact tag Rem IDs for CREATE_NOTE_TOOL', () => {
+    const properties = CREATE_NOTE_TOOL.inputSchema.properties as Record<string, unknown>;
+    expect(properties.tagRemIds).toBeDefined();
+    expect(properties.tags).toBeUndefined();
+  });
+
   it('should have correct name for SEARCH_TOOL', () => {
     expect(SEARCH_TOOL.name).toBe('remnote_search');
   });
@@ -217,6 +223,12 @@ describe('Tool Definitions', () => {
 
   it('should have required content field for APPEND_JOURNAL_TOOL', () => {
     expect(APPEND_JOURNAL_TOOL.inputSchema.required).toContain('content');
+  });
+
+  it('should advertise exact tag Rem IDs for APPEND_JOURNAL_TOOL', () => {
+    const properties = APPEND_JOURNAL_TOOL.inputSchema.properties as Record<string, unknown>;
+    expect(properties.tagRemIds).toBeDefined();
+    expect(properties.tags).toBeUndefined();
   });
 
   it('should have plural remIds and titles in APPEND_JOURNAL_TOOL output schema', () => {
