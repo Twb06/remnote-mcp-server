@@ -128,11 +128,11 @@ wrapper.
 - Before invoking the wrapper, the agent must ask the human collaborator to start the bridge in RemNote.
 - If bridge code changed after the currently running RemNote bridge session started, the agent must ask the human
   collaborator to restart the bridge before rerunning the suite.
-- Before invoking any live integration command, the agent must explicitly check whether the configured HTTP MCP port is
-  occupied (`127.0.0.1:3001` by default), for example with `lsof -nP -iTCP:3001 -sTCP:LISTEN` or an equivalent port
-  probe. If anything is listening there, including a macOS launchd-managed server, the agent must refuse to run the
-  tests and report that Robert needs to stop the existing server first. The agent must not stop or restart any existing
-  `remnote-mcp-server` process or macOS launchd service.
+- Before invoking any live integration command, the agent must run
+  `./run-agent-integration-test.sh --preflight-only` outside the Codex sandbox to check whether the configured HTTP MCP
+  port is occupied (`127.0.0.1:3001` by default). If anything is listening there, including a macOS launchd-managed
+  server, the agent must refuse to run the tests and report that Robert needs to stop the existing server first. The
+  agent must not stop or restart any existing `remnote-mcp-server` process or macOS launchd service.
 - The wrapper repeats the configured HTTP MCP port check before build/start. If the port is already occupied, it must
   refuse to run and must not stop or restart any existing `remnote-mcp-server` process or macOS launchd service.
 - If the port is free, the wrapper builds and starts its own local MCP server, then waits for

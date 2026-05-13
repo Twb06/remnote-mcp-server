@@ -35,6 +35,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   restarting existing daemon/launchd-managed servers.
 - Clarify AI-agent live integration policy: agents must preflight port `3001`, refuse to run when it is occupied, use
   `run-agent-integration-test.sh`, and run live integration outside the Codex sandbox.
+- Add `run-agent-integration-test.sh --preflight-only` so agents can check the MCP HTTP port with the same unsandboxed
+  guard used by real live integration runs.
 
 ### Fixed
 

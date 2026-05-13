@@ -12,6 +12,7 @@ HTTP_HOST="${REMNOTE_HTTP_HOST:-127.0.0.1}"
 HTTP_PORT="${REMNOTE_HTTP_PORT:-3001}"
 
 suite="all"
+preflight_only=0
 forwarded_args=()
 started_server=0
 server_pid=""
@@ -22,7 +23,7 @@ cleanup_ran=0
 
 usage() {
   cat <<'EOF'
-Usage: ./run-agent-integration-test.sh [--yes] [--suite all|mcp|mcpb|cli]
+Usage: ./run-agent-integration-test.sh [--yes] [--preflight-only] [--suite all|mcp|mcpb|cli]
 
 Agent-safe live integration wrapper. Refuses to run if the MCP HTTP port is
 already occupied, then builds once, starts its own repo-local server, waits for
@@ -30,6 +31,7 @@ a connected RemNote bridge, and runs the selected suite. Default suite is "all".
 
 Options:
   --yes                 Accepted for compatibility; agent wrapper is always non-interactive
+  --preflight-only      Check whether the MCP HTTP port is free, then exit without build/start/test work
   --suite all|mcp|mcpb|cli
                         Run all suites, only direct MCP, only MCPB stdio proxy, or only bundled CLI
   -h, --help            Show this help
@@ -39,6 +41,10 @@ EOF
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --yes)
+      shift
+      ;;
+    --preflight-only)
+      preflight_only=1
       shift
       ;;
     --suite)
@@ -152,6 +158,12 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 assert_http_port_free
+
+if (( preflight_only == 1 )); then
+  echo "MCP HTTP port ${HTTP_HOST}:${HTTP_PORT} is free for agent-assisted integration tests."
+  exit 0
+fi
+
 ensure_built_server
 start_server
 

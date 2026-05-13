@@ -223,4 +223,39 @@ describe('run-agent-integration-test.sh', () => {
       await closeServer(portServer);
     }
   });
+
+  it('checks the MCP HTTP port without building or starting when preflight-only is requested', () => {
+    const sandbox = setupServerWrapperSandbox(0);
+
+    const result = spawnSync('bash', [sandbox.scriptPath, '--preflight-only'], {
+      cwd: resolve(process.cwd()),
+      encoding: 'utf-8',
+      env: sandbox.env,
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('is free');
+    expect(() => readFileSync(sandbox.commandLogPath, 'utf-8')).toThrow();
+  });
+
+  it('reports occupied MCP HTTP ports during preflight-only checks', async () => {
+    const sandbox = setupServerWrapperSandbox(0);
+    const occupiedPort = Number.parseInt(sandbox.env.REMNOTE_HTTP_PORT, 10);
+    const portServer = await listenOnLoopback(occupiedPort);
+
+    try {
+      const result = spawnSync('bash', [sandbox.scriptPath, '--preflight-only'], {
+        cwd: resolve(process.cwd()),
+        encoding: 'utf-8',
+        env: sandbox.env,
+      });
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('already in use');
+      expect(result.stderr).toContain(`${sandbox.env.REMNOTE_HTTP_PORT}`);
+      expect(() => readFileSync(sandbox.commandLogPath, 'utf-8')).toThrow();
+    } finally {
+      await closeServer(portServer);
+    }
+  });
 });

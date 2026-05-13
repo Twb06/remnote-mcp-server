@@ -48,6 +48,9 @@ Bridge as connected.
 # Non-interactive — skips confirmation
 ./run-integration-test.sh --yes
 
+# Agent-assisted preflight — checks port 3001 without building, starting, or stopping anything
+./run-agent-integration-test.sh --preflight-only
+
 # Agent-assisted — requires port 3001 to be free, starts its own server, waits for bridge connection, then runs all suites
 ./run-agent-integration-test.sh
 ./run-agent-integration-test.sh --yes
@@ -56,11 +59,11 @@ Bridge as connected.
 `npm run test:integration` delegates to `./run-integration-test.sh`, so it also runs all suites by default.
 
 The agent-assisted wrapper does not control existing MCP server processes. Before an AI agent invokes any live
-integration command, it must explicitly probe the configured HTTP MCP port (`127.0.0.1:3001` by default). If anything is
-listening there, including a macOS launchd-managed `remnote-mcp-server`, the agent must refuse to run tests and report
-that the existing server needs to be stopped manually. The wrapper repeats this port check and exits with a clear error
-if the port is occupied. During cleanup, the wrapper stops only the repo-local server process it started for the current
-test run.
+integration command, it must run `./run-agent-integration-test.sh --preflight-only` outside the Codex sandbox. If
+anything is listening on the configured HTTP MCP port (`127.0.0.1:3001` by default), including a macOS launchd-managed
+`remnote-mcp-server`, the agent must refuse to run tests and report that the existing server needs to be stopped
+manually. The wrapper repeats this same port check during real runs and exits with a clear error if the port is
+occupied. During cleanup, the wrapper stops only the repo-local server process it started for the current test run.
 
 AI agents must run the agent-assisted wrapper outside the Codex sandbox. The TypeScript runners use `tsx`, which creates
 local IPC pipes under macOS temp directories such as `/var/folders/...`; inside the sandbox this can fail before tests
