@@ -37,8 +37,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   `run-agent-integration-test.sh`, and run live integration outside the Codex sandbox.
 - Add `run-agent-integration-test.sh --preflight-only` so agents can check the MCP HTTP port with the same unsandboxed
   guard used by real live integration runs.
-- Clarify the README connection warning to emphasize both the official bridge plugin and compatible
-  `remnote-mcp-server` version, with links to install, local source, and compatibility guides.
+- Clarify the README intro notice to emphasize both the official bridge plugin and compatible `remnote-mcp-server`
+  version, with links to setup guides and issue-reporting guidance.
 
 ### Fixed
 

@@ -9,17 +9,17 @@ MCP server and CLI package that bridges AI agents, local scripts, and coding har
 [RemNote](https://remnote.com/) via the [RemNote Automation Bridge
 plugin](https://github.com/robert7/remnote-mcp-bridge).
 
-> If you run into any issues, please [report them here](https://github.com/robert7/remnote-mcp-server/issues).
-
-> **Connection issue? Check the RemNote bridge plugin and server versions.** Use the official
+> **Connection issue? Check the RemNote bridge plugin and server versions first.** Use the official
 > **MCP/OpenClaw Automation Bridge** by Robert Spiegel in RemNote, and run a compatible `remnote-mcp-server` on the same
 > `0.x` minor line (for example, `0.15.x` with `0.15.x`). Wrong plugin flavors or mismatched versions can disconnect
 > with a `1008` compatibility message. If Marketplace and npm releases are temporarily out of sync, pin the matching
-> server package or run the matching bridge/server checkout from source. See the
+> server package or run matching bridge/server checkouts from source. Start with the
 > [version compatibility guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/bridge-consumer-version-compatibility.md),
 > [plugin install guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/install-plugin-via-marketplace-beginner.md),
 > [local plugin guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/development-run-plugin-locally.md), and
 > [server installation guide](docs/guides/installation.md).
+> If the guides do not resolve your problem, [open an issue](https://github.com/robert7/remnote-mcp-server/issues) with
+> the relevant versions, setup path, observed behavior, and exact error/status message.
 
 ## What is This?
 
