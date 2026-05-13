@@ -3,7 +3,7 @@ import { writeFileSync } from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { getConfig, parseConfigToml } from '../../src/config.js';
+import { getConfig as loadServerConfig, parseConfigToml } from '../../src/config.js';
 
 describe('Config', () => {
   const originalEnv = process.env;
@@ -22,6 +22,13 @@ describe('Config', () => {
     await rm(tempDir, { recursive: true, force: true });
     process.env = originalEnv;
   });
+
+  function getConfig(
+    cliOptions: Parameters<typeof loadServerConfig>[0],
+    loadOptions: Parameters<typeof loadServerConfig>[1] = {}
+  ): ReturnType<typeof loadServerConfig> {
+    return loadServerConfig(cliOptions, { homeDir: tempDir, ...loadOptions });
+  }
 
   describe('Port Configuration', () => {
     it('should use default ports when no CLI or env vars provided', () => {
