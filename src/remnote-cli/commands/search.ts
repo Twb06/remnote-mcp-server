@@ -15,6 +15,25 @@ const TYPE_TAG: Record<string, string> = {
   portal: '[portal] ',
 };
 
+function formatTags(tags: unknown): string {
+  if (!Array.isArray(tags)) return '';
+  return tags
+    .map((tag) => {
+      if (
+        tag &&
+        typeof tag === 'object' &&
+        typeof (tag as Record<string, unknown>).name === 'string' &&
+        typeof (tag as Record<string, unknown>).tagRemId === 'string'
+      ) {
+        const { name, tagRemId } = tag as { name: string; tagRemId: string };
+        return `${name} [${tagRemId}]`;
+      }
+      return typeof tag === 'string' ? tag : '';
+    })
+    .filter(Boolean)
+    .join(', ');
+}
+
 function applySearchOptions(payload: Record<string, unknown>, opts: Record<string, unknown>): void {
   if (opts.includeContent) payload.includeContent = opts.includeContent;
   if (opts.depth) payload.depth = parseInt(opts.depth as string, 10);
@@ -36,8 +55,9 @@ function formatSearchText(data: unknown): string {
         aliasesSuffix = ` (aka: ${(note.aliases as string[]).join(', ')})`;
       }
       let tagsSuffix = '';
-      if (note.tags && Array.isArray(note.tags) && note.tags.length > 0) {
-        tagsSuffix = ` [tags: ${(note.tags as string[]).join(', ')}]`;
+      const formattedTags = formatTags(note.tags);
+      if (formattedTags) {
+        tagsSuffix = ` [tags: ${formattedTags}]`;
       }
       let parentSuffix = '';
       if (typeof note.parentTitle === 'string' && note.parentTitle.length > 0) {

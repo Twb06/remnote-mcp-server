@@ -21,6 +21,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Change `tags` output metadata to preserve exact tag Rem IDs plus names as `{ tagRemId, name }` objects.
 - Change `remnote_search_by_tag` and `remnote-cli search-by-tag --tag-id` to search by exact tag Rem ID instead of tag
   name or alias lookup.
 - Update `remnote_get_playbook` guidance for the split write tools and exact-ID tag fields without expanding the

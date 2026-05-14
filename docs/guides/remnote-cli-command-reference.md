@@ -125,10 +125,11 @@ Shared options for `search` and `search-by-tag`:
 Behavior rules:
 
 - In `--text` mode, each line includes headline/title and Rem ID.
-- Tags are shown in `--text` mode when the bridge returns them as `[tags: tag1, tag2]`.
+- Tags are shown in `--text` mode when the bridge returns them as `[tags: tag1 [tagRemId1], tag2 [tagRemId2]]`.
 - Parent context is appended in text output when available as `<- Parent Title [parentRemId]`.
 - `--depth`, `--child-limit`, and `--max-content-length` are most relevant when content rendering is enabled.
-- `tags` is optional and present when the matched Rem has readable tag metadata.
+- `tags` is optional and present when the matched Rem has readable tag identity metadata. JSON output preserves
+  `{ tagRemId, name }` objects.
 
 Examples:
 
@@ -180,7 +181,8 @@ Behavior rules:
 - If `content` exists, it is printed after a blank line.
 - In structured mode, use JSON output (default) to preserve `contentStructured` rem IDs and child hierarchy.
 - `--include-content none` suppresses rendered content.
-- `tags` is optional and present when the returned Rem has readable tag metadata.
+- `tags` is optional and present when the returned Rem has readable tag identity metadata. JSON output preserves
+  `{ tagRemId, name }` objects.
 
 Examples:
 

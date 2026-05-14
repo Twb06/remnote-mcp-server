@@ -3,6 +3,25 @@ import { createCommandClient } from '../client/command-client.js';
 import { formatResult, formatError, type OutputFormat } from '../output/formatter.js';
 import { EXIT } from '../config.js';
 
+function formatTags(tags: unknown): string {
+  if (!Array.isArray(tags)) return '';
+  return tags
+    .map((tag) => {
+      if (
+        tag &&
+        typeof tag === 'object' &&
+        typeof (tag as Record<string, unknown>).name === 'string' &&
+        typeof (tag as Record<string, unknown>).tagRemId === 'string'
+      ) {
+        const { name, tagRemId } = tag as { name: string; tagRemId: string };
+        return `${name} [${tagRemId}]`;
+      }
+      return typeof tag === 'string' ? tag : '';
+    })
+    .filter(Boolean)
+    .join(', ');
+}
+
 export function registerReadCommand(program: Command): void {
   program
     .command('read <rem-id>')
@@ -47,8 +66,9 @@ export function registerReadCommand(program: Command): void {
             if (r.aliases && Array.isArray(r.aliases) && r.aliases.length > 0) {
               lines.push(`Aliases: ${(r.aliases as string[]).join(', ')}`);
             }
-            if (r.tags && Array.isArray(r.tags) && r.tags.length > 0) {
-              lines.push(`Tags: ${(r.tags as string[]).join(', ')}`);
+            const formattedTags = formatTags(r.tags);
+            if (formattedTags) {
+              lines.push(`Tags: ${formattedTags}`);
             }
             if (r.cardDirection) lines.push(`Card: ${r.cardDirection}`);
             if (r.contentProperties) {

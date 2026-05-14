@@ -75,7 +75,13 @@ function assertTagsInclude(
   assertHasField(note, 'tags', `${label}: tags`);
   assertIsArray(note.tags, `${label}: tags`);
   assertTruthy(
-    (note.tags as unknown[]).includes(expectedTag),
+    (note.tags as unknown[]).some(
+      (tag) =>
+        tag &&
+        typeof tag === 'object' &&
+        (tag as Record<string, unknown>).name === expectedTag &&
+        typeof (tag as Record<string, unknown>).tagRemId === 'string'
+    ),
     `${label}: tags should include ${expectedTag}`
   );
 }

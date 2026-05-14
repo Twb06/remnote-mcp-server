@@ -185,6 +185,18 @@ describe('Tool Definitions', () => {
     expect(searchChildProps.tags).toBeDefined();
     expect(readProps.tags).toBeDefined();
     expect(readChildProps.tags).toBeDefined();
+    expect(
+      (
+        (searchResultProps.tags as { items?: { properties?: Record<string, unknown> } }).items
+          ?.properties ?? {}
+      ).tagRemId
+    ).toBeDefined();
+    expect(
+      (
+        (searchResultProps.tags as { items?: { properties?: Record<string, unknown> } }).items
+          ?.properties ?? {}
+      ).name
+    ).toBeDefined();
   });
 
   it('should have correct name for READ_NOTE_TOOL', () => {
@@ -526,7 +538,7 @@ describe('Tool Handlers - read_note', () => {
     remId: 'rem-id-123',
     title: 'Root Note',
     headline: 'Root Note',
-    tags: ['project'],
+    tags: [{ tagRemId: 'tag-project', name: 'project' }],
     remType: 'document',
     content: '- Child note',
     contentProperties: {

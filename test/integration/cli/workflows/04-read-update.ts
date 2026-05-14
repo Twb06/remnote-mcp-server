@@ -100,7 +100,13 @@ export async function readUpdateWorkflow(
     assertHasField(note, 'tags', `${label}: tags`);
     assertTruthy(Array.isArray(note.tags), `${label}: tags should be an array`);
     assertTruthy(
-      (note.tags as unknown[]).includes(expectedTag),
+      (note.tags as unknown[]).some(
+        (tag) =>
+          tag &&
+          typeof tag === 'object' &&
+          (tag as Record<string, unknown>).name === expectedTag &&
+          typeof (tag as Record<string, unknown>).tagRemId === 'string'
+      ),
       `${label}: tags should include ${expectedTag}`
     );
   }
@@ -113,7 +119,10 @@ export async function readUpdateWorkflow(
     assertHasField(note, 'tags', `${label}: tags`);
     assertTruthy(Array.isArray(note.tags), `${label}: tags should be an array`);
     assertTruthy(
-      !(note.tags as unknown[]).includes(excludedTag),
+      !(note.tags as unknown[]).some(
+        (tag) =>
+          tag && typeof tag === 'object' && (tag as Record<string, unknown>).name === excludedTag
+      ),
       `${label}: tags should not include ${excludedTag}`
     );
   }

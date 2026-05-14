@@ -20,6 +20,16 @@ const NAVIGATION_PRESET = {
   childLimit: 500,
 } as const;
 
+const TAG_INFO_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    tagRemId: { type: 'string', description: 'Exact tag Rem ID' },
+    name: { type: 'string', description: 'Human-readable tag name' },
+  },
+  required: ['tagRemId', 'name'],
+  additionalProperties: false,
+};
+
 export const CREATE_NOTE_TOOL = {
   name: 'remnote_create_note',
   description:
@@ -126,9 +136,9 @@ export const SEARCH_TOOL = {
             },
             tags: {
               type: 'array',
-              items: { type: 'string' },
+              items: TAG_INFO_SCHEMA,
               description:
-                'Direct tag names applied to the returned Rem (omitted if none or unavailable from the bridge runtime)',
+                'Direct tags applied to the returned Rem as exact tag Rem IDs plus names (omitted if none or unavailable from the bridge runtime)',
             },
             remType: {
               type: 'string',
@@ -165,9 +175,9 @@ export const SEARCH_TOOL = {
                   },
                   tags: {
                     type: 'array',
-                    items: { type: 'string' },
+                    items: TAG_INFO_SCHEMA,
                     description:
-                      'Direct tag names applied to the child Rem (omitted if none or unavailable from the bridge runtime)',
+                      'Direct tags applied to the child Rem as exact tag Rem IDs plus names (omitted if none or unavailable from the bridge runtime)',
                   },
                   remType: {
                     type: 'string',
@@ -304,9 +314,9 @@ export const READ_NOTE_TOOL = {
       },
       tags: {
         type: 'array',
-        items: { type: 'string' },
+        items: TAG_INFO_SCHEMA,
         description:
-          'Direct tag names applied to the returned Rem (omitted if none or unavailable from the bridge runtime)',
+          'Direct tags applied to the returned Rem as exact tag Rem IDs plus names (omitted if none or unavailable from the bridge runtime)',
       },
       remType: {
         type: 'string',
@@ -343,9 +353,9 @@ export const READ_NOTE_TOOL = {
             },
             tags: {
               type: 'array',
-              items: { type: 'string' },
+              items: TAG_INFO_SCHEMA,
               description:
-                'Direct tag names applied to the child Rem (omitted if none or unavailable from the bridge runtime)',
+                'Direct tags applied to the child Rem as exact tag Rem IDs plus names (omitted if none or unavailable from the bridge runtime)',
             },
             remType: {
               type: 'string',

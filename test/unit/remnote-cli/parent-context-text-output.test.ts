@@ -48,13 +48,16 @@ describe('parent context text output', () => {
         {
           remId: 'child-1',
           headline: 'Child Note',
-          tags: ['work', 'urgent'],
+          tags: [
+            { tagRemId: 'tag-work', name: 'work' },
+            { tagRemId: 'tag-urgent', name: 'urgent' },
+          ],
           remType: 'text',
         },
       ],
     });
 
-    expect(output).toContain('Child Note [tags: work, urgent] [child-1]');
+    expect(output).toContain('Child Note [tags: work [tag-work], urgent [tag-urgent]] [child-1]');
     executeSpy.mockRestore();
   });
 
@@ -80,12 +83,15 @@ describe('parent context text output', () => {
       remId: 'child-1',
       headline: 'Child Note',
       remType: 'text',
-      tags: ['reference', 'next-action'],
+      tags: [
+        { tagRemId: 'tag-reference', name: 'reference' },
+        { tagRemId: 'tag-next-action', name: 'next-action' },
+      ],
       content: '',
       contentProperties: { childrenRendered: 0, childrenTotal: 0, contentTruncated: false },
     });
 
-    expect(output).toContain('Tags: reference, next-action');
+    expect(output).toContain('Tags: reference [tag-reference], next-action [tag-next-action]');
     executeSpy.mockRestore();
   });
 });

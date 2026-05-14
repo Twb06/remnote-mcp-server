@@ -190,9 +190,9 @@ After installing the LaunchAgent, `remnote-mcp-server daemon status|start|stop|r
 | Tool                      | Description                                                                 |
 |---------------------------|-----------------------------------------------------------------------------|
 | `remnote_create_note`     | Create notes, markdown trees, or flashcards with optional exact tag Rem IDs |
-| `remnote_search`          | Search knowledge base with full-text search and parent-context metadata; `tags` remain optional and SDK-limited |
+| `remnote_search`          | Search knowledge base with full-text search, parent context, and optional tag IDs/names |
 | `remnote_search_by_tag`   | Search by exact tag Rem ID with ancestor-context resolution |
-| `remnote_read_note`       | Read note by ID with metadata and markdown or structured content; readable `tags` remain SDK-limited |
+| `remnote_read_note`       | Read note by ID with metadata, optional tag IDs/names, and markdown or structured content |
 | `remnote_update_note`     | Update title |
 | `remnote_insert_children` | Insert child Rems at deterministic positions |
 | `remnote_replace_children` | Replace direct children when destructive replacement is enabled |
