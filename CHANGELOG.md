@@ -21,6 +21,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Change `remnote_search_by_tag` and `remnote-cli search-by-tag --tag-id` to search by exact tag Rem ID instead of tag
+  name or alias lookup.
 - Update `remnote_get_playbook` guidance for the split write tools and exact-ID tag fields without expanding the
   playbook shape.
 - Limit `remnote_update_note` and `remnote-cli update` to metadata title updates so child and tag writes use focused

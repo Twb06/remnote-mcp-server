@@ -157,17 +157,18 @@ describe('command bridge action mapping', () => {
     executeSpy.mockRestore();
   });
 
-  it('maps search-tag command to search_by_tag with content rendering options', async () => {
+  it('maps search-by-tag command to search_by_tag with content rendering options', async () => {
     const executeSpy = await runCommand([
-      'search-tag',
-      '#daily',
+      'search-by-tag',
+      '--tag-id',
+      'daily-tag-rem-id',
       '--include-content',
       'markdown',
       '--depth',
       '2',
     ]);
     expect(executeSpy).toHaveBeenCalledWith('search_by_tag', {
-      tag: '#daily',
+      tagRemId: 'daily-tag-rem-id',
       limit: 50,
       includeContent: 'markdown',
       depth: 2,
@@ -175,15 +176,16 @@ describe('command bridge action mapping', () => {
     executeSpy.mockRestore();
   });
 
-  it('passes through structured search-tag content mode', async () => {
+  it('passes through structured search-by-tag content mode', async () => {
     const executeSpy = await runCommand([
-      'search-tag',
-      'project-tag',
+      'search-by-tag',
+      '--tag-id',
+      'project-tag-rem-id',
       '--include-content',
       'structured',
     ]);
     expect(executeSpy).toHaveBeenCalledWith('search_by_tag', {
-      tag: 'project-tag',
+      tagRemId: 'project-tag-rem-id',
       limit: 50,
       includeContent: 'structured',
     });

@@ -43,7 +43,7 @@ When changing action names, payloads, or response semantics, validate this repo 
 
 - `remnote-cli create`
 - `remnote-cli search`
-- `remnote-cli search-tag`
+- `remnote-cli search-by-tag`
 - `remnote-cli read`
 - `remnote-cli update`
 - `remnote-cli insert-children`

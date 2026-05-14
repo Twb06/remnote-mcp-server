@@ -19,7 +19,7 @@ export const validSearchInput = {
 };
 
 export const validSearchByTagInput = {
-  tag: 'mcp-test-tag',
+  tagRemId: 'mcp-test-tag-rem-id',
   limit: 50,
   includeContent: 'markdown',
 };

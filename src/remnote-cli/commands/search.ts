@@ -95,16 +95,17 @@ export function registerSearchCommand(program: Command): void {
 export function registerSearchByTagCommand(program: Command): void {
   registerCommonSearchOptions(
     program
-      .command('search-tag <tag>')
-      .description('Search notes by tag with ancestor-context resolution')
-  ).action(async (tag: string, opts) => {
+      .command('search-by-tag')
+      .description('Search notes by exact tag Rem ID with ancestor-context resolution')
+      .requiredOption('--tag-id <tagRemId>', 'Exact tag Rem ID to search')
+  ).action(async (opts) => {
     const globalOpts = program.opts();
     const format: OutputFormat = globalOpts.text ? 'text' : 'json';
     const client = createCommandClient(program);
 
     try {
       const payload: Record<string, unknown> = {
-        tag,
+        tagRemId: opts.tagId,
         limit: parseInt(opts.limit, 10),
       };
       applySearchOptions(payload, opts);

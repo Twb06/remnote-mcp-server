@@ -174,9 +174,9 @@ describe('ReadNoteSchema', () => {
 });
 
 describe('SearchByTagSchema', () => {
-  it('should validate with required tag field', () => {
-    const result = SearchByTagSchema.parse({ tag: 'daily' });
-    expect(result.tag).toBe('daily');
+  it('should validate with required tagRemId field', () => {
+    const result = SearchByTagSchema.parse({ tagRemId: 'daily-tag-rem-id' });
+    expect(result.tagRemId).toBe('daily-tag-rem-id');
     expect(result.limit).toBe(50);
     expect(result.includeContent).toBe('none');
     expect(result.depth).toBe(1);
@@ -184,14 +184,9 @@ describe('SearchByTagSchema', () => {
     expect(result.maxContentLength).toBe(3000);
   });
 
-  it('should validate hash-prefixed tag', () => {
-    const result = SearchByTagSchema.parse({ tag: '#daily' });
-    expect(result.tag).toBe('#daily');
-  });
-
   it('should validate includeContent structured mode', () => {
     const result = SearchByTagSchema.parse({
-      tag: 'project',
+      tagRemId: 'project-tag-rem-id',
       includeContent: 'structured',
       depth: 2,
     });
@@ -199,8 +194,16 @@ describe('SearchByTagSchema', () => {
     expect(result.depth).toBe(2);
   });
 
-  it('should reject empty tag', () => {
-    expect(() => SearchByTagSchema.parse({ tag: '' })).toThrow();
+  it('should reject missing tagRemId', () => {
+    expect(() => SearchByTagSchema.parse({})).toThrow();
+  });
+
+  it('should reject empty tagRemId', () => {
+    expect(() => SearchByTagSchema.parse({ tagRemId: '' })).toThrow();
+  });
+
+  it('should reject obsolete tag field', () => {
+    expect(() => SearchByTagSchema.parse({ tag: 'daily' })).toThrow();
   });
 });
 

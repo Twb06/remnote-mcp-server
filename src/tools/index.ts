@@ -216,13 +216,13 @@ export const SEARCH_TOOL = {
 export const SEARCH_BY_TAG_TOOL = {
   name: 'remnote_search_by_tag',
   description:
-    'Find notes by tag and return resolved ancestor context targets (nearest document/daily document when available, otherwise nearest non-document ancestor). Supports the same includeContent modes as remnote_search.',
+    'Find notes by exact tag Rem ID and return resolved ancestor context targets (nearest document/daily document when available, otherwise nearest non-document ancestor). Does not look up tags by name or alias. Supports the same includeContent modes as remnote_search.',
   inputSchema: {
     type: 'object' as const,
     properties: {
-      tag: {
+      tagRemId: {
         type: 'string',
-        description: 'Tag name to search (with or without # prefix)',
+        description: 'Exact tag Rem ID to search',
       },
       limit: { type: 'number', description: 'Maximum results (1-150, default: 50)' },
       includeContent: {
@@ -245,7 +245,7 @@ export const SEARCH_BY_TAG_TOOL = {
         description: 'Maximum character length for rendered content (default: 3000)',
       },
     },
-    required: ['tag'],
+    required: ['tagRemId'],
   },
   outputSchema: SEARCH_TOOL.outputSchema,
 };
@@ -847,6 +847,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
             decisionTree: [
               'Need connection/capability context? Call remnote_status first.',
               'Need to orient across the KB? Use remnote_search with includeContent="structured", depth=1, childLimit=500.',
+              'Need tagged-note context? Use remnote_search_by_tag with tagRemId; it does not resolve tag names or aliases.',
               'Need to traverse a specific branch? Use remnote_read_note on a chosen remId with includeContent="structured", depth=1, childLimit=500, then recurse by child remIds.',
               'Need tabular/structured data from an Advanced Table? Use remnote_read_table with either tableTitle or tableRemId. Use propertyFilter to limit columns for large tables.',
               'Need a human-readable summary? Switch to includeContent="markdown" on search/read results.',

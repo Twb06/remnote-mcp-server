@@ -325,17 +325,18 @@ export async function readUpdateWorkflow(
         ])) as Record<string, unknown>;
         assertHasField(result, 'remIds', 'update note B add tags');
         const taggedSearch = (await ctx.cli.runExpectSuccess([
-          'search-tag',
-          tagVerificationName,
+          'search-by-tag',
+          '--tag-id',
+          tagVerificationRemId,
           '--include-content',
           'none',
           '--limit',
           '10',
         ])) as Record<string, unknown>;
-        assertHasField(taggedSearch, 'results', 'search-tag after add tags');
+        assertHasField(taggedSearch, 'results', 'search-by-tag after add tags');
         assertTruthy(
           Array.isArray(taggedSearch.results),
-          'search-tag after add tags should return results'
+          'search-by-tag after add tags should return results'
         );
         const taggedResults = taggedSearch.results as Array<Record<string, unknown>>;
         const match = taggedResults.find((r) => r.remId === expectedTargetRemId);
@@ -400,17 +401,18 @@ export async function readUpdateWorkflow(
         ])) as Record<string, unknown>;
         assertHasField(result, 'remIds', 'update note B remove tags');
         const taggedSearch = (await ctx.cli.runExpectSuccess([
-          'search-tag',
-          tagVerificationName,
+          'search-by-tag',
+          '--tag-id',
+          tagVerificationRemId as string,
           '--include-content',
           'none',
           '--limit',
           '10',
         ])) as Record<string, unknown>;
-        assertHasField(taggedSearch, 'results', 'search-tag after remove tags');
+        assertHasField(taggedSearch, 'results', 'search-by-tag after remove tags');
         assertTruthy(
           Array.isArray(taggedSearch.results),
-          'search-tag after remove tags should return results array'
+          'search-by-tag after remove tags should return results array'
         );
         const taggedResults = taggedSearch.results as Array<Record<string, unknown>>;
         const match = taggedResults.find((r) => r.remId === expectedTargetRemId);

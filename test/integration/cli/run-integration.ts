@@ -175,14 +175,35 @@ async function ensureIntegrationParentNote(
     };
   }
 
-  const byTagResult = (await cli.runExpectSuccess([
-    'search-tag',
+  const parentTagSearch = (await cli.runExpectSuccess([
+    'search',
     INTEGRATION_PARENT_TAG,
     '--limit',
-    '150',
+    '20',
     '--include-content',
     'none',
   ])) as Record<string, unknown>;
+  const parentTagCandidates = Array.isArray(parentTagSearch.results)
+    ? (parentTagSearch.results as Array<Record<string, unknown>>)
+    : [];
+  const parentTagRemId = parentTagCandidates.find(
+    (item) =>
+      typeof item.remId === 'string' &&
+      typeof item.title === 'string' &&
+      normalizeTitle(item.title as string) === normalizeTitle(INTEGRATION_PARENT_TAG)
+  )?.remId;
+  const byTagResult =
+    typeof parentTagRemId === 'string'
+      ? ((await cli.runExpectSuccess([
+          'search-by-tag',
+          '--tag-id',
+          parentTagRemId,
+          '--limit',
+          '150',
+          '--include-content',
+          'none',
+        ])) as Record<string, unknown>)
+      : { results: [] };
   const tagCandidates = Array.isArray(byTagResult.results)
     ? (byTagResult.results as Array<Record<string, unknown>>)
     : [];

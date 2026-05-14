@@ -17,7 +17,7 @@ JSON in a top-level `content` text block for compatibility with older clients an
 |------|-------------|----------|
 | `remnote_create_note` | Create new notes or flashcards | Adding new knowledge, ideas, references, or flashcards. Supports hierarchical markdown, flashcard syntax, and exact tag Rem IDs. |
 | `remnote_search` | Search knowledge base | Finding existing notes, exploring topics |
-| `remnote_search_by_tag` | Search by tag | Finding ancestor context for tagged notes |
+| `remnote_search_by_tag` | Search by exact tag Rem ID | Finding ancestor context for tagged notes |
 | `remnote_read_note` | Read note content | Retrieving details, reading hierarchies |
 | `remnote_update_note` | Update note metadata | Renaming |
 | `remnote_insert_children` | Insert child Rems | Ordered hierarchy maintenance, tag descriptions |
@@ -202,13 +202,13 @@ Returns array of matching notes:
 
 ## remnote_search_by_tag
 
-Search by tag and return resolved ancestor context targets.
+Search by exact tag Rem ID and return resolved ancestor context targets.
 
 ### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `tag` | string | Yes | Tag name (with or without `#` prefix) |
+| `tagRemId` | string | Yes | Exact tag Rem ID to search |
 | `limit` | number | No | Maximum results to return (1-150, default: 50) |
 | `includeContent` | string | No | Content mode: `none` (default), `markdown`, or `structured` |
 | `depth` | number | No | Max child depth for rendered content (0-10, default: 1) |
@@ -219,18 +219,21 @@ Search by tag and return resolved ancestor context targets.
   1) nearest ancestor document/daily document,
   2) otherwise nearest non-document ancestor,
   3) otherwise the tagged note itself.
+- Tag names, `#name` inputs, and aliases are intentionally not resolved. Use the exact tag Rem ID to avoid ambiguity
+  from duplicate names, renamed tags, or aliases.
+- If `tagRemId` is valid input but does not resolve to a Rem, results are empty.
 - Output shape is the same as `remnote_search`.
 
 ### Usage
 
-**Find daily notes by tag:**
+**Find notes by exact tag Rem ID:**
 ```text
-Search by tag "#daily"
+Search by tagRemId "dailyTagRemId123"
 ```
 
 **Find tagged results with content:**
 ```text
-Search by tag "project-review" and include structured content
+Search by tagRemId "projectReviewTagRemId123" and include structured content
 ```
 
 ## remnote_read_note

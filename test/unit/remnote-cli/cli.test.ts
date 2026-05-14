@@ -18,7 +18,8 @@ describe('createProgram', () => {
     expect(commandNames).not.toContain('daemon');
     expect(commandNames).toContain('create');
     expect(commandNames).toContain('search');
-    expect(commandNames).toContain('search-tag');
+    expect(commandNames).toContain('search-by-tag');
+    expect(commandNames).not.toContain('search-tag');
     expect(commandNames).toContain('read');
     expect(commandNames).toContain('update');
     expect(commandNames).toContain('journal');

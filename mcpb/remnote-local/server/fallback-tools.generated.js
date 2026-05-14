@@ -72,13 +72,13 @@ export const FALLBACK_TOOLS = [
   {
     name: 'remnote_search_by_tag',
     description:
-      'Find notes by tag and return resolved ancestor context targets (nearest document/daily document when available, otherwise nearest non-document ancestor). Supports the same includeContent modes as remnote_search.',
+      'Find notes by exact tag Rem ID and return resolved ancestor context targets (nearest document/daily document when available, otherwise nearest non-document ancestor). Does not look up tags by name or alias. Supports the same includeContent modes as remnote_search.',
     inputSchema: {
       type: 'object',
       properties: {
-        tag: {
+        tagRemId: {
           type: 'string',
-          description: 'Tag name to search (with or without # prefix)',
+          description: 'Exact tag Rem ID to search',
         },
         limit: {
           type: 'number',
@@ -104,7 +104,7 @@ export const FALLBACK_TOOLS = [
           description: 'Maximum character length for rendered content (default: 3000)',
         },
       },
-      required: ['tag'],
+      required: ['tagRemId'],
     },
   },
   {

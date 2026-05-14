@@ -77,7 +77,7 @@ expose the HTTP endpoint securely. The WebSocket connection always stays local f
 ## Features
 
 - **Create Notes & Flashcards** - Create simple notes, hierarchical markdown trees, or RemNote-native flashcards
-- **Search Knowledge Base** - Run full-text searches or tag-based searches with ancestor context
+- **Search Knowledge Base** - Run full-text searches or exact tag Rem ID searches with ancestor context
 - **Read Notes** - Retrieve note content in markdown or structured form with configurable traversal depth
 - **Update Notes** - Modify titles, insert or replace hierarchical content, and manage tags by exact Rem ID
 - **Journal Entries** - Append timestamped daily entries with hierarchical markdown content and optional exact tag Rem IDs
@@ -191,7 +191,7 @@ After installing the LaunchAgent, `remnote-mcp-server daemon status|start|stop|r
 |---------------------------|-----------------------------------------------------------------------------|
 | `remnote_create_note`     | Create notes, markdown trees, or flashcards with optional exact tag Rem IDs |
 | `remnote_search`          | Search knowledge base with full-text search and parent-context metadata; `tags` remain optional and SDK-limited |
-| `remnote_search_by_tag`   | Search by tag with ancestor-context resolution |
+| `remnote_search_by_tag`   | Search by exact tag Rem ID with ancestor-context resolution |
 | `remnote_read_note`       | Read note by ID with metadata and markdown or structured content; readable `tags` remain SDK-limited |
 | `remnote_update_note`     | Update title |
 | `remnote_insert_children` | Insert child Rems at deterministic positions |

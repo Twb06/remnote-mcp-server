@@ -14,7 +14,7 @@ Most commands require a running `remnote-mcp-server`:
 remnote-mcp-server
 ```
 
-Bridge actions (`create`, `search`, `search-tag`, `read`, `update`, `journal`, `status`) also require RemNote with
+Bridge actions (`create`, `search`, `search-by-tag`, `read`, `update`, `journal`, `status`) also require RemNote with
 the RemNote Automation Bridge plugin connected to that MCP server.
 
 ## Global Options
@@ -112,7 +112,7 @@ Search notes by text query.
 remnote-cli search <query> [options]
 ```
 
-Shared options for `search` and `search-tag`:
+Shared options for `search` and `search-by-tag`:
 
 | Option                     | Default | Description                          |
 | -------------------------- | ------- | ------------------------------------ |
@@ -137,22 +137,25 @@ remnote-cli search "meeting"
 remnote-cli search "weekly" --limit 10 --include-content structured --depth 2 --child-limit 10 --text
 ```
 
-## search-tag
+## search-by-tag
 
-Search notes by tag (ancestor-context aware).
+Search notes by exact tag Rem ID (ancestor-context aware).
 
 ```bash
-remnote-cli search-tag <tag> [options]
+remnote-cli search-by-tag --tag-id <tag-rem-id> [options]
 ```
 
 Options and output/content controls are identical to `search`
 (`-l/--limit`, `--include-content`, `--depth`, `--child-limit`, `--max-content-length`).
 
+`--tag-id` is the exact Rem ID of the tag Rem. Tag names, `#name` inputs, and aliases are not accepted; exact IDs avoid
+ambiguity from duplicate names, renamed tags, and aliases.
+
 Examples:
 
 ```bash
-remnote-cli search-tag "#daily"
-remnote-cli search-tag "weekly" --include-content markdown --depth 2 --text
+remnote-cli search-by-tag --tag-id <tag-rem-id>
+remnote-cli search-by-tag --tag-id <tag-rem-id> --include-content markdown --depth 2 --text
 ```
 
 ## read

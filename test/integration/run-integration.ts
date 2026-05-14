@@ -206,11 +206,28 @@ async function ensureIntegrationParentNote(
     };
   }
 
-  const byTagResult = await client.callTool('remnote_search_by_tag', {
-    tag: INTEGRATION_PARENT_TAG,
-    limit: 150,
+  const parentTagSearch = await client.callTool('remnote_search', {
+    query: INTEGRATION_PARENT_TAG,
+    limit: 20,
     includeContent: 'none',
   });
+  const parentTagCandidates = Array.isArray(parentTagSearch.results)
+    ? (parentTagSearch.results as Array<Record<string, unknown>>)
+    : [];
+  const parentTagRemId = parentTagCandidates.find(
+    (item) =>
+      typeof item.remId === 'string' &&
+      typeof item.title === 'string' &&
+      normalizeTitle(item.title as string) === normalizeTitle(INTEGRATION_PARENT_TAG)
+  )?.remId;
+  const byTagResult =
+    typeof parentTagRemId === 'string'
+      ? await client.callTool('remnote_search_by_tag', {
+          tagRemId: parentTagRemId,
+          limit: 150,
+          includeContent: 'none',
+        })
+      : { results: [] };
   const tagCandidates = Array.isArray(byTagResult.results)
     ? (byTagResult.results as Array<Record<string, unknown>>)
     : [];

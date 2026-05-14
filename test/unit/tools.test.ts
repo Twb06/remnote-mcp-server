@@ -119,8 +119,10 @@ describe('Tool Definitions', () => {
     expect(SEARCH_BY_TAG_TOOL.name).toBe('remnote_search_by_tag');
   });
 
-  it('should have required tag field for SEARCH_BY_TAG_TOOL', () => {
-    expect(SEARCH_BY_TAG_TOOL.inputSchema.required).toContain('tag');
+  it('should have required tagRemId field for SEARCH_BY_TAG_TOOL', () => {
+    expect(SEARCH_BY_TAG_TOOL.inputSchema.required).toContain('tagRemId');
+    expect(SEARCH_BY_TAG_TOOL.inputSchema.properties).toHaveProperty('tagRemId');
+    expect(SEARCH_BY_TAG_TOOL.inputSchema.properties).not.toHaveProperty('tag');
   });
 
   it('should advertise structured search content mode and contentStructured output', () => {
@@ -495,11 +497,11 @@ describe('Tool Handlers - search_by_tag', () => {
 
   it('should apply default values from schema', async () => {
     await mockServer.callHandler(CallToolRequestSchema, {
-      params: { name: 'remnote_search_by_tag', arguments: { tag: '#daily' } },
+      params: { name: 'remnote_search_by_tag', arguments: { tagRemId: 'daily-tag-rem-id' } },
     });
 
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('search_by_tag', {
-      tag: '#daily',
+      tagRemId: 'daily-tag-rem-id',
       limit: 50,
       includeContent: 'none',
       depth: 1,

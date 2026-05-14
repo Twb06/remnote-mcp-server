@@ -469,8 +469,9 @@ export async function createSearchWorkflow(
         ctx,
         state.mdTreeIds[0] as string
       );
+      assertTruthy(mdTreeRootOnlyTagRemId, 'markdown tree root-only tag Rem ID should be recorded');
       const result = await ctx.client.callTool('remnote_search_by_tag', {
-        tag: mdTreeRootOnlyTag,
+        tagRemId: mdTreeRootOnlyTagRemId as string,
         includeContent: 'none',
         limit: 10,
       });
@@ -505,7 +506,7 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 11-13: Search by tag with includeContent modes
+  // Step 11-13: Search by exact tag Rem ID with includeContent modes
   let expectedTagTarget: ExpectedTagTarget | undefined;
   {
     const start = Date.now();
@@ -529,12 +530,16 @@ export async function createSearchWorkflow(
 
   for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();
-    const label = `Search by tag includeContent=${mode} returns expected shape`;
+    const label = `Search by exact tag Rem ID includeContent=${mode} returns expected shape`;
     let debugResults: Array<Record<string, unknown>> | null = null;
     try {
       assertTruthy(typeof state.searchByTagTag === 'string', 'searchByTagTag should be recorded');
+      assertTruthy(
+        typeof state.searchByTagTagRemId === 'string',
+        'searchByTagTagRemId should be recorded'
+      );
       const result = await ctx.client.callTool('remnote_search_by_tag', {
-        tag: state.searchByTagTag as string,
+        tagRemId: state.searchByTagTagRemId as string,
         includeContent: mode,
       });
       assertHasField(result, 'results', `search_by_tag ${mode}`);

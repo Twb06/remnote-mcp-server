@@ -476,16 +476,18 @@ export async function createSearchWorkflow(
         ctx,
         state.mdTreeIds[0] as string
       );
+      assertTruthy(mdTreeRootOnlyTagRemId, 'markdown tree root-only tag Rem ID should be recorded');
       const result = (await ctx.cli.runExpectSuccess([
-        'search-tag',
-        mdTreeRootOnlyTag,
+        'search-by-tag',
+        '--tag-id',
+        mdTreeRootOnlyTagRemId as string,
         '--include-content',
         'none',
         '--limit',
         '10',
       ])) as Record<string, unknown>;
-      assertHasField(result, 'results', 'search-tag markdown tree root-only tag');
-      assertIsArray(result.results, 'search-tag markdown tree root-only tag results');
+      assertHasField(result, 'results', 'search-by-tag markdown tree root-only tag');
+      assertIsArray(result.results, 'search-by-tag markdown tree root-only tag results');
       const results = result.results as Array<Record<string, unknown>>;
       debugResults = results;
       assertEqual(
@@ -515,7 +517,7 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 10-12: Search by tag with includeContent modes
+  // Step 10-12: Search by exact tag Rem ID with includeContent modes
   let expectedTagTarget: ExpectedTagTarget | undefined;
   {
     const start = Date.now();
@@ -523,13 +525,13 @@ export async function createSearchWorkflow(
       assertTruthy(typeof state.noteBId === 'string', 'rich note remId should be recorded');
       expectedTagTarget = await resolveExpectedSearchByTagTarget(ctx, state.noteBId as string);
       steps.push({
-        label: 'Resolve expected search-tag ancestor target',
+        label: 'Resolve expected search-by-tag ancestor target',
         passed: true,
         durationMs: Date.now() - start,
       });
     } catch (e) {
       steps.push({
-        label: 'Resolve expected search-tag ancestor target',
+        label: 'Resolve expected search-by-tag ancestor target',
         passed: false,
         durationMs: Date.now() - start,
         error: (e as Error).message,
@@ -539,21 +541,26 @@ export async function createSearchWorkflow(
 
   for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();
-    const label = `Search-tag includeContent=${mode} returns expected shape`;
+    const label = `Search-by-tag includeContent=${mode} returns expected shape`;
     let debugResults: Array<Record<string, unknown>> | null = null;
     try {
       assertTruthy(typeof state.searchByTagTag === 'string', 'searchByTagTag should be recorded');
+      assertTruthy(
+        typeof state.searchByTagTagRemId === 'string',
+        'searchByTagTagRemId should be recorded'
+      );
       const result = (await ctx.cli.runExpectSuccess([
-        'search-tag',
-        state.searchByTagTag as string,
+        'search-by-tag',
+        '--tag-id',
+        state.searchByTagTagRemId as string,
         '--include-content',
         mode,
       ])) as Record<string, unknown>;
-      assertHasField(result, 'results', `search-tag ${mode}`);
-      assertIsArray(result.results, `search-tag ${mode} results`);
+      assertHasField(result, 'results', `search-by-tag ${mode}`);
+      assertIsArray(result.results, `search-by-tag ${mode} results`);
       const results = result.results as Array<Record<string, unknown>>;
       debugResults = results;
-      assertTruthy(results.length >= 1, `search-tag ${mode} should return results`);
+      assertTruthy(results.length >= 1, `search-by-tag ${mode} should return results`);
       assertTruthy(expectedTagTarget, 'expected tag target should be resolved');
       const match = findMatchingSearchResult(
         results,

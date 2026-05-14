@@ -403,7 +403,7 @@ export async function readUpdateWorkflow(
       assertHasField(result, 'remIds', 'add tag should succeed');
       assertIsArray(result.remIds, 'add tag remIds');
       const taggedSearch = await ctx.client.callTool('remnote_search_by_tag', {
-        tag: tagVerificationName,
+        tagRemId: tagVerificationRemId,
         includeContent: 'none',
         limit: 10,
       });
@@ -443,7 +443,7 @@ export async function readUpdateWorkflow(
       assertHasField(result, 'remIds', 'remove tag should succeed');
       assertIsArray(result.remIds, 'remove tag remIds');
       const taggedSearch = await ctx.client.callTool('remnote_search_by_tag', {
-        tag: tagVerificationName,
+        tagRemId: tagVerificationRemId as string,
         includeContent: 'none',
         limit: 10,
       });
