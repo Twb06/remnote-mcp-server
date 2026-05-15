@@ -983,7 +983,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           result = {
             playbookVersion: '1.3.0',
             summary:
-              'Use this playbook to navigate RemNote efficiently via remIds, page broad searches safely, and apply write-safety checks before mutations.',
+              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read workflows, choose content modes, handle tag and table retrieval, and apply safe exact-ID writes.',
             recommendedStatusCheck: {
               tool: 'remnote_status',
               cadence: 'recommended once per session and before risky writes',
