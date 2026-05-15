@@ -154,8 +154,11 @@ Returns array of matching notes:
   "results": [
     {
       "remId": "abc123",
-      "title": "Machine Learning Basics",
-      "headline": "Machine Learning Basics",
+      "title": "Machine Learning Basics and [[Neural Networks]]",
+      "headline": "Machine Learning Basics and [[Neural Networks]]",
+      "inlineRefs": [
+        { "text": "Neural Networks", "targetRemId": "neuralNetworksRemId789", "kind": "rem" }
+      ],
       "parentRemId": "parent987",
       "parentTitle": "AI Notes",
       "tags": [
@@ -202,6 +205,7 @@ Returns array of matching notes:
 - Use `includeContent: "none"` (default) for faster searches when you only need titles
 - Use `includeContent: "markdown"` when you need rendered child context
 - Use `includeContent: "structured"` when you need nested child `remId`s for follow-up reads/navigation
+- Use `inlineRefs` when rendered titles/headlines contain `[[...]]` references and you need exact graph targets.
 - For whole-KB orientation, start with `includeContent: "structured"`, `depth: 1`, `childLimit: 500`
 - Use `parentRemId` and `parentTitle` to show where a result sits in your hierarchy.
 - `tags` is optional and present when the matched Rem has readable tag identity metadata. Each tag includes
@@ -283,8 +287,11 @@ Returns note metadata plus optional rendered child content:
 ```json
 {
   "remId": "abc123",
-  "title": "Project Overview",
-  "headline": "Project Overview",
+  "title": "Project Overview for [[Launch Plan]]",
+  "headline": "Project Overview for [[Launch Plan]]",
+  "inlineRefs": [
+    { "text": "Launch Plan", "targetRemId": "launchPlanRemId789", "kind": "rem" }
+  ],
   "parentRemId": "folder001",
   "parentTitle": "Work Projects",
   "tags": [
@@ -309,6 +316,7 @@ instead of markdown `content`.
 - Use `depth: 0` for just the note title (no children)
 - Use `includeContent: "none"` when you only need metadata and parent context.
 - Use `includeContent: "structured"` when you need nested child `remId`s for deterministic follow-up navigation.
+- Use `inlineRefs` to follow inline Rem references without parsing `[[...]]` markdown text.
 - `tags` is optional and present when the returned Rem has readable tag identity metadata. Each tag includes
   `tagRemId` and `name`.
 - Start traversal with `includeContent: "structured"`, `depth: 1`, `childLimit: 500`, then deepen selected branches.

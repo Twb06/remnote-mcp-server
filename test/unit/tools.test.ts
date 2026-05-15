@@ -213,6 +213,36 @@ describe('Tool Definitions', () => {
     ).toBeDefined();
   });
 
+  it('should advertise inline Rem reference metadata in search/read output schemas', () => {
+    const searchResultProps = ((
+      SEARCH_TOOL.outputSchema.properties.results as {
+        items?: { properties?: Record<string, unknown> };
+      }
+    ).items?.properties ?? {}) as Record<string, unknown>;
+    const searchChildProps = ((
+      searchResultProps.contentStructured as { items?: { properties?: Record<string, unknown> } }
+    )?.items?.properties ?? {}) as Record<string, unknown>;
+    const matchedRemProps = ((
+      searchResultProps.matchedRems as { items?: { properties?: Record<string, unknown> } }
+    )?.items?.properties ?? {}) as Record<string, unknown>;
+    const readProps = (READ_NOTE_TOOL.outputSchema.properties ?? {}) as Record<string, unknown>;
+    const readChildProps = ((
+      readProps.contentStructured as { items?: { properties?: Record<string, unknown> } }
+    )?.items?.properties ?? {}) as Record<string, unknown>;
+
+    expect(searchResultProps.inlineRefs).toBeDefined();
+    expect(searchChildProps.inlineRefs).toBeDefined();
+    expect(matchedRemProps.inlineRefs).toBeDefined();
+    expect(readProps.inlineRefs).toBeDefined();
+    expect(readChildProps.inlineRefs).toBeDefined();
+    expect(
+      (
+        (readProps.inlineRefs as { items?: { properties?: Record<string, unknown> } }).items
+          ?.properties ?? {}
+      ).targetRemId
+    ).toBeDefined();
+  });
+
   it('should have correct name for READ_NOTE_TOOL', () => {
     expect(READ_NOTE_TOOL.name).toBe('remnote_read_note');
   });

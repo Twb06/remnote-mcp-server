@@ -9,6 +9,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Add `inlineRefs` metadata to `remnote_search`, `remnote_search_by_tag`, and `remnote_read_note` output schemas so
+  clients can follow inline Rem references by exact target Rem ID.
 - Add `remnote_search_by_tag.resultMode` and CLI `search-by-tag --result-mode` for direct tagged Rem results while
   preserving context navigation with `matchedRems`.
 - Add playbook guidance for choosing tag context navigation versus strict direct-tag verification.

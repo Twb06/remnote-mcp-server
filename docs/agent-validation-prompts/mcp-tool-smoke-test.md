@@ -60,6 +60,8 @@ required call fails.
 6. Read the run note with `remnote_read_note`.
    - Use `includeContent="structured"` when available.
    - Confirm the title and parent context are consistent with the root note.
+   - If `inlineRefs` appears on the note or structured children, confirm each item includes `text`, `targetRemId`, and
+     `kind: "rem"`.
 
 7. Rename the run note with `remnote_update_note`.
    - New title: `[MCP-AGENT-TEST] Tool smoke test updated <current ISO timestamp>`

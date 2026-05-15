@@ -30,12 +30,28 @@ const TAG_INFO_SCHEMA = {
   additionalProperties: false,
 };
 
+const INLINE_REF_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    text: { type: 'string', description: 'Rendered target text used in output' },
+    targetRemId: { type: 'string', description: 'Exact target Rem ID' },
+    kind: { type: 'string', enum: ['rem'], description: 'Inline reference kind' },
+  },
+  required: ['text', 'targetRemId', 'kind'],
+  additionalProperties: false,
+};
+
 const MATCHED_REM_SCHEMA = {
   type: 'object' as const,
   properties: {
     remId: { type: 'string', description: 'Directly tagged Rem ID' },
     title: { type: 'string', description: 'Rendered title with markdown formatting' },
     headline: { type: 'string', description: 'Display-oriented full line' },
+    inlineRefs: {
+      type: 'array',
+      items: INLINE_REF_SCHEMA,
+      description: 'Resolvable inline Rem references from the matched Rem title/headline',
+    },
     remType: {
       type: 'string',
       description:
@@ -150,6 +166,12 @@ export const SEARCH_TOOL = {
               description:
                 'Display-oriented full line: title + type-aware delimiter + detail (e.g. "Term :: Definition")',
             },
+            inlineRefs: {
+              type: 'array',
+              items: INLINE_REF_SCHEMA,
+              description:
+                'Resolvable inline Rem references from the rendered title/headline. Markdown text preserves these as [[Target Title]].',
+            },
             parentRemId: {
               type: 'string',
               description: 'Direct parent Rem ID (omitted for top-level Rems)',
@@ -218,6 +240,11 @@ export const SEARCH_TOOL = {
                   headline: {
                     type: 'string',
                     description: 'Display-oriented child line with type-aware delimiter',
+                  },
+                  inlineRefs: {
+                    type: 'array',
+                    items: INLINE_REF_SCHEMA,
+                    description: 'Resolvable inline Rem references from the child title/headline',
                   },
                   aliases: {
                     type: 'array',
@@ -356,6 +383,12 @@ export const READ_NOTE_TOOL = {
         description:
           'Display-oriented full line: title + type-aware delimiter + detail (e.g. "Term :: Definition")',
       },
+      inlineRefs: {
+        type: 'array',
+        items: INLINE_REF_SCHEMA,
+        description:
+          'Resolvable inline Rem references from the rendered title/headline. Markdown text preserves these as [[Target Title]].',
+      },
       parentRemId: {
         type: 'string',
         description: 'Direct parent Rem ID (omitted for top-level Rems)',
@@ -402,6 +435,11 @@ export const READ_NOTE_TOOL = {
             headline: {
               type: 'string',
               description: 'Display-oriented child line with type-aware delimiter',
+            },
+            inlineRefs: {
+              type: 'array',
+              items: INLINE_REF_SCHEMA,
+              description: 'Resolvable inline Rem references from the child title/headline',
             },
             aliases: {
               type: 'array',
@@ -917,6 +955,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
               'Need tagged-note context/navigation? Use remnote_search_by_tag with tagRemId and default resultMode="context"; inspect matchedRems to see the direct tagged Rems behind each context result.',
               'Need strict tag verification? Use remnote_search_by_tag with resultMode="tagged", or verify the exact Rem in matchedRems from context mode.',
               'Need to traverse a specific branch? Use remnote_read_note on a chosen remId with includeContent="structured", depth=1, childLimit=500, then recurse by child remIds.',
+              'Need to follow inline graph references? Inspect inlineRefs on search/read results and structured child nodes for exact target Rem IDs.',
               'Need tabular/structured data from an Advanced Table? Use remnote_read_table with either tableTitle or tableRemId. Use propertyFilter to limit columns for large tables.',
               'Need a human-readable summary? Switch to includeContent="markdown" on search/read results.',
               'Need to rename a note? Use remnote_update_note with remId and title only.',
@@ -932,9 +971,9 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
             },
             contentModes: {
               structured:
-                'ID-first traversal mode. Returns contentStructured with child remIds for deterministic follow-up reads.',
+                'ID-first traversal mode. Returns contentStructured with child remIds and inlineRefs for deterministic follow-up reads.',
               markdown:
-                'Summary mode. Returns rendered markdown content for human-facing synthesis, not deterministic child ID traversal.',
+                'Summary mode. Returns rendered markdown content for human-facing synthesis; inline Rem references render as [[Target Title]].',
               none: 'Metadata-only mode when content is not needed.',
             },
             writePolicy: {
