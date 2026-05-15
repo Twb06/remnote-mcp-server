@@ -12,6 +12,9 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Add `remnote_search_by_tag.resultMode` and CLI `search-by-tag --result-mode` for direct tagged Rem results while
   preserving context navigation with `matchedRems`.
 - Add playbook guidance for choosing tag context navigation versus strict direct-tag verification.
+- Update the MCP tool smoke-test prompt to validate `matchedRems` and `resultMode: "tagged"` behavior.
+- Document the MCP contract-change checklist for keeping tests, playbook guidance, smoke prompts, and generated tool
+  metadata aligned.
 
 ## [0.15.0] - 2026-05-15
 

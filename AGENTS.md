@@ -151,6 +151,13 @@ wrapper.
 - Before docs edits, read `.agents/dev-documentation.md`.
 - Any functional or documentation change must be recorded in `CHANGELOG.md`.
 - Keep AGENTS/docs map-level: contracts, rationale, and navigation.
+- When changing bridge action contracts, MCP tool input/output schemas, tool behavior, or response semantics:
+  - Update server unit tests and live integration tests that exercise the changed contract.
+  - Update `docs/agent-validation-prompts/mcp-tool-smoke-test.md` when the change affects agent-visible setup
+    validation.
+  - Update `remnote_get_playbook` guidance when the change affects recommended agent workflow.
+  - Update bridge/server contract docs and changelogs.
+  - Regenerate MCPB tool metadata when canonical MCP tool definitions change.
 - When changing MCP tool names, descriptions, or input schemas, update `src/tools/index.ts` first, then run
   `npm run generate:mcpb-tools`. Do not hand-edit `mcpb/remnote-local/server/fallback-tools.generated.js`.
   `./code-quality.sh` runs `npm run check:mcpb-tools` and must fail if generated MCPB metadata is stale.

@@ -38,6 +38,7 @@ required call fails.
    - If `acceptWriteOperations` is not `true`, stop and report that write tools are disabled.
 
 2. Call `remnote_get_playbook` and briefly confirm that it returned guidance.
+   - Confirm the playbook mentions tag navigation or strict tag verification through `resultMode` or `matchedRems`.
 
 3. Resolve the shared temporary integration-test root.
    - Search for the exact title `RemNote Automation Bridge [temporary integration test data]`.
@@ -78,25 +79,36 @@ required call fails.
     - Use `addTagRemIds: [testTagRemId]`.
     - Read the run note and confirm the tag appears if tag metadata is returned.
 
-11. Search by the test tag with `remnote_search_by_tag`.
+11. Search by the test tag with `remnote_search_by_tag` in navigation mode.
     - Use `tagRemId: testTagRemId`.
-    - Confirm the run note or its resolved ancestor context appears in the results.
+    - Omit `resultMode` or use `resultMode: "context"`.
+    - Confirm a result appears for the run note or its resolved ancestor context.
+    - Confirm that at least one result has `matchedRems` containing the exact run note Rem ID.
 
-12. Remove the test tag from the run note with `remnote_update_tags`.
+12. Search by the test tag with `remnote_search_by_tag` in strict verification mode.
+    - Use `tagRemId: testTagRemId`.
+    - Use `resultMode: "tagged"`.
+    - Confirm the exact run note Rem ID appears as a top-level result.
+    - Confirm the result includes context metadata (`contextRemId`, `contextTitle`, and `contextReason`) when returned
+      by the server.
+
+13. Remove the test tag from the run note with `remnote_update_tags`.
     - Use `removeTagRemIds: [testTagRemId]`.
-    - Search by the test tag again and confirm the run note is no longer returned as the tagged target.
+    - Search by the test tag again in context mode and confirm `matchedRems` no longer contains the run note Rem ID.
+    - Search by the test tag again with `resultMode: "tagged"` and confirm the run note Rem ID is no longer returned as
+      a top-level result.
 
-13. Append a journal entry with `remnote_append_journal`.
+14. Append a journal entry with `remnote_append_journal`.
     - Content: `[MCP-AGENT-TEST] Journal smoke test <current ISO timestamp>`
     - Use the test tag Rem ID as `tagRemIds` if the tool supports journal tag IDs in this client.
 
-14. Optional/report-only checks:
+15. Optional/report-only checks:
     - If `remnote_replace_children` is available and `remnote_status.acceptReplaceOperation` is `true`, report that
       destructive replacement is enabled. Do not call it unless the user explicitly asks for destructive validation.
     - If `remnote_read_table` is available, report that table validation requires an existing Advanced Table title or
       Rem ID and skip it for this zero-config smoke test.
 
-15. Final response:
+16. Final response:
     - Report PASS or FAIL.
     - Include the root note Rem ID, run note Rem ID, and test tag Rem ID if created.
     - List every required tool and whether it was used successfully.
