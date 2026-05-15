@@ -152,6 +152,8 @@ wrapper.
 - Any functional or documentation change must be recorded in `CHANGELOG.md`.
 - Keep AGENTS/docs map-level: contracts, rationale, and navigation.
 - When changing bridge action contracts, MCP tool input/output schemas, tool behavior, or response semantics:
+  - Keep `remnote-cli` functionally aligned for every behavior reachable through the CLI: update the command parser,
+    payload mapping, text/JSON output expectations, CLI docs, and CLI integration coverage.
   - Update server unit tests and live integration tests that exercise the changed contract.
   - Update `docs/agent-validation-prompts/mcp-tool-smoke-test.md` when the change affects agent-visible setup
     validation.

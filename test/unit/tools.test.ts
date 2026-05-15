@@ -155,6 +155,22 @@ describe('Tool Definitions', () => {
     expect(searchResultProps.contentStructured).toBeDefined();
   });
 
+  it('should advertise cursor paging for SEARCH_TOOL', () => {
+    const outputProps = SEARCH_TOOL.outputSchema.properties as Record<string, unknown>;
+    const searchByTagOutputProps = SEARCH_BY_TAG_TOOL.outputSchema.properties as Record<
+      string,
+      unknown
+    >;
+
+    expect(SEARCH_TOOL.inputSchema.properties).toHaveProperty('cursor');
+    expect(outputProps).toHaveProperty('hasMore');
+    expect(outputProps).toHaveProperty('nextCursor');
+    expect(outputProps).toHaveProperty('truncated');
+    expect(outputProps).toHaveProperty('truncationReason');
+    expect(searchByTagOutputProps).not.toHaveProperty('hasMore');
+    expect(searchByTagOutputProps).not.toHaveProperty('nextCursor');
+  });
+
   it('should not advertise detail in search/read output schemas', () => {
     const searchResultProps = ((
       SEARCH_TOOL.outputSchema.properties.results as {
@@ -520,6 +536,25 @@ describe('Tool Handlers - search', () => {
       limit: 50,
       includeContent: 'structured',
       depth: 2,
+      childLimit: 20,
+      maxContentLength: 3000,
+    });
+  });
+
+  it('should pass through cursor', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_search',
+        arguments: { query: 'test', limit: 25, cursor: 'search:v1:id:25:hash' },
+      },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('search', {
+      query: 'test',
+      limit: 25,
+      cursor: 'search:v1:id:25:hash',
+      includeContent: 'none',
+      depth: 1,
       childLimit: 20,
       maxContentLength: 3000,
     });

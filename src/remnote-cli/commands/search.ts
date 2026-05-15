@@ -46,7 +46,7 @@ function formatSearchText(data: unknown): string {
   const r = data as { results?: Array<Record<string, unknown>> };
   if (!r.results || r.results.length === 0) return 'No results found.';
 
-  return r.results
+  const lines = r.results
     .map((note, i) => {
       const typeTag = TYPE_TAG[note.remType as string] ?? '';
       const headline = (note.headline as string) || (note.title as string) || '(untitled)';
@@ -67,6 +67,20 @@ function formatSearchText(data: unknown): string {
       return `${i + 1}. ${typeTag}${headline}${aliasesSuffix}${tagsSuffix}${parentSuffix} [${note.remId}]`;
     })
     .join('\n');
+
+  const pagingLines: string[] = [];
+  if (
+    typeof (r as Record<string, unknown>).nextCursor === 'string' &&
+    (r as Record<string, unknown>).hasMore === true
+  ) {
+    pagingLines.push(`Next cursor: ${(r as Record<string, unknown>).nextCursor as string}`);
+  }
+  if ((r as Record<string, unknown>).truncated === true) {
+    const reason = (r as Record<string, unknown>).truncationReason;
+    pagingLines.push(`Results truncated${typeof reason === 'string' ? `: ${reason}` : ''}`);
+  }
+
+  return pagingLines.length > 0 ? `${lines}\n${pagingLines.join('\n')}` : lines;
 }
 
 function registerCommonSearchOptions(command: Command): Command {
@@ -88,28 +102,31 @@ function registerCommonSearchOptions(command: Command): Command {
 export function registerSearchCommand(program: Command): void {
   registerCommonSearchOptions(
     program.command('search <query>').description('Search for notes in RemNote')
-  ).action(async (query: string, opts) => {
-    const globalOpts = program.opts();
-    const format: OutputFormat = globalOpts.text ? 'text' : 'json';
-    const client = createCommandClient(program);
+  )
+    .option('--cursor <cursor>', 'Opaque cursor returned by a previous search page')
+    .action(async (query: string, opts) => {
+      const globalOpts = program.opts();
+      const format: OutputFormat = globalOpts.text ? 'text' : 'json';
+      const client = createCommandClient(program);
 
-    try {
-      const payload: Record<string, unknown> = {
-        query,
-        limit: parseInt(opts.limit, 10),
-      };
-      applySearchOptions(payload, opts);
+      try {
+        const payload: Record<string, unknown> = {
+          query,
+          limit: parseInt(opts.limit, 10),
+        };
+        if (opts.cursor) payload.cursor = opts.cursor;
+        applySearchOptions(payload, opts);
 
-      const result = await client.execute('search', payload);
-      console.log(formatResult(result, format, (data) => formatSearchText(data)));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error(formatError(message, format));
-      process.exit(EXIT.ERROR);
-    } finally {
-      await client.close();
-    }
-  });
+        const result = await client.execute('search', payload);
+        console.log(formatResult(result, format, (data) => formatSearchText(data)));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(formatError(message, format));
+        process.exit(EXIT.ERROR);
+      } finally {
+        await client.close();
+      }
+    });
 }
 
 export function registerSearchByTagCommand(program: Command): void {

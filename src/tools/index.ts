@@ -121,12 +121,16 @@ export const CREATE_NOTE_TOOL = {
 export const SEARCH_TOOL = {
   name: 'remnote_search',
   description:
-    'Search the RemNote knowledge base. For whole-KB orientation, prefer includeContent="structured" with depth=1 and childLimit=500, then follow remIds with remnote_read_note. Use includeContent="markdown" for human-readable summaries.',
+    'Search the RemNote knowledge base. Supports cursor paging through hasMore/nextCursor. For whole-KB orientation, prefer includeContent="structured" with depth=1 and childLimit=500, then follow remIds with remnote_read_note. Use includeContent="markdown" for human-readable summaries.',
   inputSchema: {
     type: 'object' as const,
     properties: {
       query: { type: 'string', description: 'Search query text' },
       limit: { type: 'number', description: 'Maximum results (1-150, default: 50)' },
+      cursor: {
+        type: 'string',
+        description: 'Opaque cursor returned by a previous remnote_search response',
+      },
       includeContent: {
         type: 'string',
         enum: ['none', 'markdown', 'structured'],
@@ -297,6 +301,24 @@ export const SEARCH_TOOL = {
           },
         },
       },
+      hasMore: {
+        type: 'boolean',
+        description: 'Whether more results are available through nextCursor',
+      },
+      nextCursor: {
+        type: 'string',
+        description: 'Opaque cursor for the next page when hasMore is true',
+      },
+      truncated: {
+        type: 'boolean',
+        description:
+          'Whether search results may be incomplete because the bridge hit its snapshot cap',
+      },
+      truncationReason: {
+        type: 'string',
+        enum: ['cursor_snapshot_limit'],
+        description: 'Reason search results may be incomplete when truncated is true',
+      },
     },
   },
 };
@@ -341,7 +363,12 @@ export const SEARCH_BY_TAG_TOOL = {
     },
     required: ['tagRemId'],
   },
-  outputSchema: SEARCH_TOOL.outputSchema,
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      results: SEARCH_TOOL.outputSchema.properties.results,
+    },
+  },
 };
 
 export const READ_NOTE_TOOL = {

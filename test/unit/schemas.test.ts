@@ -86,6 +86,11 @@ describe('SearchSchema', () => {
     expect(result.limit).toBe(50);
   });
 
+  it('should validate with cursor', () => {
+    const result = SearchSchema.parse({ query: 'test', cursor: 'search:v1:id:50:hash' });
+    expect(result.cursor).toBe('search:v1:id:50:hash');
+  });
+
   it('should validate with includeContent markdown', () => {
     const result = SearchSchema.parse({ query: 'test', includeContent: 'markdown' });
     expect(result.includeContent).toBe('markdown');

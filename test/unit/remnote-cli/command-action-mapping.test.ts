@@ -157,6 +157,16 @@ describe('command bridge action mapping', () => {
     executeSpy.mockRestore();
   });
 
+  it('passes through search cursor', async () => {
+    const executeSpy = await runCommand(['search', 'folders', '--cursor', 'search:v1:id:2:hash']);
+    expect(executeSpy).toHaveBeenCalledWith('search', {
+      query: 'folders',
+      limit: 50,
+      cursor: 'search:v1:id:2:hash',
+    });
+    executeSpy.mockRestore();
+  });
+
   it('maps search-by-tag command to search_by_tag with content rendering options', async () => {
     const executeSpy = await runCommand([
       'search-by-tag',

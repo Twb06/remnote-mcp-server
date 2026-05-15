@@ -122,9 +122,17 @@ Shared options for `search` and `search-by-tag`:
 | `--child-limit <n>`        | `20`    | Max children per hierarchy level     |
 | `--max-content-length <n>` | `3000`  | Max rendered content character count |
 
+`search` also supports:
+
+| Option              | Default | Description                                      |
+| ------------------- | ------- | ------------------------------------------------ |
+| `--cursor <cursor>` | n/a     | Opaque cursor from a previous `search` response |
+
 Behavior rules:
 
 - In `--text` mode, each line includes headline/title and Rem ID.
+- JSON output preserves paging metadata (`hasMore`, `nextCursor`, `truncated`, and `truncationReason`).
+- In `--text` mode, `nextCursor` is printed after results when another page is available.
 - Tags are shown in `--text` mode when the bridge returns them as `[tags: tag1 [tagRemId1], tag2 [tagRemId2]]`.
 - Parent context is appended in text output when available as `<- Parent Title [parentRemId]`.
 - `--depth`, `--child-limit`, and `--max-content-length` are most relevant when content rendering is enabled.
@@ -136,6 +144,7 @@ Examples:
 ```bash
 remnote-cli search "meeting"
 remnote-cli search "weekly" --limit 10 --include-content structured --depth 2 --child-limit 10 --text
+remnote-cli search "weekly" --limit 10 --cursor "search:v1:..."
 ```
 
 ## search-by-tag

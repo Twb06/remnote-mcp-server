@@ -15,6 +15,10 @@ export const CreateNoteSchema = z
 export const SearchSchema = z.object({
   query: z.string().describe('Search query text'),
   limit: z.number().int().min(1).max(150).default(50).describe('Maximum results'),
+  cursor: z
+    .string()
+    .optional()
+    .describe('Opaque cursor returned by a previous remnote_search page'),
   includeContent: z
     .enum(['none', 'markdown', 'structured'])
     .default('none')

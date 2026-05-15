@@ -9,6 +9,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Add cursor paging support to `remnote_search` and `remnote-cli search`, with `hasMore`, `nextCursor`, and explicit
+  snapshot-cap truncation metadata.
 - Add `inlineRefs` metadata to `remnote_search`, `remnote_search_by_tag`, and `remnote_read_note` output schemas so
   clients can follow inline Rem references by exact target Rem ID.
 - Add `remnote_search_by_tag.resultMode` and CLI `search-by-tag --result-mode` for direct tagged Rem results while

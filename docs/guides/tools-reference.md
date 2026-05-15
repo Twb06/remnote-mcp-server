@@ -125,6 +125,7 @@ Search your RemNote knowledge base with full-text search.
 |-----------|------|----------|-------------|
 | `query` | string | Yes | Search query text |
 | `limit` | number | No | Maximum results to return (1-150, default: 50) |
+| `cursor` | string | No | Opaque cursor from a previous `remnote_search` response |
 | `includeContent` | string | No | Content mode: `none` (default), `markdown`, or `structured` |
 | `depth` | number | No | Max child depth for rendered content (0-10, default: 1) |
 
@@ -140,6 +141,11 @@ Search my RemNote for "machine learning"
 Search for "project management" and show up to 50 results
 ```
 
+**Continue a paged search:**
+```
+Search again with the nextCursor from the previous remnote_search response
+```
+
 **Search with content:**
 ```
 Search for "AI ethics" and include the note content
@@ -147,7 +153,7 @@ Search for "AI ethics" and include the note content
 
 ### Response
 
-Returns array of matching notes:
+Returns matching notes plus paging metadata:
 
 ```json
 {
@@ -173,7 +179,10 @@ Returns array of matching notes:
       "headline": "Deep Learning Overview",
       "remType": "text"
     }
-  ]
+  ],
+  "hasMore": true,
+  "nextCursor": "search:v1:...",
+  "truncated": false
 }
 ```
 
@@ -205,6 +214,7 @@ Returns array of matching notes:
 - Use `includeContent: "none"` (default) for faster searches when you only need titles
 - Use `includeContent: "markdown"` when you need rendered child context
 - Use `includeContent: "structured"` when you need nested child `remId`s for follow-up reads/navigation
+- Use `nextCursor` while `hasMore` is true to continue a stable ordered search snapshot.
 - Use `inlineRefs` when rendered titles/headlines contain `[[...]]` references and you need exact graph targets.
 - For whole-KB orientation, start with `includeContent: "structured"`, `depth: 1`, `childLimit: 500`
 - Use `parentRemId` and `parentTitle` to show where a result sits in your hierarchy.

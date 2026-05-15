@@ -34,7 +34,7 @@ export const FALLBACK_TOOLS = [
   {
     name: 'remnote_search',
     description:
-      'Search the RemNote knowledge base. For whole-KB orientation, prefer includeContent="structured" with depth=1 and childLimit=500, then follow remIds with remnote_read_note. Use includeContent="markdown" for human-readable summaries.',
+      'Search the RemNote knowledge base. Supports cursor paging through hasMore/nextCursor. For whole-KB orientation, prefer includeContent="structured" with depth=1 and childLimit=500, then follow remIds with remnote_read_note. Use includeContent="markdown" for human-readable summaries.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -45,6 +45,10 @@ export const FALLBACK_TOOLS = [
         limit: {
           type: 'number',
           description: 'Maximum results (1-150, default: 50)',
+        },
+        cursor: {
+          type: 'string',
+          description: 'Opaque cursor returned by a previous remnote_search response',
         },
         includeContent: {
           type: 'string',

@@ -151,4 +151,25 @@ describe('command text output', () => {
     expect(output).toBe('1. [concept] Plan (aka: Strategy, Roadmap) <- Workspace [rem-1]');
     executeSpy.mockRestore();
   });
+
+  it('formats search paging metadata in text output', async () => {
+    const { output, executeSpy } = await runTextCommand(['search', 'plan'], {
+      results: [
+        {
+          remId: 'rem-1',
+          title: 'Plan',
+          remType: 'text',
+        },
+      ],
+      hasMore: true,
+      nextCursor: 'search:v1:id:1:hash',
+      truncated: true,
+      truncationReason: 'cursor_snapshot_limit',
+    });
+
+    expect(output).toContain('1. Plan [rem-1]');
+    expect(output).toContain('Next cursor: search:v1:id:1:hash');
+    expect(output).toContain('Results truncated: cursor_snapshot_limit');
+    executeSpy.mockRestore();
+  });
 });

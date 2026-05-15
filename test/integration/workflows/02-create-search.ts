@@ -29,6 +29,17 @@ function findMatchingSearchResult(
   return match as Record<string, unknown>;
 }
 
+function findSearchResultByTitleSubstring(
+  results: Array<Record<string, unknown>>,
+  titleSubstring: string
+): Record<string, unknown> {
+  const match = results.find(
+    (r) => typeof r.title === 'string' && r.title.includes(titleSubstring)
+  );
+  assertTruthy(match, `should find result title containing ${titleSubstring}`);
+  return match as Record<string, unknown>;
+}
+
 function assertParentContext(
   note: Record<string, unknown>,
   state: SharedState,
@@ -90,6 +101,19 @@ function assertSearchContentModeShape(
 
   assertTruthy(!('content' in note), 'none mode should omit markdown content');
   assertTruthy(!('contentStructured' in note), 'none mode should omit structured content');
+}
+
+function addSearchPageRemIds(
+  seenRemIds: Set<string>,
+  results: Array<Record<string, unknown>>,
+  label: string
+): void {
+  for (const result of results) {
+    const remId = result.remId;
+    assertTruthy(typeof remId === 'string', `${label}: result remId should be string`);
+    assertTruthy(!seenRemIds.has(remId as string), `${label}: duplicate remId ${String(remId)}`);
+    seenRemIds.add(remId as string);
+  }
 }
 
 interface ExpectedTagTarget {
@@ -162,7 +186,12 @@ export async function createSearchWorkflow(
   const steps: StepResult[] = [];
   const delay = parseInt(process.env.MCP_TEST_DELAY ?? '2000', 10);
   const sanitizedRunId = ctx.runId.replace(/[^a-zA-Z0-9]/g, '-');
+  const compactRunId = ctx.runId.replace(/[^a-zA-Z0-9]/g, '');
   const mdTreeRootOnlyTag = `mcp-tree-root-${sanitizedRunId}`;
+  const simpleSearchToken = `mcpsimple${compactRunId}`;
+  const mdTreeSearchToken = `mcptree${compactRunId}`;
+  const pagingSearchToken = `mcppaging${compactRunId}`;
+  const pagingNoteIds: string[] = [];
 
   if (!state.integrationParentRemId) {
     return {
@@ -221,7 +250,7 @@ export async function createSearchWorkflow(
     const start = Date.now();
     try {
       const result = (await ctx.client.callTool('remnote_create_note', {
-        title: `[MCP-TEST] Simple Note ${ctx.runId}`,
+        title: `[MCP-TEST] Simple Note ${simpleSearchToken}`,
         parentId: state.integrationParentRemId,
       })) as { remIds: string[] };
       assertHasField(result, 'remIds', 'create simple note');
@@ -314,11 +343,12 @@ export async function createSearchWorkflow(
         `  - Multiple-choice >>A)`,
         `    - Correct option`,
         `    - Wrong option`,
+        `  - Search token ${mdTreeSearchToken}`,
       ].join('\n');
 
       const result = (await ctx.client.callTool('remnote_create_note', {
         content: markdownContent,
-        title: `[MCP-TEST] Flashcard Tree ${ctx.runId}`,
+        title: `[MCP-TEST] Flashcard Tree ${mdTreeSearchToken}`,
         parentId: state.integrationParentRemId,
         tagRemIds: [state.searchByTagTagRemId as string, mdTreeRootOnlyTagRemId as string],
       })) as { remIds: string[] };
@@ -341,23 +371,53 @@ export async function createSearchWorkflow(
     }
   }
 
+  // Step 5: Create paging fixture notes
+  {
+    const start = Date.now();
+    try {
+      for (let i = 1; i <= 5; i += 1) {
+        const result = (await ctx.client.callTool('remnote_create_note', {
+          title: `[MCP-TEST] ${pagingSearchToken} item ${i}`,
+          parentId: state.integrationParentRemId,
+        })) as { remIds: string[] };
+        assertHasField(result, 'remIds', `create paging note ${i}`);
+        assertIsArray(result.remIds, `create paging note ${i} remIds`);
+        pagingNoteIds.push(result.remIds[0]);
+      }
+      steps.push({
+        label: 'Create paging fixture notes',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Create paging fixture notes',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
   // Wait for RemNote indexing
   await new Promise((resolve) => setTimeout(resolve, delay));
 
-  // Step 5: Search finds simple note
+  // Step 6: Search finds simple note
   {
     const start = Date.now();
     try {
       const result = await ctx.client.callTool('remnote_search', {
-        query: `[MCP-TEST] Simple Note ${ctx.runId}`,
-        limit: 5,
+        query: simpleSearchToken,
+        limit: 20,
       });
       assertHasField(result, 'results', 'search simple note');
       assertIsArray(result.results, 'search results');
       const results = result.results as Array<Record<string, unknown>>;
       assertTruthy(results.length > 0, 'search should return at least one result');
-      const found = results.some((r) => typeof r.title === 'string' && r.title.includes(ctx.runId));
-      assertTruthy(found, 'at least one result title should contain runId');
+      const found = results.some(
+        (r) => typeof r.title === 'string' && r.title.includes(simpleSearchToken)
+      );
+      assertTruthy(found, 'at least one result title should contain simple search token');
       assertTruthy(typeof state.noteAId === 'string', 'simple note remId should be recorded');
       const simpleMatch = findMatchingSearchResult(results, state.noteAId as string);
       assertParentContext(simpleMatch, state, 'search simple note parent context');
@@ -376,11 +436,82 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 6-8: Search with includeContent modes
+  // Step 7: Search pages through cursor results
+  {
+    const start = Date.now();
+    try {
+      assertEqual(pagingNoteIds.length, 5, 'paging fixture note count');
+      const firstPage = await ctx.client.callTool('remnote_search', {
+        query: pagingSearchToken,
+        limit: 2,
+        includeContent: 'none',
+      });
+      assertHasField(firstPage, 'results', 'search paging first page');
+      assertIsArray(firstPage.results, 'search paging first page results');
+      assertEqual((firstPage.results as unknown[]).length, 2, 'first page result count');
+      assertEqual(firstPage.hasMore as boolean, true, 'first page hasMore');
+      assertTruthy(typeof firstPage.nextCursor === 'string', 'first page nextCursor');
+      assertEqual(firstPage.truncated as boolean, false, 'first page truncated');
+
+      const seenRemIds = new Set<string>();
+      addSearchPageRemIds(
+        seenRemIds,
+        firstPage.results as Array<Record<string, unknown>>,
+        'first paging page'
+      );
+
+      let cursor = firstPage.nextCursor as string;
+      let lastPage: Record<string, unknown> = firstPage as Record<string, unknown>;
+      for (let page = 2; page <= 4 && cursor; page += 1) {
+        const nextPage = await ctx.client.callTool('remnote_search', {
+          query: pagingSearchToken,
+          limit: 2,
+          cursor,
+          includeContent: 'none',
+        });
+        assertHasField(nextPage, 'results', `search paging page ${page}`);
+        assertIsArray(nextPage.results, `search paging page ${page} results`);
+        assertTruthy(
+          (nextPage.results as unknown[]).length <= 2,
+          `search paging page ${page} respects limit`
+        );
+        addSearchPageRemIds(
+          seenRemIds,
+          nextPage.results as Array<Record<string, unknown>>,
+          `paging page ${page}`
+        );
+        lastPage = nextPage as Record<string, unknown>;
+        cursor = typeof nextPage.nextCursor === 'string' ? (nextPage.nextCursor as string) : '';
+      }
+
+      for (const remId of pagingNoteIds) {
+        assertTruthy(seenRemIds.has(remId), `paging results should include ${remId}`);
+      }
+      assertEqual(lastPage.hasMore as boolean, false, 'last paging page hasMore');
+      assertTruthy(!('nextCursor' in lastPage), 'last paging page should omit nextCursor');
+
+      steps.push({
+        label: 'Search cursor paging returns all fixture notes',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Search cursor paging returns all fixture notes',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: `${(e as Error).message} | token=${JSON.stringify(pagingSearchToken)} fixtureIds=${JSON.stringify(
+          pagingNoteIds
+        )}`,
+      });
+    }
+  }
+
+  // Step 8-10: Search with includeContent modes
   for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();
     const label = `Search includeContent=${mode} returns expected shape`;
-    const query = `${ctx.runId}`;
+    const query = mdTreeSearchToken;
     let debugResults: Array<Record<string, unknown>> | null = null;
     try {
       const result = await ctx.client.callTool('remnote_search', {
@@ -392,8 +523,7 @@ export async function createSearchWorkflow(
       const results = result.results as Array<Record<string, unknown>>;
       debugResults = results;
       assertTruthy(results.length > 0, `search ${mode} should return results`);
-      assertTruthy(typeof state.noteBId === 'string', 'rich note remId should be recorded');
-      const match = findMatchingSearchResult(results, state.noteBId as string);
+      const match = findSearchResultByTitleSubstring(results, mdTreeSearchToken);
       assertSearchContentModeShape(match, mode);
       assertParentContext(match, state, `search ${mode} parent context`);
       assertTruthy(typeof state.searchByTagTag === 'string', 'search tag should be recorded');
@@ -410,7 +540,7 @@ export async function createSearchWorkflow(
         durationMs: Date.now() - start,
         error:
           `${(e as Error).message} | query=${JSON.stringify(query)} expectedRemId=${JSON.stringify(
-            state.noteBId ?? null
+            mdTreeSearchToken
           )}` +
           (debugResults
             ? ` resultCount=${debugResults.length} topResults=${JSON.stringify(
@@ -421,24 +551,20 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 9: Search finds markdown tree root
+  // Step 11: Search finds markdown tree root
   {
     const start = Date.now();
     let debugResults: Array<Record<string, unknown>> | null = null;
     try {
-      assertTruthy(
-        typeof state.mdTreeIds?.[0] === 'string',
-        'markdown tree root remId should be recorded'
-      );
       const result = await ctx.client.callTool('remnote_search', {
-        query: `${ctx.runId}`,
+        query: mdTreeSearchToken,
         includeContent: 'structured',
       });
       assertHasField(result, 'results', 'search markdown tree root');
       assertIsArray(result.results, 'search markdown tree root results');
       const results = result.results as Array<Record<string, unknown>>;
       debugResults = results;
-      const match = findMatchingSearchResult(results, state.mdTreeIds[0] as string);
+      const match = findSearchResultByTitleSubstring(results, mdTreeSearchToken);
       assertSearchContentModeShape(match, 'structured');
       assertParentContext(match, state, 'search markdown tree root parent context');
       steps.push({
@@ -462,7 +588,7 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 10: Root-only markdown tree tag does not bleed to descendants
+  // Step 12: Root-only markdown tree tag does not bleed to descendants
   {
     const start = Date.now();
     let debugResults: Array<Record<string, unknown>> | null = null;
@@ -512,7 +638,7 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 11-13: Search by exact tag Rem ID with includeContent modes
+  // Step 13-15: Search by exact tag Rem ID with includeContent modes
   let expectedTagTarget: ExpectedTagTarget | undefined;
   {
     const start = Date.now();
