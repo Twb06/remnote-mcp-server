@@ -19,4 +19,6 @@ The prompt creates test artifacts with the `[MCP-AGENT-TEST]` prefix so they can
 
 ## Example Successful Run
 
+This example uses [Codex.app](https://developers.openai.com/codex/app) AI agent but it should work with any agent or MCP client.
+
 ![Agent validation smoke test pass in Codex](../images/agent-validation-smoke-test-pass.jpg)
