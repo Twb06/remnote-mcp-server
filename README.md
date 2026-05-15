@@ -18,8 +18,8 @@ plugin](https://github.com/robert7/remnote-mcp-bridge).
 > [plugin install guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/install-plugin-via-marketplace-beginner.md),
 > [local plugin guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/development-run-plugin-locally.md), and
 > [server installation guide](docs/guides/installation.md).
-> After setup, you can run the [agent validation prompt](docs/agent-validation-prompts/mcp-tool-smoke-test.md) to verify
-> that your chosen AI agent can use the installed RemNote MCP tools end to end.
+> After setup, see the [agent validation prompts](docs/agent-validation-prompts/README.md) to verify that your chosen AI
+> agent can use the installed RemNote MCP tools end to end.
 > If the guides do not resolve your problem, [open an issue](https://github.com/robert7/remnote-mcp-server/issues) with
 > the relevant versions, setup path, observed behavior, and exact error/status message.
 
