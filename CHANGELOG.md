@@ -7,18 +7,18 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-05-15
+
 ### Added
 
 - Add split RemNote write tools: `remnote_insert_children`, `remnote_replace_children`, and `remnote_update_tags`, plus
   matching `remnote-cli` commands for ordered child insertion, destructive child replacement, and exact-ID tag mutation.
 - Add exact-ID tag assignment to `remnote_append_journal` and `remnote-cli journal --tag-ids`.
-- Add generated MCPB tool metadata checks so manifest and fallback tool drift fails routine quality verification.
-- Add a three-level testing strategy guide, a zero-config agent validation prompt, and a successful-run screenshot for
-  end-user MCP setup checks.
 - Add `remnote-mcp-server daemon` lifecycle commands for detached background startup, status, logs, graceful shutdown,
   duplicate-start protection, stable log routing, and macOS `launchd` login persistence.
 - Add `~/.remnote-mcp-server/config.toml` for persistent server and daemon defaults, including ports, host, log levels,
   file logs, and WebSocket request/response JSON Lines logs.
+- Add end-user validation guidance for MCP setup checks, including a zero-config agent validation prompt.
 
 ### Changed
 
@@ -33,19 +33,14 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   of name-based `tags` / `--tags`.
 - Generate MCPB manifest tools and fallback tool metadata from the canonical server tool definitions instead of
   maintaining those copies by hand.
-- Rename CLI guide files so `remnote-mcp-server` and `remnote-cli` documentation targets are explicit.
 - Add daemon startup, status, log, and macOS persistence pointers to installation, configuration, and troubleshooting
   docs.
 - Make daemon lifecycle commands launchd-aware on macOS when the LaunchAgent is installed, and document the shared
   control surface.
-- Update the agent integration wrapper to fail fast when the MCP HTTP port is already occupied instead of stopping or
-  restarting existing daemon/launchd-managed servers.
-- Clarify AI-agent live integration policy: agents must preflight port `3001`, refuse to run when it is occupied, use
-  `run-agent-integration-test.sh`, and run live integration outside the Codex sandbox.
-- Add `run-agent-integration-test.sh --preflight-only` so agents can check the MCP HTTP port with the same unsandboxed
-  guard used by real live integration runs.
-- Clarify the README intro notice to emphasize both the official bridge plugin and compatible `remnote-mcp-server`
-  version, with links to setup guides and issue-reporting guidance.
+- Update agent-assisted live integration safeguards so agents preflight port `3001`, refuse to run when an existing
+  server is listening, and use `run-agent-integration-test.sh --preflight-only` for the same guard as real live runs.
+- Clarify setup documentation for the official bridge plugin, compatible `remnote-mcp-server` versions, and explicit
+  `remnote-mcp-server` versus `remnote-cli` documentation targets.
 
 ### Fixed
 
