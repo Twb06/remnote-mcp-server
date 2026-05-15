@@ -154,6 +154,8 @@ wrapper.
 - When changing bridge action contracts, MCP tool input/output schemas, tool behavior, or response semantics:
   - Keep `remnote-cli` functionally aligned for every behavior reachable through the CLI: update the command parser,
     payload mapping, text/JSON output expectations, CLI docs, and CLI integration coverage.
+  - Explicitly check whether `remnote_get_playbook` needs an update. Update the playbook and its tests when API changes
+    affect recommended agent workflow, traversal defaults, paging, timeouts, write safety, or tool selection.
   - Update server unit tests and live integration tests that exercise the changed contract.
   - Update `docs/agent-validation-prompts/mcp-tool-smoke-test.md` when the change affects agent-visible setup
     validation.

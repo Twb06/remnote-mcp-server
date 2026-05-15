@@ -981,9 +981,9 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           }
 
           result = {
-            playbookVersion: '1.2.0',
+            playbookVersion: '1.3.0',
             summary:
-              'Use this playbook to navigate RemNote efficiently via remIds, and to apply write-safety checks before mutations.',
+              'Use this playbook to navigate RemNote efficiently via remIds, page broad searches safely, and apply write-safety checks before mutations.',
             recommendedStatusCheck: {
               tool: 'remnote_status',
               cadence: 'recommended once per session and before risky writes',
@@ -993,8 +993,10 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
             decisionTree: [
               'Need connection/capability context? Call remnote_status first.',
               'Need to orient across the KB? Use remnote_search with includeContent="structured", depth=1, childLimit=500.',
+              'Need broad search enumeration? Continue remnote_search or remnote_search_by_tag with nextCursor while hasMore is true.',
               'Need tagged-note context/navigation? Use remnote_search_by_tag with tagRemId and default resultMode="context"; inspect matchedRems to see the direct tagged Rems behind each context result.',
               'Need strict tag verification? Use remnote_search_by_tag with resultMode="tagged", or verify the exact Rem in matchedRems from context mode.',
+              'Need a large tag search to finish? Prefer cursor paging first; use remnote_search_by_tag.timeoutMs only as a bounded wait-time escape hatch.',
               'Need to traverse a specific branch? Use remnote_read_note on a chosen remId with includeContent="structured", depth=1, childLimit=500, then recurse by child remIds.',
               'Need to follow inline graph references? Inspect inlineRefs on search/read results and structured child nodes for exact target Rem IDs.',
               'Need tabular/structured data from an Advanced Table? Use remnote_read_table with either tableTitle or tableRemId. Use propertyFilter to limit columns for large tables.',

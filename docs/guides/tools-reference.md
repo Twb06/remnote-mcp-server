@@ -552,7 +552,10 @@ Returns a structured playbook object, including:
 - `decisionTree` - short natural-language operating decisions.
 - `navigationPresets.orientation` - recommended traversal defaults (`structured`, `depth: 1`, `childLimit: 500`).
 - `contentModes` - when to use `structured` vs `markdown` vs `none`.
-- `remnote_search_by_tag` guidance - when to use default context results, `matchedRems`, or `resultMode: "tagged"`.
+- Search paging guidance - continue `remnote_search` / `remnote_search_by_tag` with `nextCursor` while `hasMore` is
+  true.
+- `remnote_search_by_tag` guidance - when to use default context results, `matchedRems`, `resultMode: "tagged"`, or a
+  bounded `timeoutMs` fallback.
 - `writePolicy` - how to interpret `acceptWriteOperations` / `acceptReplaceOperation` and exact-ID tag writes.
 - `currentStatus` - live `remnote_status` snapshot when available.
 

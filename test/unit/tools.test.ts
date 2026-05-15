@@ -1094,7 +1094,7 @@ describe('Tool Handlers - get_playbook', () => {
       params: { name: 'remnote_get_playbook', arguments: {} },
     })) as ToolSuccessResult;
 
-    expect(result.structuredContent?.playbookVersion).toBe('1.2.0');
+    expect(result.structuredContent?.playbookVersion).toBe('1.3.0');
     expect(Array.isArray(result.structuredContent?.decisionTree)).toBe(true);
     expect((result.structuredContent?.decisionTree as unknown[])?.length).toBeGreaterThan(0);
     expect(result.structuredContent?.decisionTree).toContain(
@@ -1108,6 +1108,12 @@ describe('Tool Handlers - get_playbook', () => {
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need strict tag verification? Use remnote_search_by_tag with resultMode="tagged", or verify the exact Rem in matchedRems from context mode.'
+    );
+    expect(result.structuredContent?.decisionTree).toContain(
+      'Need broad search enumeration? Continue remnote_search or remnote_search_by_tag with nextCursor while hasMore is true.'
+    );
+    expect(result.structuredContent?.decisionTree).toContain(
+      'Need a large tag search to finish? Prefer cursor paging first; use remnote_search_by_tag.timeoutMs only as a bounded wait-time escape hatch.'
     );
     expect(result.structuredContent?.navigationPresets).toMatchObject({
       orientation: {
