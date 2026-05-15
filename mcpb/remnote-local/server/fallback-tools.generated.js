@@ -76,7 +76,7 @@ export const FALLBACK_TOOLS = [
   {
     name: 'remnote_search_by_tag',
     description:
-      'Find notes by exact tag Rem ID. Default resultMode="context" returns resolved ancestor context targets with matchedRems; resultMode="tagged" returns directly tagged Rems with context metadata. Does not look up tags by name or alias. Supports the same includeContent modes as remnote_search.',
+      'Find notes by exact tag Rem ID. Supports cursor paging through hasMore/nextCursor. Default resultMode="context" returns resolved ancestor context targets with matchedRems; resultMode="tagged" returns directly tagged Rems with context metadata. Does not look up tags by name or alias. Supports the same includeContent modes as remnote_search.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -112,6 +112,15 @@ export const FALLBACK_TOOLS = [
         maxContentLength: {
           type: 'number',
           description: 'Maximum character length for rendered content (default: 3000)',
+        },
+        cursor: {
+          type: 'string',
+          description: 'Opaque cursor returned by a previous remnote_search_by_tag response',
+        },
+        timeoutMs: {
+          type: 'number',
+          description:
+            'Per-call bridge wait timeout in milliseconds (1-60000, default: 15000). Does not cancel plugin-side work.',
         },
       },
       required: ['tagRemId'],

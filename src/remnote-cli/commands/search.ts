@@ -139,6 +139,8 @@ export function registerSearchByTagCommand(program: Command): void {
         '--result-mode <mode>',
         'Result mode: "context" returns ancestor context targets, "tagged" returns direct tagged Rems'
       )
+      .option('--cursor <cursor>', 'Opaque cursor returned by a previous search-by-tag page')
+      .option('--timeout-ms <ms>', 'Per-call bridge wait timeout in milliseconds (max: 60000)')
   ).action(async (opts) => {
     const globalOpts = program.opts();
     const format: OutputFormat = globalOpts.text ? 'text' : 'json';
@@ -150,6 +152,8 @@ export function registerSearchByTagCommand(program: Command): void {
         limit: parseInt(opts.limit, 10),
       };
       if (opts.resultMode) payload.resultMode = opts.resultMode;
+      if (opts.cursor) payload.cursor = opts.cursor;
+      if (opts.timeoutMs) payload.timeoutMs = parseInt(opts.timeoutMs, 10);
       applySearchOptions(payload, opts);
 
       const result = await client.execute('search_by_tag', payload);

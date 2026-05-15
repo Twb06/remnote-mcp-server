@@ -9,6 +9,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   HELLO_TIMEOUT_MS,
+  MAX_REQUEST_TIMEOUT_MS,
   REQUEST_TIMEOUT_MS,
   WebSocketServer,
 } from '../../src/websocket-server.js';
@@ -397,6 +398,33 @@ describe('WebSocketServer - Request/Response', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('should honor a per-call request timeout', async () => {
+    client.on('message', (data) => {
+      const request = JSON.parse(data.toString());
+      if (!request.id || !request.action) {
+        return;
+      }
+    });
+
+    vi.useFakeTimers();
+    try {
+      const requestPromise = wsServer.sendRequest('slow', {}, 2500);
+      const expectation = expect(requestPromise).rejects.toThrow('Request timeout');
+
+      await vi.advanceTimersByTimeAsync(2499);
+      await vi.advanceTimersByTimeAsync(1);
+      await expectation;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('should reject invalid per-call request timeout values', async () => {
+    await expect(wsServer.sendRequest('slow', {}, MAX_REQUEST_TIMEOUT_MS + 1)).rejects.toThrow(
+      'Request timeout must be an integer'
+    );
   });
 
   it('should reject pending requests on disconnect', async () => {

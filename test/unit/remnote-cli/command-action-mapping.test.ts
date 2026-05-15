@@ -218,6 +218,25 @@ describe('command bridge action mapping', () => {
     executeSpy.mockRestore();
   });
 
+  it('passes through search-by-tag cursor and timeout', async () => {
+    const executeSpy = await runCommand([
+      'search-by-tag',
+      '--tag-id',
+      'project-tag-rem-id',
+      '--cursor',
+      'search_by_tag:v1:id:2:hash',
+      '--timeout-ms',
+      '30000',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('search_by_tag', {
+      tagRemId: 'project-tag-rem-id',
+      limit: 50,
+      cursor: 'search_by_tag:v1:id:2:hash',
+      timeoutMs: 30000,
+    });
+    executeSpy.mockRestore();
+  });
+
   it('maps update command with --title flag', async () => {
     const executeSpy = await runCommand(['update', 'abc123', '--title', 'New Title']);
     expect(executeSpy).toHaveBeenCalledWith('update_note', {

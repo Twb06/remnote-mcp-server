@@ -9,6 +9,10 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Add cursor paging support to `remnote_search_by_tag` and `remnote-cli search-by-tag`, with `hasMore`, `nextCursor`,
+  and explicit snapshot-cap truncation metadata.
+- Add bounded per-call bridge wait timeout support for `remnote_search_by_tag.timeoutMs` and
+  `remnote-cli search-by-tag --timeout-ms`.
 - Add cursor paging support to `remnote_search` and `remnote-cli search`, with `hasMore`, `nextCursor`, and explicit
   snapshot-cap truncation metadata.
 - Add `inlineRefs` metadata to `remnote_search`, `remnote_search_by_tag`, and `remnote_read_note` output schemas so

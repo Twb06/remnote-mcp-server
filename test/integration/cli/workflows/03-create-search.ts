@@ -213,7 +213,9 @@ export async function createSearchWorkflow(
   const simpleSearchToken = `clisimple${compactRunId}`;
   const mdTreeSearchToken = `clitree${compactRunId}`;
   const pagingSearchToken = `clipaging${compactRunId}`;
+  const tagPagingToken = `clitagpaging${compactRunId}`;
   const pagingNoteIds: string[] = [];
+  const tagPagingNoteIds: string[] = [];
 
   if (!state.integrationParentRemId) {
     return {
@@ -235,6 +237,7 @@ export async function createSearchWorkflow(
   }
 
   let mdTreeRootOnlyTagRemId: string | undefined;
+  let tagPagingRemId: string | undefined;
 
   // Step 0: Create tag Rems used by exact-ID create tagging
   {
@@ -257,6 +260,14 @@ export async function createSearchWorkflow(
       assertHasField(mdTagResult, 'remIds', 'create markdown tree tag rem');
       assertIsArray(mdTagResult.remIds, 'markdown tree tag remIds');
       mdTreeRootOnlyTagRemId = (mdTagResult.remIds as string[])[0];
+
+      const tagPagingResult = (await ctx.cli.runExpectSuccess([
+        'create',
+        tagPagingToken,
+      ])) as Record<string, unknown>;
+      assertHasField(tagPagingResult, 'remIds', 'create search-by-tag paging tag rem');
+      assertIsArray(tagPagingResult.remIds, 'search-by-tag paging tag remIds');
+      tagPagingRemId = (tagPagingResult.remIds as string[])[0];
 
       steps.push({ label: 'Create tag Rems', passed: true, durationMs: Date.now() - start });
     } catch (e) {
@@ -426,10 +437,13 @@ export async function createSearchWorkflow(
           `[CLI-TEST] ${pagingSearchToken} item ${i}`,
           '--parent-id',
           state.integrationParentRemId as string,
+          '--tag-ids',
+          tagPagingRemId as string,
         ])) as { remIds: string[] };
         assertHasField(result, 'remIds', `create paging note ${i}`);
         assertIsArray(result.remIds, `create paging note ${i} remIds`);
         pagingNoteIds.push(result.remIds[0]);
+        tagPagingNoteIds.push(result.remIds[0]);
       }
       steps.push({
         label: 'Create paging fixture notes',
@@ -559,7 +573,94 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 8-10: Search with includeContent modes
+  // Step 8: Search-by-tag pages through cursor results
+  {
+    const start = Date.now();
+    try {
+      assertTruthy(tagPagingRemId, 'search-by-tag paging tag Rem ID should be recorded');
+      assertEqual(tagPagingNoteIds.length, 5, 'search-by-tag paging fixture note count');
+      const firstPage = (await ctx.cli.runExpectSuccess([
+        'search-by-tag',
+        '--tag-id',
+        tagPagingRemId as string,
+        '--result-mode',
+        'tagged',
+        '--limit',
+        '2',
+        '--include-content',
+        'none',
+        '--timeout-ms',
+        '30000',
+      ])) as Record<string, unknown>;
+      assertHasField(firstPage, 'results', 'search-by-tag paging first page');
+      assertIsArray(firstPage.results, 'search-by-tag paging first page results');
+      assertEqual((firstPage.results as unknown[]).length, 2, 'search-by-tag first page count');
+      assertEqual(firstPage.hasMore as boolean, true, 'search-by-tag first page hasMore');
+      assertTruthy(typeof firstPage.nextCursor === 'string', 'search-by-tag first page nextCursor');
+      assertEqual(firstPage.truncated as boolean, false, 'search-by-tag first page truncated');
+
+      const seenRemIds = new Set<string>();
+      addSearchPageRemIds(
+        seenRemIds,
+        firstPage.results as Array<Record<string, unknown>>,
+        'first search-by-tag paging page'
+      );
+
+      let cursor = firstPage.nextCursor as string;
+      let lastPage = firstPage;
+      for (let page = 2; page <= 4 && cursor; page += 1) {
+        const nextPage = (await ctx.cli.runExpectSuccess([
+          'search-by-tag',
+          '--tag-id',
+          tagPagingRemId as string,
+          '--result-mode',
+          'tagged',
+          '--limit',
+          '2',
+          '--cursor',
+          cursor,
+          '--include-content',
+          'none',
+        ])) as Record<string, unknown>;
+        assertHasField(nextPage, 'results', `search-by-tag paging page ${page}`);
+        assertIsArray(nextPage.results, `search-by-tag paging page ${page} results`);
+        assertTruthy(
+          (nextPage.results as unknown[]).length <= 2,
+          `search-by-tag paging page ${page} respects limit`
+        );
+        addSearchPageRemIds(
+          seenRemIds,
+          nextPage.results as Array<Record<string, unknown>>,
+          `search-by-tag paging page ${page}`
+        );
+        lastPage = nextPage;
+        cursor = typeof nextPage.nextCursor === 'string' ? (nextPage.nextCursor as string) : '';
+      }
+
+      for (const remId of tagPagingNoteIds) {
+        assertTruthy(seenRemIds.has(remId), `search-by-tag paging results should include ${remId}`);
+      }
+      assertEqual(lastPage.hasMore as boolean, false, 'last search-by-tag paging page hasMore');
+      assertTruthy(!('nextCursor' in lastPage), 'last search-by-tag page should omit nextCursor');
+
+      steps.push({
+        label: 'Search-by-tag cursor paging returns all fixture notes',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Search-by-tag cursor paging returns all fixture notes',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: `${(e as Error).message} | tag=${JSON.stringify(tagPagingRemId ?? null)} fixtureIds=${JSON.stringify(
+          tagPagingNoteIds
+        )}`,
+      });
+    }
+  }
+
+  // Step 9-11: Search with includeContent modes
   for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();
     const label = `Search includeContent=${mode} returns expected shape`;
@@ -605,7 +706,7 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 11: Root-only markdown tree tag does not bleed to descendants
+  // Step 12: Root-only markdown tree tag does not bleed to descendants
   {
     const start = Date.now();
     let debugResults: Array<Record<string, unknown>> | null = null;
@@ -659,7 +760,7 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 12-14: Search by exact tag Rem ID with includeContent modes
+  // Step 13-15: Search by exact tag Rem ID with includeContent modes
   let expectedTagTarget: ExpectedTagTarget | undefined;
   {
     const start = Date.now();

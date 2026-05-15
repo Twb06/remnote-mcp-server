@@ -30,7 +30,7 @@
     },
     {
       "name": "remnote_search_by_tag",
-      "description": "Find notes by exact tag Rem ID. Default resultMode=\"context\" returns resolved ancestor context targets with matchedRems; resultMode=\"tagged\" returns directly tagged Rems with context metadata. Does not look up tags by name or alias. Supports the same includeContent modes as remnote_search."
+      "description": "Find notes by exact tag Rem ID. Supports cursor paging through hasMore/nextCursor. Default resultMode=\"context\" returns resolved ancestor context targets with matchedRems; resultMode=\"tagged\" returns directly tagged Rems with context metadata. Does not look up tags by name or alias. Supports the same includeContent modes as remnote_search."
     },
     {
       "name": "remnote_read_note",

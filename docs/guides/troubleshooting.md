@@ -432,7 +432,8 @@ Invalid session ID: ...
 4. **"Request timeout"**
    - Check RemNote app is responsive
    - Check server logs for errors
-   - Increase timeout if needed (not configurable yet - file an issue)
+   - For large tag searches, retry `remnote_search_by_tag` or `remnote-cli search-by-tag` with a bounded `timeoutMs`
+     / `--timeout-ms` value if the plugin is still responsive
 
 ### Search Returns No Results
 

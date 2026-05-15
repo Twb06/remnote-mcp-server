@@ -232,6 +232,8 @@ Search by exact tag Rem ID. By default, returns resolved ancestor context target
 | `tagRemId` | string | Yes | Exact tag Rem ID to search |
 | `resultMode` | string | No | `context` (default) returns resolved context targets with `matchedRems`; `tagged` returns direct tagged Rems with context metadata |
 | `limit` | number | No | Maximum results to return (1-150, default: 50) |
+| `cursor` | string | No | Opaque cursor from a previous `remnote_search_by_tag` response |
+| `timeoutMs` | number | No | Per-call bridge wait timeout in milliseconds (1-60000, default: 15000); does not cancel plugin-side work |
 | `includeContent` | string | No | Content mode: `none` (default), `markdown`, or `structured` |
 | `depth` | number | No | Max child depth for rendered content (0-10, default: 1) |
 
@@ -247,7 +249,8 @@ Search by exact tag Rem ID. By default, returns resolved ancestor context target
 - Tag names, `#name` inputs, and aliases are intentionally not resolved. Use the exact tag Rem ID to avoid ambiguity
   from duplicate names, renamed tags, or aliases.
 - If `tagRemId` is valid input but does not resolve to a Rem, results are empty.
-- Top-level output fields and content rendering are aligned with `remnote_search`.
+- Top-level output fields, content rendering, and cursor paging metadata are aligned with `remnote_search`.
+- `cursor` is bound to `tagRemId` and `resultMode`; `context` and `tagged` cursors are not interchangeable.
 
 ### Usage
 

@@ -155,7 +155,7 @@ describe('Tool Definitions', () => {
     expect(searchResultProps.contentStructured).toBeDefined();
   });
 
-  it('should advertise cursor paging for SEARCH_TOOL', () => {
+  it('should advertise cursor paging for SEARCH_TOOL and SEARCH_BY_TAG_TOOL', () => {
     const outputProps = SEARCH_TOOL.outputSchema.properties as Record<string, unknown>;
     const searchByTagOutputProps = SEARCH_BY_TAG_TOOL.outputSchema.properties as Record<
       string,
@@ -163,12 +163,16 @@ describe('Tool Definitions', () => {
     >;
 
     expect(SEARCH_TOOL.inputSchema.properties).toHaveProperty('cursor');
+    expect(SEARCH_BY_TAG_TOOL.inputSchema.properties).toHaveProperty('cursor');
+    expect(SEARCH_BY_TAG_TOOL.inputSchema.properties).toHaveProperty('timeoutMs');
     expect(outputProps).toHaveProperty('hasMore');
     expect(outputProps).toHaveProperty('nextCursor');
     expect(outputProps).toHaveProperty('truncated');
     expect(outputProps).toHaveProperty('truncationReason');
-    expect(searchByTagOutputProps).not.toHaveProperty('hasMore');
-    expect(searchByTagOutputProps).not.toHaveProperty('nextCursor');
+    expect(searchByTagOutputProps).toHaveProperty('hasMore');
+    expect(searchByTagOutputProps).toHaveProperty('nextCursor');
+    expect(searchByTagOutputProps).toHaveProperty('truncated');
+    expect(searchByTagOutputProps).toHaveProperty('truncationReason');
   });
 
   it('should not advertise detail in search/read output schemas', () => {
@@ -578,12 +582,16 @@ describe('Tool Handlers - search_by_tag', () => {
       params: { name: 'remnote_search_by_tag', arguments: validSearchByTagInput },
     });
 
-    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('search_by_tag', {
-      ...validSearchByTagInput,
-      depth: 1,
-      childLimit: 20,
-      maxContentLength: 3000,
-    });
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith(
+      'search_by_tag',
+      {
+        ...validSearchByTagInput,
+        depth: 1,
+        childLimit: 20,
+        maxContentLength: 3000,
+      },
+      undefined
+    );
   });
 
   it('should apply default values from schema', async () => {
@@ -591,15 +599,19 @@ describe('Tool Handlers - search_by_tag', () => {
       params: { name: 'remnote_search_by_tag', arguments: { tagRemId: 'daily-tag-rem-id' } },
     });
 
-    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('search_by_tag', {
-      tagRemId: 'daily-tag-rem-id',
-      resultMode: 'context',
-      limit: 50,
-      includeContent: 'none',
-      depth: 1,
-      childLimit: 20,
-      maxContentLength: 3000,
-    });
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith(
+      'search_by_tag',
+      {
+        tagRemId: 'daily-tag-rem-id',
+        resultMode: 'context',
+        limit: 50,
+        includeContent: 'none',
+        depth: 1,
+        childLimit: 20,
+        maxContentLength: 3000,
+      },
+      undefined
+    );
   });
 
   it('should pass through tagged resultMode', async () => {
@@ -610,15 +622,47 @@ describe('Tool Handlers - search_by_tag', () => {
       },
     });
 
-    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('search_by_tag', {
-      tagRemId: 'daily-tag-rem-id',
-      resultMode: 'tagged',
-      limit: 50,
-      includeContent: 'none',
-      depth: 1,
-      childLimit: 20,
-      maxContentLength: 3000,
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith(
+      'search_by_tag',
+      {
+        tagRemId: 'daily-tag-rem-id',
+        resultMode: 'tagged',
+        limit: 50,
+        includeContent: 'none',
+        depth: 1,
+        childLimit: 20,
+        maxContentLength: 3000,
+      },
+      undefined
+    );
+  });
+
+  it('should pass through cursor and use timeoutMs as request timeout only', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_search_by_tag',
+        arguments: {
+          tagRemId: 'daily-tag-rem-id',
+          cursor: 'search_by_tag:v1:id:2:hash',
+          timeoutMs: 30000,
+        },
+      },
     });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith(
+      'search_by_tag',
+      {
+        tagRemId: 'daily-tag-rem-id',
+        resultMode: 'context',
+        limit: 50,
+        cursor: 'search_by_tag:v1:id:2:hash',
+        includeContent: 'none',
+        depth: 1,
+        childLimit: 20,
+        maxContentLength: 3000,
+      },
+      30000
+    );
   });
 
   it('should return structuredContent for tag search results', async () => {

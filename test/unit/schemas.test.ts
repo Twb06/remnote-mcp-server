@@ -202,6 +202,22 @@ describe('SearchByTagSchema', () => {
     expect(result.depth).toBe(2);
   });
 
+  it('should validate cursor and timeoutMs', () => {
+    const result = SearchByTagSchema.parse({
+      tagRemId: 'project-tag-rem-id',
+      cursor: 'search_by_tag:v1:id:2:hash',
+      timeoutMs: 30000,
+    });
+    expect(result.cursor).toBe('search_by_tag:v1:id:2:hash');
+    expect(result.timeoutMs).toBe(30000);
+  });
+
+  it('should reject timeoutMs above the maximum', () => {
+    expect(() =>
+      SearchByTagSchema.parse({ tagRemId: 'daily-tag-rem-id', timeoutMs: 60001 })
+    ).toThrow();
+  });
+
   it('should reject invalid resultMode', () => {
     expect(() =>
       SearchByTagSchema.parse({ tagRemId: 'daily-tag-rem-id', resultMode: 'direct' })

@@ -5,6 +5,7 @@ import { checkVersionCompatibility } from './version-compat.js';
 import type { Logger } from './logger.js';
 
 export const REQUEST_TIMEOUT_MS = 15000;
+export const MAX_REQUEST_TIMEOUT_MS = 60000;
 export const HELLO_TIMEOUT_MS = 2000;
 const POLICY_VIOLATION = 1008;
 const INCOMPATIBLE_BRIDGE_REASON =
@@ -153,10 +154,19 @@ export class WebSocketServer {
     });
   }
 
-  async sendRequest(action: string, payload: Record<string, unknown>): Promise<unknown> {
+  async sendRequest(
+    action: string,
+    payload: Record<string, unknown>,
+    timeoutMs = REQUEST_TIMEOUT_MS
+  ): Promise<unknown> {
     if (!this.isConnected()) {
       throw new Error(
         'RemNote plugin not connected. Please ensure the plugin is installed and running.'
+      );
+    }
+    if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > MAX_REQUEST_TIMEOUT_MS) {
+      throw new Error(
+        `Request timeout must be an integer between 1 and ${MAX_REQUEST_TIMEOUT_MS}ms`
       );
     }
 
@@ -175,7 +185,7 @@ export class WebSocketServer {
       const timeout = setTimeout(() => {
         this.pendingRequests.delete(id);
         reject(new Error(`Request timeout: ${action}`));
-      }, REQUEST_TIMEOUT_MS);
+      }, timeoutMs);
 
       this.pendingRequests.set(id, {
         resolve: (result) => {

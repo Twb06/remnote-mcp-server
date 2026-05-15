@@ -58,6 +58,17 @@ export const SearchByTagSchema = z
         '"context" returns resolved ancestor context targets with matchedRems; "tagged" returns directly tagged Rems with context metadata'
       ),
     limit: z.number().int().min(1).max(150).default(50).describe('Maximum results'),
+    cursor: z
+      .string()
+      .optional()
+      .describe('Opaque cursor returned by a previous remnote_search_by_tag page'),
+    timeoutMs: z
+      .number()
+      .int()
+      .min(1)
+      .max(60000)
+      .optional()
+      .describe('Per-call bridge wait timeout in milliseconds (default: 15000, max: 60000)'),
     includeContent: z
       .enum(['none', 'markdown', 'structured'])
       .default('none')
