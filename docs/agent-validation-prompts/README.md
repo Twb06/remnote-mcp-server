@@ -16,3 +16,7 @@ RemNote Automation Bridge [temporary integration test data]
 ```
 
 The prompt creates test artifacts with the `[MCP-AGENT-TEST]` prefix so they can be found and removed manually later.
+
+## Example Successful Run
+
+![Agent validation smoke test pass in Codex](../images/agent-validation-smoke-test-pass.jpg)
