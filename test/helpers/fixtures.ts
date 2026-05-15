@@ -20,6 +20,7 @@ export const validSearchInput = {
 
 export const validSearchByTagInput = {
   tagRemId: 'mcp-test-tag-rem-id',
+  resultMode: 'context',
   limit: 50,
   includeContent: 'markdown',
 };

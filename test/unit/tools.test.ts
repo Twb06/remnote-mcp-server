@@ -122,7 +122,21 @@ describe('Tool Definitions', () => {
   it('should have required tagRemId field for SEARCH_BY_TAG_TOOL', () => {
     expect(SEARCH_BY_TAG_TOOL.inputSchema.required).toContain('tagRemId');
     expect(SEARCH_BY_TAG_TOOL.inputSchema.properties).toHaveProperty('tagRemId');
+    expect(SEARCH_BY_TAG_TOOL.inputSchema.properties).toHaveProperty('resultMode');
     expect(SEARCH_BY_TAG_TOOL.inputSchema.properties).not.toHaveProperty('tag');
+  });
+
+  it('should advertise direct tag-match metadata for SEARCH_BY_TAG_TOOL', () => {
+    const resultProps = ((
+      SEARCH_BY_TAG_TOOL.outputSchema.properties.results as {
+        items?: { properties?: Record<string, unknown> };
+      }
+    ).items?.properties ?? {}) as Record<string, unknown>;
+
+    expect(resultProps).toHaveProperty('matchedRems');
+    expect(resultProps).toHaveProperty('contextRemId');
+    expect(resultProps).toHaveProperty('contextTitle');
+    expect(resultProps).toHaveProperty('contextReason');
   });
 
   it('should advertise structured search content mode and contentStructured output', () => {
@@ -514,6 +528,26 @@ describe('Tool Handlers - search_by_tag', () => {
 
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('search_by_tag', {
       tagRemId: 'daily-tag-rem-id',
+      resultMode: 'context',
+      limit: 50,
+      includeContent: 'none',
+      depth: 1,
+      childLimit: 20,
+      maxContentLength: 3000,
+    });
+  });
+
+  it('should pass through tagged resultMode', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_search_by_tag',
+        arguments: { tagRemId: 'daily-tag-rem-id', resultMode: 'tagged' },
+      },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('search_by_tag', {
+      tagRemId: 'daily-tag-rem-id',
+      resultMode: 'tagged',
       limit: 50,
       includeContent: 'none',
       depth: 1,
@@ -951,7 +985,7 @@ describe('Tool Handlers - get_playbook', () => {
       params: { name: 'remnote_get_playbook', arguments: {} },
     })) as ToolSuccessResult;
 
-    expect(result.structuredContent?.playbookVersion).toBe('1.1.0');
+    expect(result.structuredContent?.playbookVersion).toBe('1.2.0');
     expect(Array.isArray(result.structuredContent?.decisionTree)).toBe(true);
     expect((result.structuredContent?.decisionTree as unknown[])?.length).toBeGreaterThan(0);
     expect(result.structuredContent?.decisionTree).toContain(
@@ -962,6 +996,9 @@ describe('Tool Handlers - get_playbook', () => {
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need to append to today journal? Use remnote_append_journal; pass tagRemIds when the journal entry should be tagged.'
+    );
+    expect(result.structuredContent?.decisionTree).toContain(
+      'Need strict tag verification? Use remnote_search_by_tag with resultMode="tagged", or verify the exact Rem in matchedRems from context mode.'
     );
     expect(result.structuredContent?.navigationPresets).toMatchObject({
       orientation: {

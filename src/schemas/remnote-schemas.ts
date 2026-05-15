@@ -47,6 +47,12 @@ export const SearchSchema = z.object({
 export const SearchByTagSchema = z
   .object({
     tagRemId: z.string().min(1).describe('Exact tag Rem ID to search'),
+    resultMode: z
+      .enum(['context', 'tagged'])
+      .default('context')
+      .describe(
+        '"context" returns resolved ancestor context targets with matchedRems; "tagged" returns directly tagged Rems with context metadata'
+      ),
     limit: z.number().int().min(1).max(150).default(50).describe('Maximum results'),
     includeContent: z
       .enum(['none', 'markdown', 'structured'])

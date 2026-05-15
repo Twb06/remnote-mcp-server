@@ -30,6 +30,35 @@ const TAG_INFO_SCHEMA = {
   additionalProperties: false,
 };
 
+const MATCHED_REM_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    remId: { type: 'string', description: 'Directly tagged Rem ID' },
+    title: { type: 'string', description: 'Rendered title with markdown formatting' },
+    headline: { type: 'string', description: 'Display-oriented full line' },
+    remType: {
+      type: 'string',
+      description:
+        'Rem classification: document, dailyDocument, concept, descriptor, portal, or text',
+    },
+    parentRemId: {
+      type: 'string',
+      description: 'Direct parent Rem ID (omitted for top-level Rems)',
+    },
+    parentTitle: {
+      type: 'string',
+      description: 'Direct parent title/front text (omitted for top-level Rems)',
+    },
+    tags: {
+      type: 'array',
+      items: TAG_INFO_SCHEMA,
+      description: 'Direct tags applied to the matched Rem as exact tag Rem IDs plus names',
+    },
+  },
+  required: ['remId', 'title', 'headline', 'remType'],
+  additionalProperties: false,
+};
+
 export const CREATE_NOTE_TOOL = {
   name: 'remnote_create_note',
   description:
@@ -145,6 +174,28 @@ export const SEARCH_TOOL = {
               description:
                 'Rem classification: document, dailyDocument, concept, descriptor, portal, or text',
             },
+            matchedRems: {
+              type: 'array',
+              items: MATCHED_REM_SCHEMA,
+              description:
+                'For remnote_search_by_tag context mode, direct Rems carrying the requested tag that produced this context result',
+            },
+            contextRemId: {
+              type: 'string',
+              description:
+                'For remnote_search_by_tag tagged mode, resolved ancestor/context Rem ID for this direct match',
+            },
+            contextTitle: {
+              type: 'string',
+              description:
+                'For remnote_search_by_tag tagged mode, resolved ancestor/context title for this direct match',
+            },
+            contextReason: {
+              type: 'string',
+              enum: ['ancestor-document', 'ancestor-concept', 'ancestor-context', 'self'],
+              description:
+                'For remnote_search_by_tag tagged mode, why the context Rem was selected',
+            },
             cardDirection: {
               type: 'string',
               description:
@@ -226,13 +277,19 @@ export const SEARCH_TOOL = {
 export const SEARCH_BY_TAG_TOOL = {
   name: 'remnote_search_by_tag',
   description:
-    'Find notes by exact tag Rem ID and return resolved ancestor context targets (nearest document/daily document when available, otherwise nearest non-document ancestor). Does not look up tags by name or alias. Supports the same includeContent modes as remnote_search.',
+    'Find notes by exact tag Rem ID. Default resultMode="context" returns resolved ancestor context targets with matchedRems; resultMode="tagged" returns directly tagged Rems with context metadata. Does not look up tags by name or alias. Supports the same includeContent modes as remnote_search.',
   inputSchema: {
     type: 'object' as const,
     properties: {
       tagRemId: {
         type: 'string',
         description: 'Exact tag Rem ID to search',
+      },
+      resultMode: {
+        type: 'string',
+        enum: ['context', 'tagged'],
+        description:
+          '"context" returns resolved ancestor context targets with matchedRems (default); "tagged" returns directly tagged Rems with context metadata',
       },
       limit: { type: 'number', description: 'Maximum results (1-150, default: 50)' },
       includeContent: {
@@ -845,7 +902,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           }
 
           result = {
-            playbookVersion: '1.1.0',
+            playbookVersion: '1.2.0',
             summary:
               'Use this playbook to navigate RemNote efficiently via remIds, and to apply write-safety checks before mutations.',
             recommendedStatusCheck: {
@@ -857,7 +914,8 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
             decisionTree: [
               'Need connection/capability context? Call remnote_status first.',
               'Need to orient across the KB? Use remnote_search with includeContent="structured", depth=1, childLimit=500.',
-              'Need tagged-note context? Use remnote_search_by_tag with tagRemId; it does not resolve tag names or aliases.',
+              'Need tagged-note context/navigation? Use remnote_search_by_tag with tagRemId and default resultMode="context"; inspect matchedRems to see the direct tagged Rems behind each context result.',
+              'Need strict tag verification? Use remnote_search_by_tag with resultMode="tagged", or verify the exact Rem in matchedRems from context mode.',
               'Need to traverse a specific branch? Use remnote_read_note on a chosen remId with includeContent="structured", depth=1, childLimit=500, then recurse by child remIds.',
               'Need tabular/structured data from an Advanced Table? Use remnote_read_table with either tableTitle or tableRemId. Use propertyFilter to limit columns for large tables.',
               'Need a human-readable summary? Switch to includeContent="markdown" on search/read results.',

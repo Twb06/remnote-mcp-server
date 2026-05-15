@@ -148,6 +148,7 @@ remnote-cli search-by-tag --tag-id <tag-rem-id> [options]
 
 Options and output/content controls are identical to `search`
 (`-l/--limit`, `--include-content`, `--depth`, `--child-limit`, `--max-content-length`).
+Use `--result-mode tagged` to return directly tagged Rems instead of the default ancestor-context results.
 
 `--tag-id` is the exact Rem ID of the tag Rem. Tag names, `#name` inputs, and aliases are not accepted; exact IDs avoid
 ambiguity from duplicate names, renamed tags, and aliases.
@@ -156,6 +157,7 @@ Examples:
 
 ```bash
 remnote-cli search-by-tag --tag-id <tag-rem-id>
+remnote-cli search-by-tag --tag-id <tag-rem-id> --result-mode tagged
 remnote-cli search-by-tag --tag-id <tag-rem-id> --include-content markdown --depth 2 --text
 ```
 

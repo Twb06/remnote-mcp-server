@@ -209,13 +209,14 @@ Returns array of matching notes:
 
 ## remnote_search_by_tag
 
-Search by exact tag Rem ID and return resolved ancestor context targets.
+Search by exact tag Rem ID. By default, returns resolved ancestor context targets and exposes direct matched Rems.
 
 ### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `tagRemId` | string | Yes | Exact tag Rem ID to search |
+| `resultMode` | string | No | `context` (default) returns resolved context targets with `matchedRems`; `tagged` returns direct tagged Rems with context metadata |
 | `limit` | number | No | Maximum results to return (1-150, default: 50) |
 | `includeContent` | string | No | Content mode: `none` (default), `markdown`, or `structured` |
 | `depth` | number | No | Max child depth for rendered content (0-10, default: 1) |
@@ -226,10 +227,13 @@ Search by exact tag Rem ID and return resolved ancestor context targets.
   1) nearest ancestor document/daily document,
   2) otherwise nearest non-document ancestor,
   3) otherwise the tagged note itself.
+- `resultMode: "context"` preserves the navigation workflow and includes `matchedRems` for direct tag verification.
+- `resultMode: "tagged"` returns the directly tagged Rems as top-level results and includes `contextRemId`,
+  `contextTitle`, and `contextReason`.
 - Tag names, `#name` inputs, and aliases are intentionally not resolved. Use the exact tag Rem ID to avoid ambiguity
   from duplicate names, renamed tags, or aliases.
 - If `tagRemId` is valid input but does not resolve to a Rem, results are empty.
-- Output shape is the same as `remnote_search`.
+- Top-level output fields and content rendering are aligned with `remnote_search`.
 
 ### Usage
 
@@ -500,6 +504,7 @@ Use this tool when an agent needs built-in guidance for:
 
 - status-first session preflight recommendations,
 - hierarchy traversal presets for whole-KB navigation,
+- tag navigation vs strict direct-tag verification guidance,
 - `markdown` vs `structured` content-mode decisions,
 - write/replace safety checks.
 
@@ -526,6 +531,7 @@ Returns a structured playbook object, including:
 - `decisionTree` - short natural-language operating decisions.
 - `navigationPresets.orientation` - recommended traversal defaults (`structured`, `depth: 1`, `childLimit: 500`).
 - `contentModes` - when to use `structured` vs `markdown` vs `none`.
+- `remnote_search_by_tag` guidance - when to use default context results, `matchedRems`, or `resultMode: "tagged"`.
 - `writePolicy` - how to interpret `acceptWriteOperations` / `acceptReplaceOperation` and exact-ID tag writes.
 - `currentStatus` - live `remnote_status` snapshot when available.
 

@@ -7,6 +7,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Add `remnote_search_by_tag.resultMode` and CLI `search-by-tag --result-mode` for direct tagged Rem results while
+  preserving context navigation with `matchedRems`.
+- Add playbook guidance for choosing tag context navigation versus strict direct-tag verification.
+
 ## [0.15.0] - 2026-05-15
 
 ### Added

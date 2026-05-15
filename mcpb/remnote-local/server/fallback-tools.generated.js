@@ -72,13 +72,19 @@ export const FALLBACK_TOOLS = [
   {
     name: 'remnote_search_by_tag',
     description:
-      'Find notes by exact tag Rem ID and return resolved ancestor context targets (nearest document/daily document when available, otherwise nearest non-document ancestor). Does not look up tags by name or alias. Supports the same includeContent modes as remnote_search.',
+      'Find notes by exact tag Rem ID. Default resultMode="context" returns resolved ancestor context targets with matchedRems; resultMode="tagged" returns directly tagged Rems with context metadata. Does not look up tags by name or alias. Supports the same includeContent modes as remnote_search.',
     inputSchema: {
       type: 'object',
       properties: {
         tagRemId: {
           type: 'string',
           description: 'Exact tag Rem ID to search',
+        },
+        resultMode: {
+          type: 'string',
+          enum: ['context', 'tagged'],
+          description:
+            '"context" returns resolved ancestor context targets with matchedRems (default); "tagged" returns directly tagged Rems with context metadata',
         },
         limit: {
           type: 'number',

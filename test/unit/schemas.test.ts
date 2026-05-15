@@ -177,6 +177,7 @@ describe('SearchByTagSchema', () => {
   it('should validate with required tagRemId field', () => {
     const result = SearchByTagSchema.parse({ tagRemId: 'daily-tag-rem-id' });
     expect(result.tagRemId).toBe('daily-tag-rem-id');
+    expect(result.resultMode).toBe('context');
     expect(result.limit).toBe(50);
     expect(result.includeContent).toBe('none');
     expect(result.depth).toBe(1);
@@ -187,11 +188,19 @@ describe('SearchByTagSchema', () => {
   it('should validate includeContent structured mode', () => {
     const result = SearchByTagSchema.parse({
       tagRemId: 'project-tag-rem-id',
+      resultMode: 'tagged',
       includeContent: 'structured',
       depth: 2,
     });
+    expect(result.resultMode).toBe('tagged');
     expect(result.includeContent).toBe('structured');
     expect(result.depth).toBe(2);
+  });
+
+  it('should reject invalid resultMode', () => {
+    expect(() =>
+      SearchByTagSchema.parse({ tagRemId: 'daily-tag-rem-id', resultMode: 'direct' })
+    ).toThrow();
   });
 
   it('should reject missing tagRemId', () => {

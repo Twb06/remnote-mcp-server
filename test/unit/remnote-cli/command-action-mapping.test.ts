@@ -192,6 +192,22 @@ describe('command bridge action mapping', () => {
     executeSpy.mockRestore();
   });
 
+  it('passes through tagged search-by-tag result mode', async () => {
+    const executeSpy = await runCommand([
+      'search-by-tag',
+      '--tag-id',
+      'project-tag-rem-id',
+      '--result-mode',
+      'tagged',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('search_by_tag', {
+      tagRemId: 'project-tag-rem-id',
+      limit: 50,
+      resultMode: 'tagged',
+    });
+    executeSpy.mockRestore();
+  });
+
   it('maps update command with --title flag', async () => {
     const executeSpy = await runCommand(['update', 'abc123', '--title', 'New Title']);
     expect(executeSpy).toHaveBeenCalledWith('update_note', {

@@ -118,6 +118,10 @@ export function registerSearchByTagCommand(program: Command): void {
       .command('search-by-tag')
       .description('Search notes by exact tag Rem ID with ancestor-context resolution')
       .requiredOption('--tag-id <tagRemId>', 'Exact tag Rem ID to search')
+      .option(
+        '--result-mode <mode>',
+        'Result mode: "context" returns ancestor context targets, "tagged" returns direct tagged Rems'
+      )
   ).action(async (opts) => {
     const globalOpts = program.opts();
     const format: OutputFormat = globalOpts.text ? 'text' : 'json';
@@ -128,6 +132,7 @@ export function registerSearchByTagCommand(program: Command): void {
         tagRemId: opts.tagId,
         limit: parseInt(opts.limit, 10),
       };
+      if (opts.resultMode) payload.resultMode = opts.resultMode;
       applySearchOptions(payload, opts);
 
       const result = await client.execute('search_by_tag', payload);
