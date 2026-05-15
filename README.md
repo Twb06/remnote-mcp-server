@@ -18,6 +18,8 @@ plugin](https://github.com/robert7/remnote-mcp-bridge).
 > [plugin install guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/install-plugin-via-marketplace-beginner.md),
 > [local plugin guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/development-run-plugin-locally.md), and
 > [server installation guide](docs/guides/installation.md).
+> After setup, you can run the [agent validation prompt](docs/agent-validation-prompts/mcp-tool-smoke-test.md) to verify
+> that your chosen AI agent can use the installed RemNote MCP tools end to end.
 > If the guides do not resolve your problem, [open an issue](https://github.com/robert7/remnote-mcp-server/issues) with
 > the relevant versions, setup path, observed behavior, and exact error/status message.
 
@@ -182,6 +184,8 @@ After installing the LaunchAgent, `remnote-mcp-server daemon status|start|stop|r
 ### Development
 
 - **[Development Setup](docs/guides/development-setup.md)** - Contributing guide for developers
+- **[Testing Strategy](docs/guides/testing-strategy.md)** - Three-level testing model: local quality checks, maintainer
+  live integration, and end-user agent validation
 - **[Integration Testing](docs/guides/integration-testing.md)** - Canonical shared workflow for updating and running MCP server + CLI integration coverage against live RemNote
 - **[Publishing Guide](docs/npm-publishing.md)** - npm publishing process (maintainers only)
 
@@ -333,7 +337,7 @@ See the [Development Setup Guide](docs/guides/development-setup.md) for complete
 
 Pull requests that affect bridge-consumer behavior should follow the shared PR rules in the bridge repo: [Pull Request Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/pull-request-guide.md). In particular, keep bridge and server-package behavior aligned for shared functionality changes.
 
-For the canonical workflow for updating and running shared live integration coverage, see the [Integration Testing Guide](docs/guides/integration-testing.md).
+For the three-level testing model and links to each verification path, see the [Testing Strategy](docs/guides/testing-strategy.md).
 
 ## Related Projects
 

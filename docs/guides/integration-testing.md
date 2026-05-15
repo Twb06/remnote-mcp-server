@@ -1,7 +1,8 @@
 # Integration Testing
 
-This is the canonical workflow for updating and running shared integration coverage for `remnote-mcp-server` and
-`remnote-cli`.
+This is the Level 2 maintainer live integration workflow in the
+[Testing Strategy](testing-strategy.md). It is the canonical workflow for updating and running shared integration
+coverage for `remnote-mcp-server` and `remnote-cli`.
 
 Use it when a feature changes the shared bridge-consumer surface and should be validated end to end against a live
 RemNote instance.

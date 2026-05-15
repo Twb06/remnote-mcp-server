@@ -169,6 +169,9 @@ describe('Component Name', () => {
 
 ### Manual Integration Testing
 
+For the full three-level model covering local quality checks, maintainer live integration, and end-user agent
+validation prompts, see the [Testing Strategy](testing-strategy.md).
+
 **Prerequisites:**
 
 1. Server running (`npm run dev` or `npm start`)
