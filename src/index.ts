@@ -5,6 +5,7 @@ import { HttpMcpServer } from './http-server.js';
 import { handleUtilityCommand, parseCliArgs } from './cli.js';
 import { getConfig } from './config.js';
 import { createLogger, ensureLogDirectory, createRequestResponseLogger } from './logger.js';
+import { createShutdownHandler } from './shutdown.js';
 
 const require = createRequire(import.meta.url);
 const packageJson = require('../package.json');
@@ -88,13 +89,7 @@ async function main() {
     `RemNote MCP Server v${packageJson.version} listening`
   );
 
-  // Graceful shutdown
-  const shutdown = async () => {
-    logger.info('Shutting down');
-    await httpServer.stop();
-    await wsServer.stop();
-    process.exit(0);
-  };
+  const shutdown = createShutdownHandler({ logger, httpServer, wsServer });
 
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);

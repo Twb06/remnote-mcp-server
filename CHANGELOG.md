@@ -75,6 +75,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Bound `remnote-mcp-server` signal shutdown so failed or stuck cleanup exits instead of hanging silently.
 - Fix OpenAI/Codex tool registration compatibility by removing top-level JSON Schema composition keywords from
   advertised MCP tool input schemas while keeping server-side validation strict.
 - Align MCPB manifest and fallback tool metadata with the split write tools so local Claude Desktop/MCPB clients no
