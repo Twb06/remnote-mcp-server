@@ -18,4 +18,14 @@ describe('package executables', () => {
     expect(packageLock.packages[''].bin).toEqual(packageJson.bin);
     expect(existsSync(packageJson.bin['remnote-mcp-stdio'])).toBe(true);
   });
+
+  it('keeps the release build script on the required artifact pipeline', () => {
+    const packageJson = JSON.parse(readFileSync('package.json', 'utf-8')) as {
+      scripts: Record<string, string>;
+    };
+
+    expect(packageJson.scripts.build).toBe(
+      'tsc && node scripts/chmod-bins.mjs && node scripts/generate-mcpb-tools.mjs && node scripts/build-mcpb.mjs'
+    );
+  });
 });
