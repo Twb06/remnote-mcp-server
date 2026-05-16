@@ -4,6 +4,10 @@ This page describes longer, multi-step workflows where an AI client uses RemNote
 only as a search backend. The examples here focus on workflows that combine search, structured reads, inline-link
 traversal, exact-ID writes, and audit loops across multiple tool calls.
 
+This page is also meant to collect advanced, practical, and occasionally cool ideas for using AI agents together with
+RemNote. Contributions are welcome: open a pull request or describe your idea in an issue, especially if it is a workflow
+you have already used successfully.
+
 For short client screenshots and simple examples, see [Demo](demo.md).
 
 ## Knowledge Base Discovery and Tagging
