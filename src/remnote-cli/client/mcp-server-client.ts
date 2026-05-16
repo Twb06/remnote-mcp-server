@@ -143,9 +143,9 @@ export class McpServerClient {
 }
 
 function normalizeMcpUrl(value: string): string {
-  const trimmed = value.trim();
+  const trimmed = value.trim().replace(/\/+$/, '');
   if (trimmed.endsWith('/mcp')) {
     return trimmed;
   }
-  return `${trimmed.replace(/\/+$/, '')}/mcp`;
+  return `${trimmed}/mcp`;
 }

@@ -61,6 +61,18 @@ describe('McpServerClient', () => {
     expect(result).toEqual({ remId: 'abc123' });
   });
 
+  it('normalizes an already-suffixed MCP URL with a trailing slash', async () => {
+    mocks.callTool.mockResolvedValue({
+      structuredContent: { connected: true },
+      content: [{ type: 'text', text: '{"connected":true}' }],
+    });
+
+    const client = new McpServerClient('http://127.0.0.1:3001/mcp/');
+    await client.execute('get_status', {});
+
+    expect(mocks.transportUrl).toBe('http://127.0.0.1:3001/mcp');
+  });
+
   it('parses JSON text content when structured content is absent', async () => {
     mocks.callTool.mockResolvedValue({
       content: [
