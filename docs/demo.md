@@ -106,7 +106,7 @@ connection logs visible in the background.
 ## Codex
 
 Codex TUI and Codex.app can use the local RemNote MCP server through Streamable HTTP, through the `remnote-mcp-stdio`
-proxy, or through `remnote-cli` with the bundled RemNote skill.
+proxy, or through `remnote-cli` with the bundled [RemNote skill](../skills/remnote/SKILL.md).
 
 **Setup:** [Codex Configuration Guide](guides/configuration-codex.md)
 
@@ -144,7 +144,7 @@ search remnote for "AI assisted coding"
 
 ![remnote-cli from Claude Code](images/remnote-cli-coding-harness-claude-code.jpg)
 
-Claude Code fetches `SKILL.md`, verifies MCP-server-backed bridge status, then searches RemNote.
+Claude Code fetches [SKILL.md](../skills/remnote/SKILL.md), verifies MCP-server-backed bridge status, then searches RemNote.
 
 #### GitHub Copilot CLI
 
