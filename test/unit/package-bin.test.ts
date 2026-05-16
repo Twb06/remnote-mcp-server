@@ -41,4 +41,16 @@ describe('package executables', () => {
     expect(prettierIgnore).toContain('!mcpb/**/*.md');
     expect(existsSync('mcpb/remnote-local/README.md')).toBe(true);
   });
+
+  it('starts the built server entrypoint', () => {
+    const packageJson = JSON.parse(readFileSync('package.json', 'utf-8')) as {
+      main: string;
+      bin: Record<string, string>;
+      scripts: Record<string, string>;
+    };
+
+    expect(packageJson.scripts.start).toBe('node dist/index.js');
+    expect(packageJson.scripts.start).toBe(`node ${packageJson.main}`);
+    expect(packageJson.bin['remnote-mcp-server']).toBe(packageJson.main);
+  });
 });
