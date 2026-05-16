@@ -2,6 +2,10 @@
 
 Visual demonstrations of the RemNote MCP Server with different AI clients.
 
+This page shows short visual demos of simple RemNote MCP workflows: status checks, search, read, synthesis, and
+journal writes. For longer multi-step workflows such as knowledge-base discovery, tag design, reviewed tag writes, and
+audit loops, see [Advanced Use Cases](advanced-use-cases.md).
+
 ## ChatGPT
 
 Web-based integration using ChatGPT Apps with a custom MCP server.

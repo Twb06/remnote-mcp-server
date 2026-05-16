@@ -33,7 +33,7 @@ your knowledge base; update existing notes; and maintain your daily journal thro
 
 ## Demo
 
-See AI agent examples in action with RemNote: **[View Demo →](docs/demo.md)**
+See AI agent examples in action with RemNote: **[Demo and Screenshots](docs/demo.md)** · **[Advanced Use Cases](docs/advanced-use-cases.md)**
 
 ### Two-Component Architecture
 
@@ -166,7 +166,7 @@ After installing the LaunchAgent, `remnote-mcp-server daemon status|start|stop|r
 - **[Configuration Guide](docs/guides/configuration.md)** - Configure Claude Code CLI, Accomplish, and other clients
 - **[Codex Configuration Guide](docs/guides/configuration-codex.md)** - Set up Codex TUI and Codex.app with RemNote
 - **[ChatGPT Configuration Guide](docs/guides/configuration-chatgpt.md)** - Set up ChatGPT Apps with your MCP server
-- **[Demo & Screenshots](docs/demo.md)** - See the server in action with different AI clients
+- **[Demo and Screenshots](docs/demo.md)** · **[Advanced Use Cases](docs/advanced-use-cases.md)** - See simple demos and longer workflows
 
 ### Usage
 

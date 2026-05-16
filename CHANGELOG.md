@@ -9,6 +9,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Add an agent-facing idea file for RemNote knowledge-base discovery and tagging workflows and link advanced use cases from the README.
+- Add advanced RemNote MCP use-case documentation for knowledge-base discovery, tag design, reviewed exact-ID tag writes, and strict audit loops.
 - Add cursor paging support to `remnote_search_by_tag` and `remnote-cli search-by-tag`, with `hasMore`, `nextCursor`,
   and explicit snapshot-cap truncation metadata.
 - Add bounded per-call bridge wait timeout support for `remnote_search_by_tag.timeoutMs` and
