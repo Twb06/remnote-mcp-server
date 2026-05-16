@@ -30,10 +30,8 @@ through the Model Context Protocol (MCP). The same npm package also provides `re
 for local scripts and coding harnesses, and `remnote-mcp-stdio`, a stdio MCP proxy for clients that cannot consume
 Streamable HTTP directly. Create notes, hierarchical markdown trees, and RemNote-native flashcards; search and read
 your knowledge base; update existing notes; and maintain your daily journal through MCP tools or shell commands.
-
-## Demo
-
-See AI agent examples in action with RemNote: **[Demo and Screenshots](docs/demo.md)** · **[Advanced Use Cases](docs/advanced-use-cases.md)**
+See AI agent examples in action with 
+RemNote: **[Demo and Screenshots](docs/demo.md)** · **[Advanced Use Cases](docs/advanced-use-cases.md)**
 
 ### Two-Component Architecture
 
