@@ -19,11 +19,13 @@ const packageJson = require('../package.json');
 export const SERVER_INFO = { name: 'remnote-mcp-stdio', version: packageJson.version };
 
 export function normalizeMcpUrl(value) {
-  const trimmed = String(value || DEFAULT_MCP_URL).trim();
+  const trimmed = String(value || DEFAULT_MCP_URL)
+    .trim()
+    .replace(/\/+$/, '');
   if (trimmed.endsWith('/mcp')) {
     return trimmed;
   }
-  return `${trimmed.replace(/\/+$/, '')}/mcp`;
+  return `${trimmed}/mcp`;
 }
 
 export function createSdkHttpClient(mcpUrl, clientInfo = SERVER_INFO) {

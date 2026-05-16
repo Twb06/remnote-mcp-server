@@ -75,6 +75,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Normalize `remnote-mcp-stdio` endpoints ending in `/mcp/` without appending a duplicate `/mcp` path.
 - Bound `remnote-mcp-server` signal shutdown so failed or stuck cleanup exits instead of hanging silently.
 - Fix OpenAI/Codex tool registration compatibility by removing top-level JSON Schema composition keywords from
   advertised MCP tool input schemas while keeping server-side validation strict.

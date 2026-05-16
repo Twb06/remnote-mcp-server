@@ -22,6 +22,7 @@ describe('RemNoteLocalProxy', () => {
     expect(normalizeMcpUrl('http://127.0.0.1:3001')).toBe(DEFAULT_MCP_URL);
     expect(normalizeMcpUrl('http://127.0.0.1:3001/')).toBe(DEFAULT_MCP_URL);
     expect(normalizeMcpUrl(DEFAULT_MCP_URL)).toBe(DEFAULT_MCP_URL);
+    expect(normalizeMcpUrl(`${DEFAULT_MCP_URL}/`)).toBe(DEFAULT_MCP_URL);
     expect(normalizeMcpUrl('')).toBe(DEFAULT_MCP_URL);
   });
 
