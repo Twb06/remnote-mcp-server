@@ -28,4 +28,17 @@ describe('package executables', () => {
       'tsc && node scripts/chmod-bins.mjs && node scripts/generate-mcpb-tools.mjs && node scripts/build-mcpb.mjs'
     );
   });
+
+  it('keeps advertised MCPB Markdown formatting active', () => {
+    const packageJson = JSON.parse(readFileSync('package.json', 'utf-8')) as {
+      scripts: Record<string, string>;
+    };
+    const prettierIgnore = readFileSync('.prettierignore', 'utf-8');
+
+    expect(packageJson.scripts.format).toContain('"mcpb/**/*.md"');
+    expect(packageJson.scripts['format:check']).toContain('"mcpb/**/*.md"');
+    expect(prettierIgnore).toContain('*.md');
+    expect(prettierIgnore).toContain('!mcpb/**/*.md');
+    expect(existsSync('mcpb/remnote-local/README.md')).toBe(true);
+  });
 });

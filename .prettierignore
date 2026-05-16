@@ -2,4 +2,5 @@ dist/
 node_modules/
 coverage/
 *.md
+!mcpb/**/*.md
 package-lock.json

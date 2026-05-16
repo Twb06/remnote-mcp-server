@@ -75,6 +75,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Keep advertised MCPB Markdown files covered by Prettier format and format-check scripts.
 - Keep generated `dist` and `coverage` output out of Vitest test discovery when integration tests are excluded.
 - Prevent TypeScript builds from emitting `dist` artifacts when compilation reports errors.
 - Normalize `remnote-mcp-stdio` endpoints ending in `/mcp/` without appending a duplicate `/mcp` path.
