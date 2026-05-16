@@ -36,6 +36,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Update the bundled `remnote-cli` skill guidance for the current `search-by-tag`, split write, exact-ID tag, and
   `read-table` command surface.
 - Link the bundled RemNote CLI skill from the README for OpenClaw/Hermes-style local agent workflows.
+- Mark `skills/remnote/SKILL.md` as a critical agent-facing update target in the API-change checklist.
 
 ## [0.15.0] - 2026-05-15
 

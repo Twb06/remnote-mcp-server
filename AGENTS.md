@@ -156,6 +156,9 @@ wrapper.
     payload mapping, text/JSON output expectations, CLI docs, and CLI integration coverage.
   - Explicitly check whether `remnote_get_playbook` needs an update. Update the playbook and its tests when API changes
     affect recommended agent workflow, traversal defaults, paging, timeouts, write safety, or tool selection.
+  - Explicitly check whether `skills/remnote/SKILL.md` needs an update. This skill is a critical agent-facing contract
+    for `remnote-cli` workflows and must stay aligned with command names, flags, write safety, traversal defaults, and
+    recovery guidance.
   - Update server unit tests and live integration tests that exercise the changed contract.
   - Update `docs/agent-validation-prompts/mcp-tool-smoke-test.md` when the change affects agent-visible setup
     validation.
