@@ -47,6 +47,9 @@ This system consists of **two separate runtime components** that work together:
 The `remnote-cli` and `remnote-mcp-stdio` commands are not second RemNote-facing servers. They call the MCP endpoint
 exposed by `remnote-mcp-server`.
 
+For OpenClaw/Hermes AI agents and other command-driven local automation, `remnote-cli` is the direct path: point the
+agent at the bundled [RemNote CLI skill](skills/remnote/SKILL.md) and keep the MCP server running locally.
+
 For the detailed bridge connection lifecycle, retry phases, and wake-up triggers, use the bridge repo as the source of
 truth: [Connection Lifecycle Guide](https://github.com/robert7/remnote-mcp-bridge/blob/main/docs/guides/connection-lifecycle.md).
 

@@ -31,6 +31,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Document the MCP contract-change checklist for keeping tests, playbook guidance, smoke prompts, and generated tool
   metadata aligned.
 
+### Changed
+
+- Update the bundled `remnote-cli` skill guidance for the current `search-by-tag`, split write, exact-ID tag, and
+  `read-table` command surface.
+- Link the bundled RemNote CLI skill from the README for OpenClaw/Hermes-style local agent workflows.
+
 ## [0.15.0] - 2026-05-15
 
 ### Added

@@ -1,6 +1,6 @@
 ---
 name: remnote
-description: Search, read, and write RemNote notes and personal knowledge base content via `remnote-cli`. Use for note-taking, journaling, tags, and knowledge-base navigation; require `confirm write` before create/update/journal.
+description: Search, read, and write RemNote notes and personal knowledge base content via `remnote-cli`. Use for note-taking, journaling, tags, tables, and knowledge-base navigation; require `confirm write` before mutating commands.
 homepage: https://github.com/robert7/remnote-mcp-server
 metadata:
   {
@@ -36,7 +36,7 @@ skill customization when needed.
 
 - "Check if RemNote bridge is connected."
 - "Search my RemNote for sprint notes."
-- "Find notes tagged weekly-review in RemNote."
+- "Find notes tagged with this exact tag Rem ID in RemNote."
 - "Read this RemNote by ID: `<rem-id>`."
 - "Map the top-level structure of my whole RemNote knowledge base."
 - "Create a RemNote note titled X with this content." (requires `confirm write`)
@@ -61,9 +61,10 @@ If any precondition is missing, stop and fix setup first.
 
 ## Read-First Safety Policy
 
-- Default to read-only flows: `status`, `search`, `search-tag`, `read`.
+- Default to read-only flows: `status`, `search`, `search-by-tag`, `read`, `read-table`.
 - Do not run mutating commands by default.
-- For writes (`create`, `update`, `journal`), require the exact phrase `confirm write` from the user in the same turn.
+- For writes (`create`, `update`, `insert-children`, `replace-children`, `update-tags`, `journal`), require the exact
+  phrase `confirm write` from the user in the same turn.
 - If `confirm write` is not present, ask for confirmation and do not execute writes.
 
 ## Command Invocation Rule (critical)
@@ -78,10 +79,10 @@ If any precondition is missing, stop and fix setup first.
 ## Write Payload Rule (allowlist-friendly)
 
 - For write commands, prefer file-based payload flags:
-  - `--content-file <path|->` for `create` / `journal`
-  - `--append-file <path|->` or `--replace-file <path|->` for `update`
+  - `--content-file <path|->` for `create`, `insert-children`, `replace-children`, and `journal`
 - Keep executed command strings short and predictable for OpenClaw allowlisting.
-- Inline `--content` / `--append`/positional `journal [content]`/positional `create [title]` are discouraged except for very short single-line text.
+- Inline `--content` / positional `journal [content]` / positional `create [title]` are discouraged except for very
+  short single-line text.
 - With markdown syntax input, all options must use flags to prevent misinterpretation of the content as command options.
 - `-` (stdin) is supported but discouraged by default in OpenClaw flows because command context can be less explicit.
 
@@ -117,8 +118,11 @@ If any precondition is missing, stop and fix setup first.
 ### Read-Only Operations (default)
 
 - Search notes: `remnote-cli search "query"`
-- Search by tag: `remnote-cli search-tag "tag"`
+- Search by exact tag Rem ID: `remnote-cli search-by-tag --tag-id <tag-rem-id>`
 - Read note by Rem ID: `remnote-cli read <rem-id>`
+- Read Advanced Table by title or Rem ID:
+  - `remnote-cli read-table --title "Projects"`
+  - `remnote-cli read-table --rem-id <table-rem-id>`
 - Optional text mode: add `--text`
 
 ## Output Mode and Traversal Strategy
@@ -145,20 +149,25 @@ If any precondition is missing, stop and fix setup first.
 
 - Create (preferred): `remnote-cli create "Title" --content-file /tmp/body.md --text`
 - Create under a parent or apply tags:
-  - `remnote-cli create "Title" --parent-id <rem-id> --tags project active --text`
-- Update (preferred): `remnote-cli update <rem-id> --title "New Title" --append-file /tmp/append.md --text`
-- Update tags:
-  - `remnote-cli update <rem-id> --add-tags active --remove-tags draft --text`
-- Update replace (destructive, preferred only with explicit user intent):
-  - `remnote-cli update <rem-id> --replace-file /tmp/replacement.md --text`
-  - `remnote-cli update <rem-id> --replace "" --text` (clear all direct children)
+  - `remnote-cli create "Title" --parent-id <rem-id> --tag-ids <tag-rem-id> --text`
+- Update title: `remnote-cli update <rem-id> --title "New Title" --text`
+- Insert children (preferred for append-like child writes):
+  - `remnote-cli insert-children <parent-rem-id> --content-file /tmp/children.md --position last --text`
+  - `remnote-cli insert-children <parent-rem-id> --content-file /tmp/children.md --position before --sibling-rem-id <rem-id> --text`
+- Update tags by exact tag Rem ID:
+  - `remnote-cli update-tags <rem-id> --add-tag-ids <tag-rem-id> --remove-tag-ids <tag-rem-id> --text`
+- Replace direct children (destructive, only with explicit user intent):
+  - `remnote-cli replace-children <parent-rem-id> --content-file /tmp/replacement.md --text`
+  - Use an empty content file to clear all direct children.
 - Journal: `remnote-cli journal "Finished task" --text`
 - Journal (from file): `remnote-cli journal --content-file /tmp/entry.md --text`
 - Journal without timestamp:
   - `remnote-cli journal --content-file /tmp/entry.md --no-timestamp --text`
+- Journal with exact-ID tags:
+  - `remnote-cli journal --content-file /tmp/entry.md --tag-ids <tag-rem-id> --text`
 - Fallbacks (discouraged): inline flags for short single-line text only.
 - Safety:
-  - Never combine append and replace flags in one command.
+  - Use `insert-children` for additive child writes and `replace-children` only for explicit replacement.
   - Run replace only when `acceptWriteOperations=true` and `acceptReplaceOperation=true` from `status`.
   - Treat replace as destructive and require the user to clearly request replace semantics.
   - Quote text values with spaces or special characters, and use explicit empty-value syntax like `--title=""` to avoid
@@ -166,8 +175,8 @@ If any precondition is missing, stop and fix setup first.
 
 ## Failure Handling
 
-When a bridge-backed operation fails (`search`, `search-tag`, `read`, `create`, `update`, `journal`, `status`), run
-this sequence in order:
+When a bridge-backed operation fails (`search`, `search-by-tag`, `read`, `read-table`, `create`, `update`,
+`insert-children`, `replace-children`, `update-tags`, `journal`, `status`), run this sequence in order:
 
 1. Check bridge status first:
    - `remnote-cli status --text`
@@ -213,4 +222,4 @@ this sequence in order:
 - JSON output is default and preferred for automation.
 - `--text` is useful for quick human checks.
 - Reference command docs when unsure:
-  `https://github.com/robert7/remnote-mcp-server/blob/main/docs/guides/cli-command-reference.md`
+  `https://github.com/robert7/remnote-mcp-server/blob/main/docs/guides/remnote-cli-command-reference.md`
