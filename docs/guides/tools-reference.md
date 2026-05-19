@@ -19,7 +19,9 @@ JSON in a top-level `content` text block for compatibility with older clients an
 | `remnote_search` | Search knowledge base | Finding existing notes, exploring topics |
 | `remnote_search_by_tag` | Search by exact tag Rem ID | Finding ancestor context for tagged notes |
 | `remnote_read_note` | Read note content | Retrieving details, reading hierarchies |
+| `remnote_list_children` | List direct child Rems | Cheap branch traversal without subtree rendering |
 | `remnote_update_note` | Update note metadata | Renaming |
+| `remnote_move_note` | Move a Rem safely | Dry-run-first hierarchy reorganization |
 | `remnote_insert_children` | Insert child Rems | Ordered hierarchy maintenance, tag descriptions |
 | `remnote_replace_children` | Replace direct child Rems | Explicitly approved destructive rewrites |
 | `remnote_update_tags` | Mutate tags by exact Rem ID | Production tagging workflows |
@@ -126,7 +128,9 @@ Search your RemNote knowledge base with full-text search.
 | `query` | string | Yes | Search query text |
 | `limit` | number | No | Maximum results to return (1-150, default: 50) |
 | `cursor` | string | No | Opaque cursor from a previous `remnote_search` response |
-| `includeContent` | string | No | Content mode: `none` (default), `markdown`, or `structured` |
+| `contentMode` | string | No | Content mode: `none` (default), `markdown`, or `structured` |
+| `view` | string | No | Output detail level: `compact`, `standard` (default), or `full` |
+| `ancestorDepth` | number | No | Number of parent Rems to include, direct parent first |
 | `depth` | number | No | Max child depth for rendered content (0-10, default: 1) |
 
 ### Usage
@@ -211,13 +215,15 @@ Returns matching notes plus paging metadata:
 
 - Use specific terms for better results
 - Increase `limit` for comprehensive searches
-- Use `includeContent: "none"` (default) for faster searches when you only need titles
-- Use `includeContent: "markdown"` when you need rendered child context
-- Use `includeContent: "structured"` when you need nested child `remId`s for follow-up reads/navigation
+- Use `contentMode: "none"` (default) for faster searches when you only need titles
+- Use `contentMode: "markdown"` when you need rendered child context
+- Use `contentMode: "structured"` when you need nested child `remId`s for follow-up reads/navigation
 - Use `nextCursor` while `hasMore` is true to continue a stable ordered search snapshot.
 - Use `inlineRefs` when rendered titles/headlines contain `[[...]]` references and you need exact graph targets.
-- For whole-KB orientation, start with `includeContent: "structured"`, `depth: 1`, `childLimit: 500`
-- Use `parentRemId` and `parentTitle` to show where a result sits in your hierarchy.
+- For whole-KB orientation, start with `contentMode: "structured"`, `view: "compact"`, `depth: 1`, `childLimit: 500`
+- Use `parentRemId` and `parentTitle` to show the direct parent.
+- Use `ancestorDepth` when you need nearby hierarchy context. `ancestors` is parent-first and may include
+  `ancestorsTruncated`.
 - `tags` is optional and present when the matched Rem has readable tag identity metadata. Each tag includes
   `tagRemId` and `name`.
 
@@ -234,7 +240,9 @@ Search by exact tag Rem ID. By default, returns resolved ancestor context target
 | `limit` | number | No | Maximum results to return (1-150, default: 50) |
 | `cursor` | string | No | Opaque cursor from a previous `remnote_search_by_tag` response |
 | `timeoutMs` | number | No | Per-call bridge wait timeout in milliseconds (1-60000, default: 15000); does not cancel plugin-side work |
-| `includeContent` | string | No | Content mode: `none` (default), `markdown`, or `structured` |
+| `contentMode` | string | No | Content mode: `none` (default), `markdown`, or `structured` |
+| `view` | string | No | Output detail level: `compact`, `standard` (default), or `full` |
+| `ancestorDepth` | number | No | Number of parent Rems to include on results and `matchedRems`, direct parent first |
 | `depth` | number | No | Max child depth for rendered content (0-10, default: 1) |
 
 ### Behavior
@@ -274,7 +282,9 @@ Read a specific note by its Rem ID, including child content.
 |-----------|------|----------|-------------|
 | `remId` | string | Yes | The Rem ID to read |
 | `depth` | number | No | Depth of children to include in rendered content (0-10, default: 5) |
-| `includeContent` | string | No | Content mode: `markdown` (default), `structured`, or `none` |
+| `contentMode` | string | No | Content mode: `markdown` (default), `structured`, or `none` |
+| `view` | string | No | Output detail level: `compact`, `standard` (default), or `full` |
+| `ancestorDepth` | number | No | Number of parent Rems to include, direct parent first |
 
 ### Usage
 
@@ -321,18 +331,18 @@ Returns note metadata plus optional rendered child content:
 }
 ```
 
-In `includeContent: "structured"` mode, the response includes `contentStructured` (nested child nodes with `remId`s)
+In `contentMode: "structured"` mode, the response includes `contentStructured` (nested child nodes with `remId`s)
 instead of markdown `content`.
 
 ### Tips
 
 - Use `depth: 0` for just the note title (no children)
-- Use `includeContent: "none"` when you only need metadata and parent context.
-- Use `includeContent: "structured"` when you need nested child `remId`s for deterministic follow-up navigation.
+- Use `contentMode: "none"` when you only need metadata and parent context.
+- Use `contentMode: "structured"` when you need nested child `remId`s for deterministic follow-up navigation.
 - Use `inlineRefs` to follow inline Rem references without parsing `[[...]]` markdown text.
 - `tags` is optional and present when the returned Rem has readable tag identity metadata. Each tag includes
   `tagRemId` and `name`.
-- Start traversal with `includeContent: "structured"`, `depth: 1`, `childLimit: 500`, then deepen selected branches.
+- Start traversal with `contentMode: "structured"`, `depth: 1`, `childLimit: 500`, then deepen selected branches.
 - Use `depth: 1-3` for common hierarchies
 - Use `depth: 4-10` for deep nested structures
 - Higher depth may be slower for large hierarchies
@@ -353,6 +363,7 @@ Update note metadata. This tool is intentionally limited to title changes.
 - Use `remnote_insert_children` for ordered child creation.
 - Use `remnote_replace_children` for explicitly approved direct-child replacement.
 - Use `remnote_update_tags` for exact-ID tag mutation.
+- Use `remnote_move_note` for dry-run-first hierarchy reparenting.
 
 ### Usage
 
@@ -360,6 +371,35 @@ Update note metadata. This tool is intentionally limited to title changes.
 ```
 Rename note abc123 to "Updated Project Name"
 ```
+
+## remnote_list_children
+
+List direct children under a parent without rendering a whole subtree. Use this for cheap hierarchy traversal before
+deepening selected branches with `remnote_read_note`.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `parentRemId` | string | Yes | Parent Rem ID |
+| `limit` | number | No | Maximum direct children (1-150, default: 50) |
+| `cursor` | string | No | Opaque cursor from a previous page |
+| `view` | string | No | `compact` (default), `standard`, or `full` |
+| `ancestorDepth` | number | No | Number of parent Rems to include for each child, direct parent first |
+
+## remnote_move_note
+
+Move an existing Rem and its whole subtree under a new parent. The tool defaults to `dryRun: true`; rerun with
+`dryRun: false` only after the proposed move is approved. Pass `expectedOldParentRemId` when the move was proposed from
+a previous read so stale hierarchy context is rejected.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `remId` | string | Yes | Rem ID to move |
+| `newParentRemId` | string | Yes | New parent Rem ID |
+| `position` | `"first" \| "last" \| "before" \| "after"` | No | Placement under the new parent (default: `last`) |
+| `siblingRemId` | string | For `before`/`after` | Sibling Rem ID used for relative placement |
+| `dryRun` | boolean | No | Preview only by default |
+| `expectedOldParentRemId` | string | No | Reject if the current direct parent differs |
+| `ancestorDepth` | number | No | Number of parent Rems to include before/after the move |
 
 ## remnote_insert_children
 
@@ -703,8 +743,8 @@ AI agents can chain multiple tools:
 ### Searching
 
 - Start with broad searches, then refine
-- Use `includeContent: false` for title-only searches (faster)
-- Use `includeContent: true` when you need content analysis
+- Use `contentMode: "none"` for title-only searches (faster)
+- Use `contentMode: "markdown"` or `"structured"` when you need content analysis
 - Increase `limit` for comprehensive searches
 
 ### Reading Notes

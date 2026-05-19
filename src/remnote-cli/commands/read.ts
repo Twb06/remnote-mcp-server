@@ -28,9 +28,11 @@ export function registerReadCommand(program: Command): void {
     .description('Read a note by its Rem ID')
     .option('-d, --depth <n>', 'Depth of child hierarchy to render (default: 5)', '5')
     .option(
-      '--include-content <mode>',
+      '--content-mode <mode>',
       'Content rendering mode: "markdown" (default), "none", or "structured"'
     )
+    .option('--view <view>', 'Output detail level: compact, standard, or full')
+    .option('--ancestor-depth <n>', 'Number of parent Rems to include, direct parent first')
     .option('--child-limit <n>', 'Maximum children per level (default: 100)')
     .option('--max-content-length <n>', 'Maximum content character length (default: 100000)')
     .action(async (remId: string, opts) => {
@@ -43,7 +45,9 @@ export function registerReadCommand(program: Command): void {
           remId,
           depth: parseInt(opts.depth, 10),
         };
-        if (opts.includeContent) payload.includeContent = opts.includeContent;
+        if (opts.contentMode) payload.contentMode = opts.contentMode;
+        if (opts.view) payload.view = opts.view;
+        if (opts.ancestorDepth) payload.ancestorDepth = parseInt(opts.ancestorDepth, 10);
         if (opts.childLimit) payload.childLimit = parseInt(opts.childLimit, 10);
         if (opts.maxContentLength) payload.maxContentLength = parseInt(opts.maxContentLength, 10);
 
@@ -62,6 +66,18 @@ export function registerReadCommand(program: Command): void {
             if (typeof r.parentTitle === 'string' && r.parentTitle.length > 0) {
               const parentIdSuffix = typeof r.parentRemId === 'string' ? ` [${r.parentRemId}]` : '';
               lines.push(`Parent: ${r.parentTitle}${parentIdSuffix}`);
+            }
+            if (Array.isArray(r.ancestors) && r.ancestors.length > 0) {
+              lines.push(
+                `Ancestors: ${r.ancestors
+                  .map((ancestor) =>
+                    ancestor && typeof ancestor === 'object'
+                      ? (ancestor as Record<string, unknown>).title
+                      : ''
+                  )
+                  .filter(Boolean)
+                  .join(' <- ')}`
+              );
             }
             if (r.aliases && Array.isArray(r.aliases) && r.aliases.length > 0) {
               lines.push(`Aliases: ${(r.aliases as string[]).join(', ')}`);

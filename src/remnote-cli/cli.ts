@@ -2,11 +2,16 @@ import { Command } from 'commander';
 import { createRequire } from 'node:module';
 import { DEFAULT_MCP_URL } from './config.js';
 import { registerCreateCommand } from './commands/create.js';
-import { registerSearchByTagCommand, registerSearchCommand } from './commands/search.js';
+import {
+  registerListChildrenCommand,
+  registerSearchByTagCommand,
+  registerSearchCommand,
+} from './commands/search.js';
 import { registerReadCommand } from './commands/read.js';
 import { registerUpdateCommand } from './commands/update.js';
 import {
   registerInsertChildrenCommand,
+  registerMoveNoteCommand,
   registerReplaceChildrenCommand,
   registerUpdateTagsCommand,
 } from './commands/write-actions.js';
@@ -36,9 +41,11 @@ export function createProgram(version: string): Command {
   registerCreateCommand(program);
   registerSearchCommand(program);
   registerSearchByTagCommand(program);
+  registerListChildrenCommand(program);
   registerReadCommand(program);
   registerUpdateCommand(program);
   registerInsertChildrenCommand(program);
+  registerMoveNoteCommand(program);
   registerReplaceChildrenCommand(program);
   registerUpdateTagsCommand(program);
   registerJournalCommand(program);

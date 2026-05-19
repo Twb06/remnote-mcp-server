@@ -157,3 +157,57 @@ export function registerUpdateTagsCommand(program: Command): void {
       }
     });
 }
+
+export function registerMoveNoteCommand(program: Command): void {
+  const subprogram = program.command('move-note <rem-id>');
+  const validate = (val: string) => validateNotFlag(val, subprogram);
+
+  subprogram
+    .description('Move a Rem and its subtree under a new parent')
+    .requiredOption('--new-parent-rem-id <id>', 'New parent Rem ID', validate)
+    .option('--position <position>', 'Move position: first, last, before, or after', validate)
+    .option('--sibling-rem-id <id>', 'Sibling Rem ID for before/after positions', validate)
+    .option('--apply', 'Perform the move. Without this flag, the command runs as dry-run.')
+    .option(
+      '--expected-old-parent-rem-id <id>',
+      'Reject if current parent differs from this Rem ID',
+      validate
+    )
+    .option(
+      '--ancestor-depth <n>',
+      'Number of parent Rems to include before/after the move',
+      validate
+    )
+    .action(async (remId: string, opts) => {
+      const globalOpts = program.opts();
+      const format: OutputFormat = globalOpts.text ? 'text' : 'json';
+      const client = createCommandClient(program);
+
+      try {
+        const payload: Record<string, unknown> = {
+          remId,
+          newParentRemId: opts.newParentRemId,
+          dryRun: !opts.apply,
+        };
+        if (opts.position) payload.position = opts.position;
+        if (opts.siblingRemId) payload.siblingRemId = opts.siblingRemId;
+        if (opts.expectedOldParentRemId)
+          payload.expectedOldParentRemId = opts.expectedOldParentRemId;
+        if (opts.ancestorDepth) payload.ancestorDepth = parseInt(opts.ancestorDepth, 10);
+
+        const result = await client.execute('move_note', payload);
+        console.log(
+          formatResult(result, format, (data) => {
+            const r = data as Record<string, unknown>;
+            return `${r.dryRun ? 'Dry-run move' : 'Moved'}: ${r.title ?? remId} (${r.remId ?? remId}) -> ${r.newParentTitle ?? r.newParentRemId}`;
+          })
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(formatError(message, format));
+        process.exit(EXIT.ERROR);
+      } finally {
+        await client.close();
+      }
+    });
+}

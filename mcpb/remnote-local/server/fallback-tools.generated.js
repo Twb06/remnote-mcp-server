@@ -34,7 +34,7 @@ export const FALLBACK_TOOLS = [
   {
     name: 'remnote_search',
     description:
-      'Search the RemNote knowledge base. Supports cursor paging through hasMore/nextCursor. For whole-KB orientation, prefer includeContent="structured" with depth=1 and childLimit=500, then follow remIds with remnote_read_note. Use includeContent="markdown" for human-readable summaries.',
+      'Search the RemNote knowledge base. Supports cursor paging through hasMore/nextCursor. For whole-KB orientation, prefer contentMode="structured" with view="compact", depth=1, and childLimit=500. Request ancestorDepth when hierarchy context matters.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -50,11 +50,20 @@ export const FALLBACK_TOOLS = [
           type: 'string',
           description: 'Opaque cursor returned by a previous remnote_search response',
         },
-        includeContent: {
+        contentMode: {
           type: 'string',
           enum: ['none', 'markdown', 'structured'],
           description:
             'Content rendering mode: "none" omits content (default), "markdown" renders child subtree as indented markdown, "structured" returns nested child objects with remIds',
+        },
+        view: {
+          type: 'string',
+          enum: ['compact', 'standard', 'full'],
+          description: 'Output detail level: compact, standard, or full',
+        },
+        ancestorDepth: {
+          type: 'number',
+          description: 'Number of parent Rems to include, direct parent first (0-20, default: 0)',
         },
         depth: {
           type: 'number',
@@ -76,7 +85,7 @@ export const FALLBACK_TOOLS = [
   {
     name: 'remnote_search_by_tag',
     description:
-      'Find notes by exact tag Rem ID. Supports cursor paging through hasMore/nextCursor. Default resultMode="context" returns resolved ancestor context targets with matchedRems; resultMode="tagged" returns directly tagged Rems with context metadata. Does not look up tags by name or alias. Supports the same includeContent modes as remnote_search.',
+      'Find notes by exact tag Rem ID. Supports cursor paging through hasMore/nextCursor. Default resultMode="context" returns resolved ancestor context targets with matchedRems; resultMode="tagged" returns directly tagged Rems with context metadata. Request ancestorDepth to include parent-first ancestors on both context results and matchedRems.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -94,11 +103,20 @@ export const FALLBACK_TOOLS = [
           type: 'number',
           description: 'Maximum results (1-150, default: 50)',
         },
-        includeContent: {
+        contentMode: {
           type: 'string',
           enum: ['none', 'markdown', 'structured'],
           description:
             'Content rendering mode: "none" omits content (default), "markdown" renders child subtree as indented markdown, "structured" returns nested child objects with remIds',
+        },
+        view: {
+          type: 'string',
+          enum: ['compact', 'standard', 'full'],
+          description: 'Output detail level: compact, standard, or full',
+        },
+        ancestorDepth: {
+          type: 'number',
+          description: 'Number of parent Rems to include, direct parent first (0-20, default: 0)',
         },
         depth: {
           type: 'number',
@@ -129,7 +147,7 @@ export const FALLBACK_TOOLS = [
   {
     name: 'remnote_read_note',
     description:
-      'Read a specific note from RemNote by its Rem ID. For hierarchy traversal, prefer includeContent="structured" and start shallow (depth=1, childLimit=500), then deepen only selected branches. Use includeContent="markdown" for summarization.',
+      'Read a specific note from RemNote by its Rem ID. For hierarchy traversal, prefer contentMode="structured" and start shallow (depth=1, childLimit=500), then deepen only selected branches. Request ancestorDepth when placement context matters.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -141,11 +159,20 @@ export const FALLBACK_TOOLS = [
           type: 'number',
           description: 'Depth of child hierarchy to render (0-10, default: 5)',
         },
-        includeContent: {
+        contentMode: {
           type: 'string',
           enum: ['none', 'markdown', 'structured'],
           description:
             'Content rendering mode: "markdown" renders child subtree (default), "structured" returns nested child objects with remIds, "none" omits content',
+        },
+        view: {
+          type: 'string',
+          enum: ['compact', 'standard', 'full'],
+          description: 'Output detail level: compact, standard, or full',
+        },
+        ancestorDepth: {
+          type: 'number',
+          description: 'Number of parent Rems to include, direct parent first (0-20, default: 0)',
         },
         childLimit: {
           type: 'number',
@@ -157,6 +184,38 @@ export const FALLBACK_TOOLS = [
         },
       },
       required: ['remId'],
+    },
+  },
+  {
+    name: 'remnote_list_children',
+    description:
+      'List direct child Rems under a parent without rendering a subtree. Use for cheap hierarchy traversal; page with nextCursor when hasMore is true.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        parentRemId: {
+          type: 'string',
+          description: 'Parent Rem ID whose direct children to list',
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum direct children (1-150, default: 50)',
+        },
+        cursor: {
+          type: 'string',
+          description: 'Opaque cursor returned by a previous remnote_list_children response',
+        },
+        view: {
+          type: 'string',
+          enum: ['compact', 'standard', 'full'],
+          description: 'Output detail level for child metadata: compact, standard, or full',
+        },
+        ancestorDepth: {
+          type: 'number',
+          description: 'Number of parent Rems to include for each child, direct parent first',
+        },
+      },
+      required: ['parentRemId'],
     },
   },
   {
@@ -176,6 +235,46 @@ export const FALLBACK_TOOLS = [
       },
       required: ['remId', 'title'],
       additionalProperties: false,
+    },
+  },
+  {
+    name: 'remnote_move_note',
+    description:
+      'Safely move an existing Rem and its subtree under a new parent. Defaults to dryRun=true; pass dryRun=false only after user approval. expectedOldParentRemId rejects stale move proposals.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        remId: {
+          type: 'string',
+          description: 'Rem ID to move',
+        },
+        newParentRemId: {
+          type: 'string',
+          description: 'New parent Rem ID',
+        },
+        position: {
+          type: 'string',
+          enum: ['first', 'last', 'before', 'after'],
+          description: 'Where to place the moved Rem under the new parent (default: last)',
+        },
+        siblingRemId: {
+          type: 'string',
+          description: 'Sibling Rem ID required for before/after positioning',
+        },
+        dryRun: {
+          type: 'boolean',
+          description: 'Preview without mutating RemNote (default: true)',
+        },
+        expectedOldParentRemId: {
+          type: 'string',
+          description: 'Reject if the current direct parent differs from this Rem ID',
+        },
+        ancestorDepth: {
+          type: 'number',
+          description: 'Number of parent Rems to include before/after the move',
+        },
+      },
+      required: ['remId', 'newParentRemId'],
     },
   },
   {

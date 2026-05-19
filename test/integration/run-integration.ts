@@ -162,7 +162,7 @@ async function ensureIntegrationParentNote(
     const searchResult = await client.callTool('remnote_search', {
       query,
       limit: 150,
-      includeContent: 'none',
+      contentMode: 'none',
     });
     const candidates = Array.isArray(searchResult.results)
       ? (searchResult.results as Array<Record<string, unknown>>)
@@ -209,7 +209,7 @@ async function ensureIntegrationParentNote(
   const parentTagSearch = await client.callTool('remnote_search', {
     query: INTEGRATION_PARENT_TAG,
     limit: 20,
-    includeContent: 'none',
+    contentMode: 'none',
   });
   const parentTagCandidates = Array.isArray(parentTagSearch.results)
     ? (parentTagSearch.results as Array<Record<string, unknown>>)
@@ -225,7 +225,7 @@ async function ensureIntegrationParentNote(
       ? await client.callTool('remnote_search_by_tag', {
           tagRemId: parentTagRemId,
           limit: 150,
-          includeContent: 'none',
+          contentMode: 'none',
         })
       : { results: [] };
   const tagCandidates = Array.isArray(byTagResult.results)

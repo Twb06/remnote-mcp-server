@@ -15,14 +15,14 @@ export const validCreateNoteInput = {
 export const validSearchInput = {
   query: 'test query',
   limit: 50,
-  includeContent: 'markdown',
+  contentMode: 'markdown',
 };
 
 export const validSearchByTagInput = {
   tagRemId: 'mcp-test-tag-rem-id',
   resultMode: 'context',
   limit: 50,
-  includeContent: 'markdown',
+  contentMode: 'markdown',
 };
 
 export const validReadNoteInput = {

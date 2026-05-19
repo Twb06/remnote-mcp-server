@@ -533,7 +533,7 @@ Invalid session ID: ...
    - Use smaller `depth` parameter in `remnote_read_note`
 2. **Many search results:**
    - Reduce `limit` parameter in `remnote_search`
-   - Use `includeContent: false` for faster searches
+   - Use `contentMode: "none"` for faster searches
 3. **RemNote app performance:**
    - Check RemNote app isn't slow
    - Close other heavy applications

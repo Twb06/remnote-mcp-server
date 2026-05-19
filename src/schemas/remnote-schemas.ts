@@ -1,37 +1,28 @@
 import { z } from 'zod';
 
-export const CreateNoteSchema = z
-  .object({
-    title: z.string().optional().describe('The title of the note'),
-    content: z.string().optional().describe('Content as child bullets (markdown supported)'),
-    parentId: z.string().optional().describe('Parent Rem ID'),
-    tagRemIds: z.array(z.string()).optional().describe('Exact tag Rem IDs to apply'),
-  })
-  .strict()
-  .refine((value) => value.title !== undefined || value.content !== undefined, {
-    message: 'create_note requires either title or content',
-  });
+const ContentModeSchema = z.enum(['none', 'markdown', 'structured']);
+const ViewSchema = z.enum(['compact', 'standard', 'full']);
+const AncestorDepthSchema = z
+  .number()
+  .int()
+  .min(0)
+  .max(20)
+  .default(0)
+  .describe('Number of parent Rems to include, direct parent first');
 
-export const SearchSchema = z.object({
-  query: z.string().describe('Search query text'),
-  limit: z.number().int().min(1).max(150).default(50).describe('Maximum results'),
-  cursor: z
-    .string()
-    .optional()
-    .describe('Opaque cursor returned by a previous remnote_search page'),
-  includeContent: z
-    .enum(['none', 'markdown', 'structured'])
-    .default('none')
-    .describe(
-      'Content rendering mode: "none" omits content, "markdown" renders child subtree, "structured" returns nested child objects with remIds'
-    ),
+const SearchContentShape = {
+  contentMode: ContentModeSchema.default('none').describe(
+    'Content rendering mode: "none" omits content, "markdown" renders child subtree, "structured" returns nested child objects with remIds'
+  ),
+  view: ViewSchema.default('standard').describe('Output detail level: compact, standard, or full'),
+  ancestorDepth: AncestorDepthSchema,
   depth: z
     .number()
     .int()
     .min(0)
     .max(10)
     .default(1)
-    .describe('Depth of child hierarchy to render (when includeContent is markdown or structured)'),
+    .describe('Depth of child hierarchy to render when contentMode is markdown or structured'),
   childLimit: z
     .number()
     .int()
@@ -46,7 +37,31 @@ export const SearchSchema = z.object({
     .max(200000)
     .default(3000)
     .describe('Maximum character length for rendered content'),
-});
+};
+
+export const CreateNoteSchema = z
+  .object({
+    title: z.string().optional().describe('The title of the note'),
+    content: z.string().optional().describe('Content as child bullets (markdown supported)'),
+    parentId: z.string().optional().describe('Parent Rem ID'),
+    tagRemIds: z.array(z.string()).optional().describe('Exact tag Rem IDs to apply'),
+  })
+  .strict()
+  .refine((value) => value.title !== undefined || value.content !== undefined, {
+    message: 'create_note requires either title or content',
+  });
+
+export const SearchSchema = z
+  .object({
+    query: z.string().describe('Search query text'),
+    limit: z.number().int().min(1).max(150).default(50).describe('Maximum results'),
+    cursor: z
+      .string()
+      .optional()
+      .describe('Opaque cursor returned by a previous remnote_search page'),
+    ...SearchContentShape,
+  })
+  .strict();
 
 export const SearchByTagSchema = z
   .object({
@@ -69,64 +84,93 @@ export const SearchByTagSchema = z
       .max(60000)
       .optional()
       .describe('Per-call bridge wait timeout in milliseconds (default: 15000, max: 60000)'),
-    includeContent: z
-      .enum(['none', 'markdown', 'structured'])
-      .default('none')
-      .describe(
-        'Content rendering mode: "none" omits content, "markdown" renders child subtree, "structured" returns nested child objects with remIds'
-      ),
+    ...SearchContentShape,
+  })
+  .strict();
+
+export const ReadNoteSchema = z
+  .object({
+    remId: z.string().describe('The Rem ID to read'),
     depth: z
       .number()
       .int()
       .min(0)
       .max(10)
-      .default(1)
-      .describe(
-        'Depth of child hierarchy to render (when includeContent is markdown or structured)'
-      ),
+      .default(5)
+      .describe('Depth of child hierarchy to render'),
+    contentMode: ContentModeSchema.default('markdown').describe(
+      'Content rendering mode: "none" omits content, "markdown" renders child subtree, "structured" returns nested child objects with remIds'
+    ),
+    view: ViewSchema.default('standard').describe(
+      'Output detail level: compact, standard, or full'
+    ),
+    ancestorDepth: AncestorDepthSchema,
     childLimit: z
       .number()
       .int()
       .min(1)
       .max(500)
-      .default(20)
+      .default(100)
       .describe('Maximum children per level in rendered content'),
     maxContentLength: z
       .number()
       .int()
       .min(100)
       .max(200000)
-      .default(3000)
+      .default(100000)
       .describe('Maximum character length for rendered content'),
   })
   .strict();
 
-export const ReadNoteSchema = z.object({
-  remId: z.string().describe('The Rem ID to read'),
-  depth: z.number().int().min(0).max(10).default(5).describe('Depth of child hierarchy to render'),
-  includeContent: z
-    .enum(['none', 'markdown', 'structured'])
-    .default('markdown')
-    .describe(
-      'Content rendering mode: "none" omits content, "markdown" renders child subtree, "structured" returns nested child objects with remIds'
+export const ListChildrenSchema = z
+  .object({
+    parentRemId: z.string().min(1).describe('Parent Rem ID whose direct children should be listed'),
+    limit: z.number().int().min(1).max(150).default(50).describe('Maximum direct children'),
+    cursor: z
+      .string()
+      .optional()
+      .describe('Opaque cursor returned by a previous remnote_list_children page'),
+    view: ViewSchema.default('compact').describe(
+      'Output detail level for child metadata: compact, standard, or full'
     ),
-  childLimit: z
-    .number()
-    .int()
-    .min(1)
-    .max(500)
-    .default(100)
-    .describe('Maximum children per level in rendered content'),
-  maxContentLength: z
-    .number()
-    .int()
-    .min(100)
-    .max(200000)
-    .default(100000)
-    .describe('Maximum character length for rendered content'),
-});
+    ancestorDepth: AncestorDepthSchema,
+  })
+  .strict();
 
 export const InsertChildrenPositionSchema = z.enum(['first', 'last', 'before', 'after']);
+
+export const MoveNoteSchema = z
+  .object({
+    remId: z.string().min(1).describe('Rem ID to move'),
+    newParentRemId: z.string().min(1).describe('New parent Rem ID'),
+    position: InsertChildrenPositionSchema.default('last').describe(
+      'Where to place the moved Rem under the new parent'
+    ),
+    siblingRemId: z.string().optional().describe('Sibling Rem ID required for before/after'),
+    dryRun: z.boolean().default(true).describe('Preview the move without mutating RemNote'),
+    expectedOldParentRemId: z
+      .string()
+      .optional()
+      .describe('Reject if the Rem current direct parent is different from this Rem ID'),
+    ancestorDepth: AncestorDepthSchema,
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if ((value.position === 'before' || value.position === 'after') && !value.siblingRemId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `siblingRemId is required when position is ${value.position}`,
+        path: ['siblingRemId'],
+      });
+    }
+    if ((value.position === 'first' || value.position === 'last') && value.siblingRemId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `siblingRemId must not be provided when position is ${value.position}`,
+        path: ['siblingRemId'],
+      });
+    }
+  });
 
 export const UpdateNoteSchema = z
   .object({

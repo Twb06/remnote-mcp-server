@@ -130,7 +130,7 @@ async function ensureIntegrationParentNote(
       query,
       '--limit',
       '150',
-      '--include-content',
+      '--content-mode',
       'none',
     ])) as Record<string, unknown>;
     const candidates = Array.isArray(searchResult.results)
@@ -180,7 +180,7 @@ async function ensureIntegrationParentNote(
     INTEGRATION_PARENT_TAG,
     '--limit',
     '20',
-    '--include-content',
+    '--content-mode',
     'none',
   ])) as Record<string, unknown>;
   const parentTagCandidates = Array.isArray(parentTagSearch.results)
@@ -200,7 +200,7 @@ async function ensureIntegrationParentNote(
           parentTagRemId,
           '--limit',
           '150',
-          '--include-content',
+          '--content-mode',
           'none',
         ])) as Record<string, unknown>)
       : { results: [] };

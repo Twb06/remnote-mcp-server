@@ -58,7 +58,8 @@ required call fails.
 5. Search for the exact run-note title with `remnote_search` and confirm the created run note appears.
 
 6. Read the run note with `remnote_read_note`.
-   - Use `includeContent="structured"` when available.
+   - Use `contentMode="structured"` when available.
+   - Use `ancestorDepth=5` on at least one read or search and confirm `ancestors` is parent-first when present.
    - Confirm the title and parent context are consistent with the root note.
    - If `inlineRefs` appears on the note or structured children, confirm each item includes `text`, `targetRemId`, and
      `kind: "rem"`.
@@ -72,39 +73,45 @@ required call fails.
      - `status: created by MCP agent validation`
      - `timestamp: <current ISO timestamp>`
    - Read the run note again with structured content and confirm the inserted children are present.
+9. List direct children of the run note with `remnote_list_children`.
+   - Confirm only direct children are returned.
+   - If `hasMore` is true, report the `nextCursor`.
+10. Dry-run a move with `remnote_move_note`.
+   - Use a temporary child Rem, `dryRun=true`, and `expectedOldParentRemId`.
+   - Confirm the response previews old/new parent data without changing the Rem parent.
 
-9. Create a test tag note under the same root note.
+11. Create a test tag note under the same root note.
    - Title: `[MCP-AGENT-TEST] tag <current ISO timestamp>`
    - Keep its Rem ID as `testTagRemId`.
 
-10. Add the test tag to the run note with `remnote_update_tags`.
+12. Add the test tag to the run note with `remnote_update_tags`.
     - Use `addTagRemIds: [testTagRemId]`.
     - Read the run note and confirm the tag appears if tag metadata is returned.
 
-11. Search by the test tag with `remnote_search_by_tag` in navigation mode.
+13. Search by the test tag with `remnote_search_by_tag` in navigation mode.
     - Use `tagRemId: testTagRemId`.
     - Omit `resultMode` or use `resultMode: "context"`.
     - Confirm a result appears for the run note or its resolved ancestor context.
     - Confirm that at least one result has `matchedRems` containing the exact run note Rem ID.
 
-12. Search by the test tag with `remnote_search_by_tag` in strict verification mode.
+14. Search by the test tag with `remnote_search_by_tag` in strict verification mode.
     - Use `tagRemId: testTagRemId`.
     - Use `resultMode: "tagged"`.
     - Confirm the exact run note Rem ID appears as a top-level result.
     - Confirm the result includes context metadata (`contextRemId`, `contextTitle`, and `contextReason`) when returned
       by the server.
 
-13. Remove the test tag from the run note with `remnote_update_tags`.
+15. Remove the test tag from the run note with `remnote_update_tags`.
     - Use `removeTagRemIds: [testTagRemId]`.
     - Search by the test tag again in context mode and confirm `matchedRems` no longer contains the run note Rem ID.
     - Search by the test tag again with `resultMode: "tagged"` and confirm the run note Rem ID is no longer returned as
       a top-level result.
 
-14. Append a journal entry with `remnote_append_journal`.
+16. Append a journal entry with `remnote_append_journal`.
     - Content: `[MCP-AGENT-TEST] Journal smoke test <current ISO timestamp>`
     - Use the test tag Rem ID as `tagRemIds` if the tool supports journal tag IDs in this client.
 
-15. Optional/report-only checks:
+17. Optional/report-only checks:
     - If `remnote_replace_children` is available and `remnote_status.acceptReplaceOperation` is `true`, report that
       destructive replacement is enabled. Do not call it unless the user explicitly asks for destructive validation.
     - If `remnote_read_table` is available, report that table validation requires an existing Advanced Table title or

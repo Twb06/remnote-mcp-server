@@ -33,7 +33,7 @@ async function assertJournalReadback(
   const reread = (await ctx.cli.runExpectSuccess([
     'read',
     remId,
-    '--include-content',
+    '--content-mode',
     'markdown',
     '--depth',
     '4',

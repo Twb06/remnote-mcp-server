@@ -31,7 +31,7 @@ async function resolveExpectedSearchByTagTarget(
   const tagged = (await ctx.cli.runExpectSuccess([
     'read',
     taggedRemId,
-    '--include-content',
+    '--content-mode',
     'none',
   ])) as Record<string, unknown>;
 
@@ -45,7 +45,7 @@ async function resolveExpectedSearchByTagTarget(
     const parent = (await ctx.cli.runExpectSuccess([
       'read',
       currentParentId,
-      '--include-content',
+      '--content-mode',
       'none',
     ])) as Record<string, unknown>;
 
@@ -183,16 +183,16 @@ export async function readUpdateWorkflow(
     }
   }
 
-  // Step 2-4: Read note B includeContent modes
+  // Step 2-4: Read note B contentMode modes
   for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();
-    const label = `Read note B includeContent=${mode} returns expected shape`;
+    const label = `Read note B contentMode=${mode} returns expected shape`;
     let debugResult: Record<string, unknown> | null = null;
     try {
       const result = (await ctx.cli.runExpectSuccess([
         'read',
         state.noteBId,
-        '--include-content',
+        '--content-mode',
         mode,
       ])) as Record<string, unknown>;
       debugResult = result;
@@ -337,7 +337,7 @@ export async function readUpdateWorkflow(
           'search-by-tag',
           '--tag-id',
           tagVerificationRemId,
-          '--include-content',
+          '--content-mode',
           'none',
           '--limit',
           '10',
@@ -353,7 +353,7 @@ export async function readUpdateWorkflow(
         const taggedRead = (await ctx.cli.runExpectSuccess([
           'read',
           state.noteBId as string,
-          '--include-content',
+          '--content-mode',
           'none',
         ])) as Record<string, unknown>;
         assertTagsInclude(taggedRead, tagVerificationName, 'read after add tags');
@@ -413,7 +413,7 @@ export async function readUpdateWorkflow(
           'search-by-tag',
           '--tag-id',
           tagVerificationRemId as string,
-          '--include-content',
+          '--content-mode',
           'none',
           '--limit',
           '10',
@@ -429,7 +429,7 @@ export async function readUpdateWorkflow(
         const taggedRead = (await ctx.cli.runExpectSuccess([
           'read',
           state.noteBId as string,
-          '--include-content',
+          '--content-mode',
           'none',
         ])) as Record<string, unknown>;
         assertTagsExclude(taggedRead, tagVerificationName, 'read after remove tags');
@@ -489,7 +489,7 @@ export async function readUpdateWorkflow(
         const reread = (await ctx.cli.runExpectSuccess([
           'read',
           state.noteAId as string,
-          '--include-content',
+          '--content-mode',
           'markdown',
         ])) as Record<string, unknown>;
         assertTruthy(typeof reread.content === 'string', 're-read content should be a string');
@@ -567,7 +567,7 @@ export async function readUpdateWorkflow(
       const reread = (await ctx.cli.runExpectSuccess([
         'read',
         state.noteAId as string,
-        '--include-content',
+        '--content-mode',
         'markdown',
       ])) as Record<string, unknown>;
       assertEqual(
@@ -674,7 +674,7 @@ export async function readUpdateWorkflow(
       const reread = (await ctx.cli.runExpectSuccess([
         'read',
         state.noteAId as string,
-        '--include-content',
+        '--content-mode',
         'markdown',
       ])) as Record<string, unknown>;
       assertContains(

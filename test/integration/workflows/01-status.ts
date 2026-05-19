@@ -129,9 +129,10 @@ export async function statusWorkflow(
       const presets = result.navigationPresets as Record<string, unknown>;
       const orientation = presets.orientation as Record<string, unknown>;
       assertTruthy(
-        orientation?.includeContent === 'structured',
-        'orientation includeContent should be structured'
+        orientation?.contentMode === 'structured',
+        'orientation contentMode should be structured'
       );
+      assertTruthy(orientation?.view === 'compact', 'orientation view should be compact');
       assertTruthy(orientation?.depth === 1, 'orientation depth should be 1');
       assertTruthy(orientation?.childLimit === 500, 'orientation childLimit should be 500');
       steps.push({

@@ -9,6 +9,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Add discovery-oriented API support for parent-first `ancestors`, compact/full output `view`, `remnote_list_children`,
+  and dry-run-first `remnote_move_note`.
 - Invite users to contribute advanced RemNote MCP use-case ideas through pull requests or issues.
 - Add an agent-facing idea file for RemNote knowledge-base discovery and tagging workflows and link advanced use cases from the README.
 - Add advanced RemNote MCP use-case documentation for knowledge-base discovery, tag design, reviewed exact-ID tag writes, and strict audit loops.

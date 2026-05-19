@@ -117,7 +117,9 @@ Shared options for `search` and `search-by-tag`:
 | Option                     | Default | Description                          |
 | -------------------------- | ------- | ------------------------------------ |
 | `-l, --limit <n>`          | `50`    | Maximum number of results            |
-| `--include-content <mode>` | `none`  | `none`, `markdown`, or `structured`  |
+| `--content-mode <mode>`    | `none`  | `none`, `markdown`, or `structured`  |
+| `--view <view>`            | default | `compact`, `standard`, or `full`     |
+| `--ancestor-depth <n>`     | `0`     | Parent Rems to include, parent-first |
 | `--depth <n>`              | `1`     | Child depth for rendered content     |
 | `--child-limit <n>`        | `20`    | Max children per hierarchy level     |
 | `--max-content-length <n>` | `3000`  | Max rendered content character count |
@@ -135,6 +137,7 @@ Behavior rules:
 - In `--text` mode, `nextCursor` is printed after results when another page is available.
 - Tags are shown in `--text` mode when the bridge returns them as `[tags: tag1 [tagRemId1], tag2 [tagRemId2]]`.
 - Parent context is appended in text output when available as `<- Parent Title [parentRemId]`.
+- Ancestors are appended when `--ancestor-depth` is used.
 - `--depth`, `--child-limit`, and `--max-content-length` are most relevant when content rendering is enabled.
 - `tags` is optional and present when the matched Rem has readable tag identity metadata. JSON output preserves
   `{ tagRemId, name }` objects.
@@ -143,7 +146,7 @@ Examples:
 
 ```bash
 remnote-cli search "meeting"
-remnote-cli search "weekly" --limit 10 --include-content structured --depth 2 --child-limit 10 --text
+remnote-cli search "weekly" --limit 10 --content-mode structured --depth 2 --child-limit 10 --text
 remnote-cli search "weekly" --limit 10 --cursor "search:v1:..."
 ```
 
@@ -156,7 +159,8 @@ remnote-cli search-by-tag --tag-id <tag-rem-id> [options]
 ```
 
 Options and output/content controls are identical to `search`
-(`-l/--limit`, `--include-content`, `--depth`, `--child-limit`, `--max-content-length`).
+(`-l/--limit`, `--content-mode`, `--view`, `--ancestor-depth`, `--depth`, `--child-limit`,
+`--max-content-length`).
 Use `--result-mode tagged` to return directly tagged Rems instead of the default ancestor-context results.
 Use `--cursor <cursor>` to continue a previous search-by-tag page. Use `--timeout-ms <ms>` to extend the bridge wait
 timeout for a slow tag call (max 60000 ms); this does not cancel plugin-side work.
@@ -170,7 +174,7 @@ Examples:
 remnote-cli search-by-tag --tag-id <tag-rem-id>
 remnote-cli search-by-tag --tag-id <tag-rem-id> --result-mode tagged
 remnote-cli search-by-tag --tag-id <tag-rem-id> --limit 10 --cursor "search_by_tag:v1:..."
-remnote-cli search-by-tag --tag-id <tag-rem-id> --include-content markdown --depth 2 --text
+remnote-cli search-by-tag --tag-id <tag-rem-id> --content-mode markdown --depth 2 --text
 ```
 
 ## read
@@ -184,7 +188,9 @@ remnote-cli read <rem-id> [options]
 | Option                     | Default    | Description                          |
 | -------------------------- | ---------- | ------------------------------------ |
 | `-d, --depth <n>`          | `5`        | Child depth to render                |
-| `--include-content <mode>` | `markdown` | `markdown`, `structured`, or `none`  |
+| `--content-mode <mode>`    | `markdown` | `markdown`, `structured`, or `none`  |
+| `--view <view>`            | default    | `compact`, `standard`, or `full`     |
+| `--ancestor-depth <n>`     | `0`        | Parent Rems to include, parent-first |
 | `--child-limit <n>`        | `100`      | Max children per hierarchy level     |
 | `--max-content-length <n>` | `100000`   | Max rendered content character count |
 
@@ -194,7 +200,7 @@ Behavior rules:
   stats.
 - If `content` exists, it is printed after a blank line.
 - In structured mode, use JSON output (default) to preserve `contentStructured` rem IDs and child hierarchy.
-- `--include-content none` suppresses rendered content.
+- `--content-mode none` suppresses rendered content.
 - `tags` is optional and present when the returned Rem has readable tag identity metadata. JSON output preserves
   `{ tagRemId, name }` objects.
 
@@ -202,8 +208,8 @@ Examples:
 
 ```bash
 remnote-cli read abc123def
-remnote-cli read abc123def --include-content none --depth 2 --child-limit 30 --max-content-length 5000 --text
-remnote-cli read abc123def --include-content structured --depth 2 --child-limit 30
+remnote-cli read abc123def --content-mode none --depth 2 --child-limit 30 --max-content-length 5000 --text
+remnote-cli read abc123def --content-mode structured --depth 2 --child-limit 30
 ```
 
 ## read-table
@@ -258,6 +264,21 @@ Examples:
 remnote-cli update abc123def --title "Updated Title"
 ```
 
+## list-children
+
+List direct children under a parent without rendering a whole subtree.
+
+```bash
+remnote-cli list-children <parent-rem-id> --limit 50 --ancestor-depth 1
+```
+
+| Option                 | Default | Description                                  |
+| ---------------------- | ------- | -------------------------------------------- |
+| `--limit <n>`          | `50`    | Maximum direct children                      |
+| `--cursor <cursor>`    | none    | Continue a previous page                     |
+| `--view <view>`        | compact | `compact`, `standard`, or `full`             |
+| `--ancestor-depth <n>` | `0`     | Parent Rems to include for each child        |
+
 ## insert-children
 
 Insert child Rems under a parent at an explicit position.
@@ -279,6 +300,24 @@ Examples:
 remnote-cli insert-children cEZH8DJYED3RQIB7k --content "description: Use for Codex app/CLI/skills/ExecPlans notes." --position first
 remnote-cli insert-children cEZH8DJYED3RQIB7k --content-file /tmp/child.md --position before --sibling-rem-id abc123def
 ```
+
+## move-note
+
+Move an existing Rem and its subtree under a new parent. The command is a dry-run unless `--apply` is provided.
+
+```bash
+remnote-cli move-note <rem-id> --new-parent-rem-id <parent-rem-id>
+remnote-cli move-note <rem-id> --new-parent-rem-id <parent-rem-id> --expected-old-parent-rem-id <old-parent-rem-id> --apply
+```
+
+| Option                         | Default | Description                                  |
+| ------------------------------ | ------- | -------------------------------------------- |
+| `--new-parent-rem-id <id>`     | none    | New parent Rem ID                            |
+| `--position <position>`        | `last`  | `first`, `last`, `before`, or `after`        |
+| `--sibling-rem-id <id>`        | none    | Required for `before` and `after`            |
+| `--apply`                      | false   | Perform the move instead of dry-run preview  |
+| `--expected-old-parent-rem-id` | none    | Reject stale parent context before moving    |
+| `--ancestor-depth <n>`         | `0`     | Parent Rems to include before/after the move |
 
 ## replace-children
 

@@ -11,7 +11,9 @@ import {
   SEARCH_BY_TAG_TOOL,
   READ_NOTE_TOOL,
   UPDATE_NOTE_TOOL,
+  LIST_CHILDREN_TOOL,
   INSERT_CHILDREN_TOOL,
+  MOVE_NOTE_TOOL,
   REPLACE_CHILDREN_TOOL,
   UPDATE_TAGS_TOOL,
   APPEND_JOURNAL_TOOL,
@@ -140,8 +142,8 @@ describe('Tool Definitions', () => {
   });
 
   it('should advertise structured search content mode and contentStructured output', () => {
-    const includeContent = (
-      SEARCH_TOOL.inputSchema.properties.includeContent as {
+    const contentMode = (
+      SEARCH_TOOL.inputSchema.properties.contentMode as {
         enum?: string[];
       }
     ).enum;
@@ -151,7 +153,7 @@ describe('Tool Definitions', () => {
       }
     ).items?.properties ?? {}) as Record<string, unknown>;
 
-    expect(includeContent).toContain('structured');
+    expect(contentMode).toContain('structured');
     expect(searchResultProps.contentStructured).toBeDefined();
   });
 
@@ -197,8 +199,12 @@ describe('Tool Definitions', () => {
 
     expect(searchResultProps.parentRemId).toBeDefined();
     expect(searchResultProps.parentTitle).toBeDefined();
+    expect(searchResultProps.ancestors).toBeDefined();
+    expect(searchResultProps.ancestorsTruncated).toBeDefined();
     expect(readProps.parentRemId).toBeDefined();
     expect(readProps.parentTitle).toBeDefined();
+    expect(readProps.ancestors).toBeDefined();
+    expect(readProps.ancestorsTruncated).toBeDefined();
   });
 
   it('should advertise tag fields in search/read output schemas', () => {
@@ -272,14 +278,14 @@ describe('Tool Definitions', () => {
   });
 
   it('should advertise structured read content mode and contentStructured output', () => {
-    const includeContent = (
-      READ_NOTE_TOOL.inputSchema.properties.includeContent as {
+    const contentMode = (
+      READ_NOTE_TOOL.inputSchema.properties.contentMode as {
         enum?: string[];
       }
     ).enum;
     const readProps = (READ_NOTE_TOOL.outputSchema.properties ?? {}) as Record<string, unknown>;
 
-    expect(includeContent).toContain('structured');
+    expect(contentMode).toContain('structured');
     expect(readProps.contentStructured).toBeDefined();
   });
 
@@ -301,7 +307,9 @@ describe('Tool Definitions', () => {
   });
 
   it('should expose split write tools', () => {
+    expect(LIST_CHILDREN_TOOL.name).toBe('remnote_list_children');
     expect(INSERT_CHILDREN_TOOL.name).toBe('remnote_insert_children');
+    expect(MOVE_NOTE_TOOL.name).toBe('remnote_move_note');
     expect(REPLACE_CHILDREN_TOOL.name).toBe('remnote_replace_children');
     expect(UPDATE_TAGS_TOOL.name).toBe('remnote_update_tags');
   });
@@ -415,7 +423,7 @@ describe('Tool Registration', () => {
       tools: unknown[];
     };
 
-    expect(result.tools).toHaveLength(12);
+    expect(result.tools).toHaveLength(14);
   });
 
   it('should include all tool names in list', async () => {
@@ -501,6 +509,8 @@ describe('Tool Handlers - search', () => {
       depth: 1,
       childLimit: 20,
       maxContentLength: 3000,
+      ancestorDepth: 0,
+      view: 'standard',
     });
   });
 
@@ -520,28 +530,32 @@ describe('Tool Handlers - search', () => {
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('search', {
       query: 'test',
       limit: 50, // default
-      includeContent: 'none', // default
+      contentMode: 'none', // default
       depth: 1, // default
       childLimit: 20, // default
       maxContentLength: 3000, // default
+      ancestorDepth: 0,
+      view: 'standard',
     });
   });
 
-  it('should pass through includeContent structured', async () => {
+  it('should pass through contentMode structured', async () => {
     await mockServer.callHandler(CallToolRequestSchema, {
       params: {
         name: 'remnote_search',
-        arguments: { query: 'test', includeContent: 'structured', depth: 2 },
+        arguments: { query: 'test', contentMode: 'structured', depth: 2 },
       },
     });
 
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('search', {
       query: 'test',
       limit: 50,
-      includeContent: 'structured',
+      contentMode: 'structured',
       depth: 2,
       childLimit: 20,
       maxContentLength: 3000,
+      ancestorDepth: 0,
+      view: 'standard',
     });
   });
 
@@ -557,10 +571,12 @@ describe('Tool Handlers - search', () => {
       query: 'test',
       limit: 25,
       cursor: 'search:v1:id:25:hash',
-      includeContent: 'none',
+      contentMode: 'none',
       depth: 1,
       childLimit: 20,
       maxContentLength: 3000,
+      ancestorDepth: 0,
+      view: 'standard',
     });
   });
 });
@@ -589,6 +605,8 @@ describe('Tool Handlers - search_by_tag', () => {
         depth: 1,
         childLimit: 20,
         maxContentLength: 3000,
+        ancestorDepth: 0,
+        view: 'standard',
       },
       undefined
     );
@@ -605,10 +623,12 @@ describe('Tool Handlers - search_by_tag', () => {
         tagRemId: 'daily-tag-rem-id',
         resultMode: 'context',
         limit: 50,
-        includeContent: 'none',
+        contentMode: 'none',
         depth: 1,
         childLimit: 20,
         maxContentLength: 3000,
+        ancestorDepth: 0,
+        view: 'standard',
       },
       undefined
     );
@@ -628,10 +648,12 @@ describe('Tool Handlers - search_by_tag', () => {
         tagRemId: 'daily-tag-rem-id',
         resultMode: 'tagged',
         limit: 50,
-        includeContent: 'none',
+        contentMode: 'none',
         depth: 1,
         childLimit: 20,
         maxContentLength: 3000,
+        ancestorDepth: 0,
+        view: 'standard',
       },
       undefined
     );
@@ -656,10 +678,12 @@ describe('Tool Handlers - search_by_tag', () => {
         resultMode: 'context',
         limit: 50,
         cursor: 'search_by_tag:v1:id:2:hash',
-        includeContent: 'none',
+        contentMode: 'none',
         depth: 1,
         childLimit: 20,
         maxContentLength: 3000,
+        ancestorDepth: 0,
+        view: 'standard',
       },
       30000
     );
@@ -706,9 +730,11 @@ describe('Tool Handlers - read_note', () => {
 
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('read_note', {
       ...validReadNoteInput,
-      includeContent: 'markdown',
+      contentMode: 'markdown',
       childLimit: 100,
       maxContentLength: 100000,
+      ancestorDepth: 0,
+      view: 'standard',
     });
   });
 
@@ -720,26 +746,30 @@ describe('Tool Handlers - read_note', () => {
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('read_note', {
       remId: 'rem-123',
       depth: 5, // default
-      includeContent: 'markdown', // default
+      contentMode: 'markdown', // default
       childLimit: 100, // default
       maxContentLength: 100000, // default
+      ancestorDepth: 0,
+      view: 'standard',
     });
   });
 
-  it('should pass through includeContent structured', async () => {
+  it('should pass through contentMode structured', async () => {
     await mockServer.callHandler(CallToolRequestSchema, {
       params: {
         name: 'remnote_read_note',
-        arguments: { remId: 'rem-123', includeContent: 'structured', depth: 2 },
+        arguments: { remId: 'rem-123', contentMode: 'structured', depth: 2 },
       },
     });
 
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('read_note', {
       remId: 'rem-123',
       depth: 2,
-      includeContent: 'structured',
+      contentMode: 'structured',
       childLimit: 100,
       maxContentLength: 100000,
+      ancestorDepth: 0,
+      view: 'standard',
     });
   });
 
@@ -799,6 +829,35 @@ describe('Tool Handlers - update_note', () => {
   });
 });
 
+describe('Tool Handlers - list_children', () => {
+  let mockServer: MockMCPServer;
+  let mockWsServer: { sendRequest: ReturnType<typeof vi.fn> };
+
+  beforeEach(() => {
+    mockServer = new MockMCPServer();
+    mockWsServer = {
+      sendRequest: vi.fn().mockResolvedValue({ children: [], hasMore: false, totalChildren: 0 }),
+    };
+    registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never);
+  });
+
+  it('should call wsServer.sendRequest with list_children action', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_list_children',
+        arguments: { parentRemId: 'parent', limit: 10, ancestorDepth: 2 },
+      },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('list_children', {
+      parentRemId: 'parent',
+      limit: 10,
+      ancestorDepth: 2,
+      view: 'compact',
+    });
+  });
+});
+
 describe('Tool Handlers - split write tools', () => {
   let mockServer: MockMCPServer;
   let mockWsServer: { sendRequest: ReturnType<typeof vi.fn> };
@@ -839,6 +898,29 @@ describe('Tool Handlers - split write tools', () => {
     });
 
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('update_tags', validUpdateTagsInput);
+  });
+
+  it('should call wsServer.sendRequest with move_note action', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_move_note',
+        arguments: {
+          remId: 'child',
+          newParentRemId: 'parent',
+          expectedOldParentRemId: 'old-parent',
+          ancestorDepth: 2,
+        },
+      },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('move_note', {
+      remId: 'child',
+      newParentRemId: 'parent',
+      position: 'last',
+      dryRun: true,
+      expectedOldParentRemId: 'old-parent',
+      ancestorDepth: 2,
+    });
   });
 
   it('should reject insert before without siblingRemId', async () => {
@@ -1094,7 +1176,7 @@ describe('Tool Handlers - get_playbook', () => {
       params: { name: 'remnote_get_playbook', arguments: {} },
     })) as ToolSuccessResult;
 
-    expect(result.structuredContent?.playbookVersion).toBe('1.3.0');
+    expect(result.structuredContent?.playbookVersion).toBe('1.4.0');
     expect(Array.isArray(result.structuredContent?.decisionTree)).toBe(true);
     expect((result.structuredContent?.decisionTree as unknown[])?.length).toBeGreaterThan(0);
     expect(result.structuredContent?.decisionTree).toContain(
@@ -1113,11 +1195,15 @@ describe('Tool Handlers - get_playbook', () => {
       'Need broad search enumeration? Continue remnote_search or remnote_search_by_tag with nextCursor while hasMore is true.'
     );
     expect(result.structuredContent?.decisionTree).toContain(
+      'Need hierarchy placement context? Add ancestorDepth, typically 5, to search/read/search_by_tag/list_children; ancestors are direct-parent first.'
+    );
+    expect(result.structuredContent?.decisionTree).toContain(
       'Need a large tag search to finish? Prefer cursor paging first; use remnote_search_by_tag.timeoutMs only as a bounded wait-time escape hatch.'
     );
     expect(result.structuredContent?.navigationPresets).toMatchObject({
       orientation: {
-        includeContent: 'structured',
+        contentMode: 'structured',
+        view: 'compact',
         depth: 1,
         childLimit: 500,
       },

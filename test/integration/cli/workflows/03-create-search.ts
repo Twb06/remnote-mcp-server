@@ -148,7 +148,7 @@ async function resolveExpectedSearchByTagTarget(
   const tagged = (await ctx.cli.runExpectSuccess([
     'read',
     taggedRemId,
-    '--include-content',
+    '--content-mode',
     'none',
   ])) as Record<string, unknown>;
 
@@ -163,7 +163,7 @@ async function resolveExpectedSearchByTagTarget(
     const parent = (await ctx.cli.runExpectSuccess([
       'read',
       currentParentId,
-      '--include-content',
+      '--content-mode',
       'none',
     ])) as Record<string, unknown>;
 
@@ -505,7 +505,7 @@ export async function createSearchWorkflow(
         pagingSearchToken,
         '--limit',
         '2',
-        '--include-content',
+        '--content-mode',
         'none',
       ])) as Record<string, unknown>;
       assertHasField(firstPage, 'results', 'search paging first page');
@@ -532,7 +532,7 @@ export async function createSearchWorkflow(
           '2',
           '--cursor',
           cursor,
-          '--include-content',
+          '--content-mode',
           'none',
         ])) as Record<string, unknown>;
         assertHasField(nextPage, 'results', `search paging page ${page}`);
@@ -587,7 +587,7 @@ export async function createSearchWorkflow(
         'tagged',
         '--limit',
         '2',
-        '--include-content',
+        '--content-mode',
         'none',
         '--timeout-ms',
         '30000',
@@ -619,7 +619,7 @@ export async function createSearchWorkflow(
           '2',
           '--cursor',
           cursor,
-          '--include-content',
+          '--content-mode',
           'none',
         ])) as Record<string, unknown>;
         assertHasField(nextPage, 'results', `search-by-tag paging page ${page}`);
@@ -660,17 +660,17 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 9-11: Search with includeContent modes
+  // Step 9-11: Search with contentMode modes
   for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();
-    const label = `Search includeContent=${mode} returns expected shape`;
+    const label = `Search contentMode=${mode} returns expected shape`;
     const query = mdTreeSearchToken;
     let debugResults: Array<Record<string, unknown>> | null = null;
     try {
       const result = (await ctx.cli.runExpectSuccess([
         'search',
         query,
-        '--include-content',
+        '--content-mode',
         mode,
       ])) as Record<string, unknown>;
       assertHasField(result, 'results', `search ${mode}`);
@@ -724,7 +724,7 @@ export async function createSearchWorkflow(
         'search-by-tag',
         '--tag-id',
         mdTreeRootOnlyTagRemId as string,
-        '--include-content',
+        '--content-mode',
         'none',
         '--limit',
         '10',
@@ -760,7 +760,7 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 13-15: Search by exact tag Rem ID with includeContent modes
+  // Step 13-15: Search by exact tag Rem ID with contentMode modes
   let expectedTagTarget: ExpectedTagTarget | undefined;
   {
     const start = Date.now();
@@ -784,7 +784,7 @@ export async function createSearchWorkflow(
 
   for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();
-    const label = `Search-by-tag includeContent=${mode} returns expected shape`;
+    const label = `Search-by-tag contentMode=${mode} returns expected shape`;
     let debugResults: Array<Record<string, unknown>> | null = null;
     try {
       assertTruthy(typeof state.searchByTagTag === 'string', 'searchByTagTag should be recorded');
@@ -796,7 +796,7 @@ export async function createSearchWorkflow(
         'search-by-tag',
         '--tag-id',
         state.searchByTagTagRemId as string,
-        '--include-content',
+        '--content-mode',
         mode,
       ])) as Record<string, unknown>;
       assertHasField(result, 'results', `search-by-tag ${mode}`);

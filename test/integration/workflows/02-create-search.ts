@@ -128,7 +128,7 @@ async function resolveExpectedSearchByTagTarget(
 ): Promise<ExpectedTagTarget> {
   const tagged = (await ctx.client.callTool('remnote_read_note', {
     remId: taggedRemId,
-    includeContent: 'none',
+    contentMode: 'none',
   })) as Record<string, unknown>;
 
   let currentParentId =
@@ -141,7 +141,7 @@ async function resolveExpectedSearchByTagTarget(
   while (currentParentId) {
     const parent = (await ctx.client.callTool('remnote_read_note', {
       remId: currentParentId,
-      includeContent: 'none',
+      contentMode: 'none',
     })) as Record<string, unknown>;
 
     const parentRemId = parent.remId as string;
@@ -456,7 +456,7 @@ export async function createSearchWorkflow(
       const firstPage = await ctx.client.callTool('remnote_search', {
         query: pagingSearchToken,
         limit: 2,
-        includeContent: 'none',
+        contentMode: 'none',
       });
       assertHasField(firstPage, 'results', 'search paging first page');
       assertIsArray(firstPage.results, 'search paging first page results');
@@ -479,7 +479,7 @@ export async function createSearchWorkflow(
           query: pagingSearchToken,
           limit: 2,
           cursor,
-          includeContent: 'none',
+          contentMode: 'none',
         });
         assertHasField(nextPage, 'results', `search paging page ${page}`);
         assertIsArray(nextPage.results, `search paging page ${page} results`);
@@ -529,7 +529,7 @@ export async function createSearchWorkflow(
         tagRemId: tagPagingRemId as string,
         resultMode: 'tagged',
         limit: 2,
-        includeContent: 'none',
+        contentMode: 'none',
         timeoutMs: 30000,
       });
       assertHasField(firstPage, 'results', 'search_by_tag paging first page');
@@ -554,7 +554,7 @@ export async function createSearchWorkflow(
           resultMode: 'tagged',
           limit: 2,
           cursor,
-          includeContent: 'none',
+          contentMode: 'none',
         });
         assertHasField(nextPage, 'results', `search_by_tag paging page ${page}`);
         assertIsArray(nextPage.results, `search_by_tag paging page ${page} results`);
@@ -594,16 +594,16 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 9-11: Search with includeContent modes
+  // Step 9-11: Search with contentMode modes
   for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();
-    const label = `Search includeContent=${mode} returns expected shape`;
+    const label = `Search contentMode=${mode} returns expected shape`;
     const query = mdTreeSearchToken;
     let debugResults: Array<Record<string, unknown>> | null = null;
     try {
       const result = await ctx.client.callTool('remnote_search', {
         query,
-        includeContent: mode,
+        contentMode: mode,
       });
       assertHasField(result, 'results', `search ${mode}`);
       assertIsArray(result.results, `search ${mode} results`);
@@ -645,7 +645,7 @@ export async function createSearchWorkflow(
     try {
       const result = await ctx.client.callTool('remnote_search', {
         query: mdTreeSearchToken,
-        includeContent: 'structured',
+        contentMode: 'structured',
       });
       assertHasField(result, 'results', 'search markdown tree root');
       assertIsArray(result.results, 'search markdown tree root results');
@@ -691,7 +691,7 @@ export async function createSearchWorkflow(
       assertTruthy(mdTreeRootOnlyTagRemId, 'markdown tree root-only tag Rem ID should be recorded');
       const result = await ctx.client.callTool('remnote_search_by_tag', {
         tagRemId: mdTreeRootOnlyTagRemId as string,
-        includeContent: 'none',
+        contentMode: 'none',
         limit: 10,
       });
       assertHasField(result, 'results', 'search_by_tag markdown tree root-only tag');
@@ -725,7 +725,7 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 14-16: Search by exact tag Rem ID with includeContent modes
+  // Step 14-16: Search by exact tag Rem ID with contentMode modes
   let expectedTagTarget: ExpectedTagTarget | undefined;
   {
     const start = Date.now();
@@ -749,7 +749,7 @@ export async function createSearchWorkflow(
 
   for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();
-    const label = `Search by exact tag Rem ID includeContent=${mode} returns expected shape`;
+    const label = `Search by exact tag Rem ID contentMode=${mode} returns expected shape`;
     let debugResults: Array<Record<string, unknown>> | null = null;
     try {
       assertTruthy(typeof state.searchByTagTag === 'string', 'searchByTagTag should be recorded');
@@ -759,7 +759,7 @@ export async function createSearchWorkflow(
       );
       const result = await ctx.client.callTool('remnote_search_by_tag', {
         tagRemId: state.searchByTagTagRemId as string,
-        includeContent: mode,
+        contentMode: mode,
       });
       assertHasField(result, 'results', `search_by_tag ${mode}`);
       assertIsArray(result.results, `search_by_tag ${mode} results`);

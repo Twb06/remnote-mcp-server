@@ -120,11 +120,11 @@ describe('command bridge action mapping', () => {
   });
 
   it('passes through structured read content mode', async () => {
-    const executeSpy = await runCommand(['read', 'abc123', '--include-content', 'structured']);
+    const executeSpy = await runCommand(['read', 'abc123', '--content-mode', 'structured']);
     expect(executeSpy).toHaveBeenCalledWith('read_note', {
       remId: 'abc123',
       depth: 5,
-      includeContent: 'structured',
+      contentMode: 'structured',
     });
     executeSpy.mockRestore();
   });
@@ -133,7 +133,7 @@ describe('command bridge action mapping', () => {
     const executeSpy = await runCommand([
       'search',
       'ml',
-      '--include-content',
+      '--content-mode',
       'markdown',
       '--depth',
       '1',
@@ -141,18 +141,18 @@ describe('command bridge action mapping', () => {
     expect(executeSpy).toHaveBeenCalledWith('search', {
       query: 'ml',
       limit: 50,
-      includeContent: 'markdown',
+      contentMode: 'markdown',
       depth: 1,
     });
     executeSpy.mockRestore();
   });
 
   it('passes through structured search content mode', async () => {
-    const executeSpy = await runCommand(['search', 'folders', '--include-content', 'structured']);
+    const executeSpy = await runCommand(['search', 'folders', '--content-mode', 'structured']);
     expect(executeSpy).toHaveBeenCalledWith('search', {
       query: 'folders',
       limit: 50,
-      includeContent: 'structured',
+      contentMode: 'structured',
     });
     executeSpy.mockRestore();
   });
@@ -172,7 +172,7 @@ describe('command bridge action mapping', () => {
       'search-by-tag',
       '--tag-id',
       'daily-tag-rem-id',
-      '--include-content',
+      '--content-mode',
       'markdown',
       '--depth',
       '2',
@@ -180,7 +180,7 @@ describe('command bridge action mapping', () => {
     expect(executeSpy).toHaveBeenCalledWith('search_by_tag', {
       tagRemId: 'daily-tag-rem-id',
       limit: 50,
-      includeContent: 'markdown',
+      contentMode: 'markdown',
       depth: 2,
     });
     executeSpy.mockRestore();
@@ -191,13 +191,13 @@ describe('command bridge action mapping', () => {
       'search-by-tag',
       '--tag-id',
       'project-tag-rem-id',
-      '--include-content',
+      '--content-mode',
       'structured',
     ]);
     expect(executeSpy).toHaveBeenCalledWith('search_by_tag', {
       tagRemId: 'project-tag-rem-id',
       limit: 50,
-      includeContent: 'structured',
+      contentMode: 'structured',
     });
     executeSpy.mockRestore();
   });
@@ -233,6 +233,41 @@ describe('command bridge action mapping', () => {
       limit: 50,
       cursor: 'search_by_tag:v1:id:2:hash',
       timeoutMs: 30000,
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('maps list-children command to list_children with traversal options', async () => {
+    const executeSpy = await runCommand([
+      'list-children',
+      'parent123',
+      '--limit',
+      '25',
+      '--view',
+      'compact',
+      '--ancestor-depth',
+      '3',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('list_children', {
+      parentRemId: 'parent123',
+      limit: 25,
+      view: 'compact',
+      ancestorDepth: 3,
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('maps list-children cursor pagination', async () => {
+    const executeSpy = await runCommand([
+      'list-children',
+      'parent123',
+      '--cursor',
+      'list_children:v1:parent123:50:hash',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('list_children', {
+      parentRemId: 'parent123',
+      limit: 50,
+      cursor: 'list_children:v1:parent123:50:hash',
     });
     executeSpy.mockRestore();
   });
@@ -313,6 +348,49 @@ describe('command bridge action mapping', () => {
       remId: 'abc123',
       addTagRemIds: ['tag1', 'tag2'],
       removeTagRemIds: ['tag3'],
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('maps move-note to dry-run move_note by default', async () => {
+    const executeSpy = await runCommand([
+      'move-note',
+      'rem123',
+      '--new-parent-rem-id',
+      'parent456',
+      '--expected-old-parent-rem-id',
+      'old-parent',
+      '--ancestor-depth',
+      '4',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('move_note', {
+      remId: 'rem123',
+      newParentRemId: 'parent456',
+      dryRun: true,
+      expectedOldParentRemId: 'old-parent',
+      ancestorDepth: 4,
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('maps move-note --apply with sibling position', async () => {
+    const executeSpy = await runCommand([
+      'move-note',
+      'rem123',
+      '--new-parent-rem-id',
+      'parent456',
+      '--position',
+      'before',
+      '--sibling-rem-id',
+      'sibling789',
+      '--apply',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('move_note', {
+      remId: 'rem123',
+      newParentRemId: 'parent456',
+      dryRun: false,
+      position: 'before',
+      siblingRemId: 'sibling789',
     });
     executeSpy.mockRestore();
   });

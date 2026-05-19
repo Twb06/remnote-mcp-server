@@ -67,7 +67,7 @@ describe('SearchSchema', () => {
     const result = SearchSchema.parse({ query: 'test' });
     expect(result.query).toBe('test');
     expect(result.limit).toBe(50); // default
-    expect(result.includeContent).toBe('none'); // default
+    expect(result.contentMode).toBe('none'); // default
     expect(result.depth).toBe(1); // default
   });
 
@@ -76,9 +76,9 @@ describe('SearchSchema', () => {
     expect(result.limit).toBe(50);
   });
 
-  it('should apply default includeContent of "none"', () => {
+  it('should apply default contentMode of "none"', () => {
     const result = SearchSchema.parse({ query: 'test' });
-    expect(result.includeContent).toBe('none');
+    expect(result.contentMode).toBe('none');
   });
 
   it('should validate with custom limit', () => {
@@ -91,14 +91,20 @@ describe('SearchSchema', () => {
     expect(result.cursor).toBe('search:v1:id:50:hash');
   });
 
-  it('should validate with includeContent markdown', () => {
-    const result = SearchSchema.parse({ query: 'test', includeContent: 'markdown' });
-    expect(result.includeContent).toBe('markdown');
+  it('should validate with contentMode markdown', () => {
+    const result = SearchSchema.parse({ query: 'test', contentMode: 'markdown' });
+    expect(result.contentMode).toBe('markdown');
   });
 
-  it('should validate with includeContent structured', () => {
-    const result = SearchSchema.parse({ query: 'test', includeContent: 'structured' });
-    expect(result.includeContent).toBe('structured');
+  it('should validate with contentMode structured', () => {
+    const result = SearchSchema.parse({ query: 'test', contentMode: 'structured' });
+    expect(result.contentMode).toBe('structured');
+  });
+
+  it('should validate ancestorDepth and compact view', () => {
+    const result = SearchSchema.parse({ query: 'test', ancestorDepth: 5, view: 'compact' });
+    expect(result.ancestorDepth).toBe(5);
+    expect(result.view).toBe('compact');
   });
 
   it('should apply default search depth of 1', () => {
@@ -128,7 +134,7 @@ describe('ReadNoteSchema', () => {
     const result = ReadNoteSchema.parse({ remId: 'rem-123' });
     expect(result.remId).toBe('rem-123');
     expect(result.depth).toBe(5); // default
-    expect(result.includeContent).toBe('markdown'); // default
+    expect(result.contentMode).toBe('markdown'); // default
   });
 
   it('should apply default depth of 5', () => {
@@ -151,13 +157,13 @@ describe('ReadNoteSchema', () => {
     expect(result.depth).toBe(10);
   });
 
-  it('should validate includeContent structured mode', () => {
+  it('should validate contentMode structured mode', () => {
     const result = ReadNoteSchema.parse({
       remId: 'rem-123',
-      includeContent: 'structured',
+      contentMode: 'structured',
       depth: 2,
     });
-    expect(result.includeContent).toBe('structured');
+    expect(result.contentMode).toBe('structured');
     expect(result.depth).toBe(2);
   });
 
@@ -184,21 +190,21 @@ describe('SearchByTagSchema', () => {
     expect(result.tagRemId).toBe('daily-tag-rem-id');
     expect(result.resultMode).toBe('context');
     expect(result.limit).toBe(50);
-    expect(result.includeContent).toBe('none');
+    expect(result.contentMode).toBe('none');
     expect(result.depth).toBe(1);
     expect(result.childLimit).toBe(20);
     expect(result.maxContentLength).toBe(3000);
   });
 
-  it('should validate includeContent structured mode', () => {
+  it('should validate contentMode structured mode', () => {
     const result = SearchByTagSchema.parse({
       tagRemId: 'project-tag-rem-id',
       resultMode: 'tagged',
-      includeContent: 'structured',
+      contentMode: 'structured',
       depth: 2,
     });
     expect(result.resultMode).toBe('tagged');
-    expect(result.includeContent).toBe('structured');
+    expect(result.contentMode).toBe('structured');
     expect(result.depth).toBe(2);
   });
 

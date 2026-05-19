@@ -6,6 +6,8 @@ import { SearchSchema } from '../schemas/remnote-schemas.js';
 import { SearchByTagSchema } from '../schemas/remnote-schemas.js';
 import { ReadNoteSchema } from '../schemas/remnote-schemas.js';
 import { UpdateNoteSchema } from '../schemas/remnote-schemas.js';
+import { ListChildrenSchema } from '../schemas/remnote-schemas.js';
+import { MoveNoteSchema } from '../schemas/remnote-schemas.js';
 import { InsertChildrenSchema } from '../schemas/remnote-schemas.js';
 import { ReplaceChildrenSchema } from '../schemas/remnote-schemas.js';
 import { UpdateTagsSchema } from '../schemas/remnote-schemas.js';
@@ -15,10 +17,25 @@ import { checkVersionCompatibility } from '../version-compat.js';
 import type { Logger } from '../logger.js';
 
 const NAVIGATION_PRESET = {
-  includeContent: 'structured',
+  contentMode: 'structured',
+  view: 'compact',
   depth: 1,
   childLimit: 500,
 } as const;
+
+const ANCESTOR_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    remId: { type: 'string', description: 'Ancestor Rem ID' },
+    title: { type: 'string', description: 'Rendered ancestor title' },
+    remType: {
+      type: 'string',
+      description: 'Ancestor Rem classification when available',
+    },
+  },
+  required: ['remId', 'title'],
+  additionalProperties: false,
+};
 
 const TAG_INFO_SCHEMA = {
   type: 'object' as const,
@@ -64,6 +81,15 @@ const MATCHED_REM_SCHEMA = {
     parentTitle: {
       type: 'string',
       description: 'Direct parent title/front text (omitted for top-level Rems)',
+    },
+    ancestors: {
+      type: 'array',
+      items: ANCESTOR_SCHEMA,
+      description: 'Parent-first ancestor chain when ancestorDepth is greater than zero',
+    },
+    ancestorsTruncated: {
+      type: 'boolean',
+      description: 'Whether the ancestor chain was capped by ancestorDepth',
     },
     tags: {
       type: 'array',
@@ -121,7 +147,7 @@ export const CREATE_NOTE_TOOL = {
 export const SEARCH_TOOL = {
   name: 'remnote_search',
   description:
-    'Search the RemNote knowledge base. Supports cursor paging through hasMore/nextCursor. For whole-KB orientation, prefer includeContent="structured" with depth=1 and childLimit=500, then follow remIds with remnote_read_note. Use includeContent="markdown" for human-readable summaries.',
+    'Search the RemNote knowledge base. Supports cursor paging through hasMore/nextCursor. For whole-KB orientation, prefer contentMode="structured" with view="compact", depth=1, and childLimit=500. Request ancestorDepth when hierarchy context matters.',
   inputSchema: {
     type: 'object' as const,
     properties: {
@@ -131,11 +157,20 @@ export const SEARCH_TOOL = {
         type: 'string',
         description: 'Opaque cursor returned by a previous remnote_search response',
       },
-      includeContent: {
+      contentMode: {
         type: 'string',
         enum: ['none', 'markdown', 'structured'],
         description:
           'Content rendering mode: "none" omits content (default), "markdown" renders child subtree as indented markdown, "structured" returns nested child objects with remIds',
+      },
+      view: {
+        type: 'string',
+        enum: ['compact', 'standard', 'full'],
+        description: 'Output detail level: compact, standard, or full',
+      },
+      ancestorDepth: {
+        type: 'number',
+        description: 'Number of parent Rems to include, direct parent first (0-20, default: 0)',
       },
       depth: {
         type: 'number',
@@ -184,6 +219,15 @@ export const SEARCH_TOOL = {
               type: 'string',
               description: 'Direct parent title/front text (omitted for top-level Rems)',
             },
+            ancestors: {
+              type: 'array',
+              items: ANCESTOR_SCHEMA,
+              description: 'Parent-first ancestor chain when ancestorDepth is greater than zero',
+            },
+            ancestorsTruncated: {
+              type: 'boolean',
+              description: 'Whether the ancestor chain was capped by ancestorDepth',
+            },
             aliases: {
               type: 'array',
               items: { type: 'string' },
@@ -230,12 +274,12 @@ export const SEARCH_TOOL = {
             content: {
               type: 'string',
               description:
-                'Rendered markdown content of child subtree (only when includeContent="markdown")',
+                'Rendered markdown content of child subtree (only when contentMode="markdown")',
             },
             contentStructured: {
               type: 'array',
               description:
-                'Structured child subtree with nested remIds and metadata (only when includeContent="structured")',
+                'Structured child subtree with nested remIds and metadata (only when contentMode="structured")',
               items: {
                 type: 'object',
                 properties: {
@@ -326,7 +370,7 @@ export const SEARCH_TOOL = {
 export const SEARCH_BY_TAG_TOOL = {
   name: 'remnote_search_by_tag',
   description:
-    'Find notes by exact tag Rem ID. Supports cursor paging through hasMore/nextCursor. Default resultMode="context" returns resolved ancestor context targets with matchedRems; resultMode="tagged" returns directly tagged Rems with context metadata. Does not look up tags by name or alias. Supports the same includeContent modes as remnote_search.',
+    'Find notes by exact tag Rem ID. Supports cursor paging through hasMore/nextCursor. Default resultMode="context" returns resolved ancestor context targets with matchedRems; resultMode="tagged" returns directly tagged Rems with context metadata. Request ancestorDepth to include parent-first ancestors on both context results and matchedRems.',
   inputSchema: {
     type: 'object' as const,
     properties: {
@@ -341,11 +385,20 @@ export const SEARCH_BY_TAG_TOOL = {
           '"context" returns resolved ancestor context targets with matchedRems (default); "tagged" returns directly tagged Rems with context metadata',
       },
       limit: { type: 'number', description: 'Maximum results (1-150, default: 50)' },
-      includeContent: {
+      contentMode: {
         type: 'string',
         enum: ['none', 'markdown', 'structured'],
         description:
           'Content rendering mode: "none" omits content (default), "markdown" renders child subtree as indented markdown, "structured" returns nested child objects with remIds',
+      },
+      view: {
+        type: 'string',
+        enum: ['compact', 'standard', 'full'],
+        description: 'Output detail level: compact, standard, or full',
+      },
+      ancestorDepth: {
+        type: 'number',
+        description: 'Number of parent Rems to include, direct parent first (0-20, default: 0)',
       },
       depth: {
         type: 'number',
@@ -387,7 +440,7 @@ export const SEARCH_BY_TAG_TOOL = {
 export const READ_NOTE_TOOL = {
   name: 'remnote_read_note',
   description:
-    'Read a specific note from RemNote by its Rem ID. For hierarchy traversal, prefer includeContent="structured" and start shallow (depth=1, childLimit=500), then deepen only selected branches. Use includeContent="markdown" for summarization.',
+    'Read a specific note from RemNote by its Rem ID. For hierarchy traversal, prefer contentMode="structured" and start shallow (depth=1, childLimit=500), then deepen only selected branches. Request ancestorDepth when placement context matters.',
   inputSchema: {
     type: 'object' as const,
     properties: {
@@ -396,11 +449,20 @@ export const READ_NOTE_TOOL = {
         type: 'number',
         description: 'Depth of child hierarchy to render (0-10, default: 5)',
       },
-      includeContent: {
+      contentMode: {
         type: 'string',
         enum: ['none', 'markdown', 'structured'],
         description:
           'Content rendering mode: "markdown" renders child subtree (default), "structured" returns nested child objects with remIds, "none" omits content',
+      },
+      view: {
+        type: 'string',
+        enum: ['compact', 'standard', 'full'],
+        description: 'Output detail level: compact, standard, or full',
+      },
+      ancestorDepth: {
+        type: 'number',
+        description: 'Number of parent Rems to include, direct parent first (0-20, default: 0)',
       },
       childLimit: {
         type: 'number',
@@ -437,6 +499,15 @@ export const READ_NOTE_TOOL = {
         type: 'string',
         description: 'Direct parent title/front text (omitted for top-level Rems)',
       },
+      ancestors: {
+        type: 'array',
+        items: ANCESTOR_SCHEMA,
+        description: 'Parent-first ancestor chain when ancestorDepth is greater than zero',
+      },
+      ancestorsTruncated: {
+        type: 'boolean',
+        description: 'Whether the ancestor chain was capped by ancestorDepth',
+      },
       aliases: {
         type: 'array',
         items: { type: 'string' },
@@ -461,12 +532,12 @@ export const READ_NOTE_TOOL = {
       content: {
         type: 'string',
         description:
-          'Rendered markdown content of child subtree (when includeContent="markdown", which is the default)',
+          'Rendered markdown content of child subtree (when contentMode="markdown", which is the default)',
       },
       contentStructured: {
         type: 'array',
         description:
-          'Structured child subtree with nested remIds and metadata (only when includeContent="structured")',
+          'Structured child subtree with nested remIds and metadata (only when contentMode="structured")',
         items: {
           type: 'object',
           properties: {
@@ -530,6 +601,102 @@ export const READ_NOTE_TOOL = {
         },
       },
     },
+  },
+};
+
+export const LIST_CHILDREN_TOOL = {
+  name: 'remnote_list_children',
+  description:
+    'List direct child Rems under a parent without rendering a subtree. Use for cheap hierarchy traversal; page with nextCursor when hasMore is true.',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {
+      parentRemId: { type: 'string', description: 'Parent Rem ID whose direct children to list' },
+      limit: { type: 'number', description: 'Maximum direct children (1-150, default: 50)' },
+      cursor: {
+        type: 'string',
+        description: 'Opaque cursor returned by a previous remnote_list_children response',
+      },
+      view: {
+        type: 'string',
+        enum: ['compact', 'standard', 'full'],
+        description: 'Output detail level for child metadata: compact, standard, or full',
+      },
+      ancestorDepth: {
+        type: 'number',
+        description: 'Number of parent Rems to include for each child, direct parent first',
+      },
+    },
+    required: ['parentRemId'],
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      children: {
+        type: 'array',
+        items: SEARCH_TOOL.outputSchema.properties.results.items,
+      },
+      hasMore: SEARCH_TOOL.outputSchema.properties.hasMore,
+      nextCursor: SEARCH_TOOL.outputSchema.properties.nextCursor,
+      totalChildren: {
+        type: 'number',
+        description: 'Total direct children observed when listing this parent',
+      },
+    },
+  },
+};
+
+export const MOVE_NOTE_TOOL = {
+  name: 'remnote_move_note',
+  description:
+    'Safely move an existing Rem and its subtree under a new parent. Defaults to dryRun=true; pass dryRun=false only after user approval. expectedOldParentRemId rejects stale move proposals.',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {
+      remId: { type: 'string', description: 'Rem ID to move' },
+      newParentRemId: { type: 'string', description: 'New parent Rem ID' },
+      position: {
+        type: 'string',
+        enum: ['first', 'last', 'before', 'after'],
+        description: 'Where to place the moved Rem under the new parent (default: last)',
+      },
+      siblingRemId: {
+        type: 'string',
+        description: 'Sibling Rem ID required for before/after positioning',
+      },
+      dryRun: {
+        type: 'boolean',
+        description: 'Preview without mutating RemNote (default: true)',
+      },
+      expectedOldParentRemId: {
+        type: 'string',
+        description: 'Reject if the current direct parent differs from this Rem ID',
+      },
+      ancestorDepth: {
+        type: 'number',
+        description: 'Number of parent Rems to include before/after the move',
+      },
+    },
+    required: ['remId', 'newParentRemId'],
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      remId: { type: 'string' },
+      title: { type: 'string' },
+      dryRun: { type: 'boolean' },
+      oldParentRemId: { type: 'string' },
+      oldParentTitle: { type: 'string' },
+      newParentRemId: { type: 'string' },
+      newParentTitle: { type: 'string' },
+      position: { type: 'string', enum: ['first', 'last', 'before', 'after'] },
+      siblingRemId: { type: 'string' },
+      ancestorsBefore: { type: 'array', items: ANCESTOR_SCHEMA },
+      ancestorsBeforeTruncated: { type: 'boolean' },
+      ancestorsAfter: { type: 'array', items: ANCESTOR_SCHEMA },
+      ancestorsAfterTruncated: { type: 'boolean' },
+    },
+    required: ['remId', 'title', 'dryRun', 'newParentRemId', 'newParentTitle', 'position'],
   },
 };
 
@@ -823,7 +990,8 @@ export const PLAYBOOK_TOOL = {
           orientation: {
             type: 'object',
             properties: {
-              includeContent: { type: 'string' },
+              contentMode: { type: 'string' },
+              view: { type: 'string' },
               depth: { type: 'number' },
               childLimit: { type: 'number' },
             },
@@ -860,7 +1028,9 @@ export const ALL_TOOLS = [
   SEARCH_TOOL,
   SEARCH_BY_TAG_TOOL,
   READ_NOTE_TOOL,
+  LIST_CHILDREN_TOOL,
   UPDATE_NOTE_TOOL,
+  MOVE_NOTE_TOOL,
   INSERT_CHILDREN_TOOL,
   REPLACE_CHILDREN_TOOL,
   UPDATE_TAGS_TOOL,
@@ -938,6 +1108,12 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           break;
         }
 
+        case 'remnote_list_children': {
+          const args = ListChildrenSchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('list_children', args);
+          break;
+        }
+
         case 'remnote_update_note': {
           const args = UpdateNoteSchema.parse(request.params.arguments);
           result = await wsServer.sendRequest('update_note', args);
@@ -947,6 +1123,12 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
         case 'remnote_insert_children': {
           const args = InsertChildrenSchema.parse(request.params.arguments);
           result = await wsServer.sendRequest('insert_children', args);
+          break;
+        }
+
+        case 'remnote_move_note': {
+          const args = MoveNoteSchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('move_note', args);
           break;
         }
 
@@ -981,9 +1163,9 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           }
 
           result = {
-            playbookVersion: '1.3.0',
+            playbookVersion: '1.4.0',
             summary:
-              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read workflows, choose content modes, handle tag and table retrieval, and apply safe exact-ID writes.',
+              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, request nearby ancestors when hierarchy context matters, choose compact/full output views, and apply safe exact-ID writes.',
             recommendedStatusCheck: {
               tool: 'remnote_status',
               cadence: 'recommended once per session and before risky writes',
@@ -992,19 +1174,22 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
             },
             decisionTree: [
               'Need connection/capability context? Call remnote_status first.',
-              'Need to orient across the KB? Use remnote_search with includeContent="structured", depth=1, childLimit=500.',
+              'Need to orient across the KB? Use remnote_search with contentMode="structured", view="compact", depth=1, childLimit=500.',
               'Need broad search enumeration? Continue remnote_search or remnote_search_by_tag with nextCursor while hasMore is true.',
               'Need tagged-note context/navigation? Use remnote_search_by_tag with tagRemId and default resultMode="context"; inspect matchedRems to see the direct tagged Rems behind each context result.',
+              'Need hierarchy placement context? Add ancestorDepth, typically 5, to search/read/search_by_tag/list_children; ancestors are direct-parent first.',
               'Need strict tag verification? Use remnote_search_by_tag with resultMode="tagged", or verify the exact Rem in matchedRems from context mode.',
               'Need a large tag search to finish? Prefer cursor paging first; use remnote_search_by_tag.timeoutMs only as a bounded wait-time escape hatch.',
-              'Need to traverse a specific branch? Use remnote_read_note on a chosen remId with includeContent="structured", depth=1, childLimit=500, then recurse by child remIds.',
+              'Need to traverse a specific branch cheaply? Use remnote_list_children on the parentRemId and page through direct children.',
+              'Need to read a selected subtree? Use remnote_read_note on a chosen remId with contentMode="structured", depth=1, childLimit=500, then deepen selected branches.',
               'Need to follow inline graph references? Inspect inlineRefs on search/read results and structured child nodes for exact target Rem IDs.',
               'Need tabular/structured data from an Advanced Table? Use remnote_read_table with either tableTitle or tableRemId. Use propertyFilter to limit columns for large tables.',
-              'Need a human-readable summary? Switch to includeContent="markdown" on search/read results.',
+              'Need a human-readable summary? Switch to contentMode="markdown" on search/read results.',
               'Need to rename a note? Use remnote_update_note with remId and title only.',
               'Need to create a note? Use remnote_create_note; pass tagRemIds for exact-ID tag assignment.',
               'Need to append to today journal? Use remnote_append_journal; pass tagRemIds when the journal entry should be tagged.',
               'Need to insert children? Use remnote_insert_children with an explicit position.',
+              'Need to move a note? Use remnote_move_note dryRun first, include expectedOldParentRemId for stale-context protection, then rerun with dryRun=false after approval.',
               'Need to replace children? Check remnote_status first; remnote_replace_children requires acceptReplaceOperation=true.',
               'Need to update tags on an existing note? Use remnote_update_tags with exact tag Rem IDs.',
             ],
@@ -1019,6 +1204,12 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
                 'Summary mode. Returns rendered markdown content for human-facing synthesis; inline Rem references render as [[Target Title]].',
               none: 'Metadata-only mode when content is not needed.',
             },
+            outputViews: {
+              compact:
+                'Small metadata surface for broad discovery. Omits tags, aliases, inlineRefs, and diagnostic fields unless another option requires them.',
+              standard: 'Normal discovery metadata for most agent workflows.',
+              full: 'Verbose metadata for diagnostics or detailed audits.',
+            },
             writePolicy: {
               statusTool: 'remnote_status',
               requiredFields: ['acceptWriteOperations', 'acceptReplaceOperation'],
@@ -1027,6 +1218,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
                 'remnote_update_note is metadata-only; use insert_children, replace_children, and update_tags for structural or tag writes.',
                 'remnote_replace_children requires acceptReplaceOperation=true.',
                 'remnote_insert_children preserves existing child Rem IDs; remnote_replace_children removes them.',
+                'remnote_move_note preserves the moved Rem ID and subtree; dryRun defaults to true.',
                 'All production tag writes use exact tag Rem IDs: create_note.tagRemIds, append_journal.tagRemIds, and update_tags add/remove arrays.',
               ],
             },

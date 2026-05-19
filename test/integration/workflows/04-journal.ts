@@ -16,7 +16,7 @@ async function assertJournalReadback(
   const reread = (await ctx.client.callTool('remnote_read_note', {
     remId,
     depth: 4,
-    includeContent: 'markdown',
+    contentMode: 'markdown',
   })) as Record<string, unknown>;
   const combined = [reread.title, reread.content]
     .filter((value): value is string => typeof value === 'string' && value.length > 0)

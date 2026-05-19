@@ -35,7 +35,9 @@ function formatTags(tags: unknown): string {
 }
 
 function applySearchOptions(payload: Record<string, unknown>, opts: Record<string, unknown>): void {
-  if (opts.includeContent) payload.includeContent = opts.includeContent;
+  if (opts.contentMode) payload.contentMode = opts.contentMode;
+  if (opts.view) payload.view = opts.view;
+  if (opts.ancestorDepth) payload.ancestorDepth = parseInt(opts.ancestorDepth as string, 10);
   if (opts.depth) payload.depth = parseInt(opts.depth as string, 10);
   if (opts.childLimit) payload.childLimit = parseInt(opts.childLimit as string, 10);
   if (opts.maxContentLength)
@@ -64,7 +66,18 @@ function formatSearchText(data: unknown): string {
         const parentIdSuffix = typeof note.parentRemId === 'string' ? ` [${note.parentRemId}]` : '';
         parentSuffix = ` <- ${note.parentTitle}${parentIdSuffix}`;
       }
-      return `${i + 1}. ${typeTag}${headline}${aliasesSuffix}${tagsSuffix}${parentSuffix} [${note.remId}]`;
+      let ancestorSuffix = '';
+      if (Array.isArray(note.ancestors) && note.ancestors.length > 0) {
+        ancestorSuffix = ` | ancestors: ${note.ancestors
+          .map((ancestor) =>
+            ancestor && typeof ancestor === 'object'
+              ? (ancestor as Record<string, unknown>).title
+              : ''
+          )
+          .filter(Boolean)
+          .join(' <- ')}`;
+      }
+      return `${i + 1}. ${typeTag}${headline}${aliasesSuffix}${tagsSuffix}${parentSuffix}${ancestorSuffix} [${note.remId}]`;
     })
     .join('\n');
 
@@ -91,9 +104,11 @@ function registerCommonSearchOptions(command: Command): Command {
       String(DEFAULT_SEARCH_LIMIT)
     )
     .option(
-      '--include-content <mode>',
+      '--content-mode <mode>',
       'Content rendering mode: "none" (default), "markdown", or "structured"'
     )
+    .option('--view <view>', 'Output detail level: compact, standard, or full')
+    .option('--ancestor-depth <n>', 'Number of parent Rems to include, direct parent first')
     .option('--depth <n>', 'Depth of child hierarchy to render (default: 1)')
     .option('--child-limit <n>', 'Maximum children per level (default: 20)')
     .option('--max-content-length <n>', 'Maximum content character length (default: 3000)');
@@ -166,4 +181,47 @@ export function registerSearchByTagCommand(program: Command): void {
       await client.close();
     }
   });
+}
+
+export function registerListChildrenCommand(program: Command): void {
+  program
+    .command('list-children <parent-rem-id>')
+    .description('List direct child Rems under a parent')
+    .option('-l, --limit <n>', 'Maximum direct children (default: 50)', '50')
+    .option('--cursor <cursor>', 'Opaque cursor returned by a previous list-children page')
+    .option('--view <view>', 'Output detail level: compact, standard, or full')
+    .option('--ancestor-depth <n>', 'Number of parent Rems to include, direct parent first')
+    .action(async (parentRemId: string, opts) => {
+      const globalOpts = program.opts();
+      const format: OutputFormat = globalOpts.text ? 'text' : 'json';
+      const client = createCommandClient(program);
+
+      try {
+        const payload: Record<string, unknown> = {
+          parentRemId,
+          limit: parseInt(opts.limit, 10),
+        };
+        if (opts.cursor) payload.cursor = opts.cursor;
+        if (opts.view) payload.view = opts.view;
+        if (opts.ancestorDepth) payload.ancestorDepth = parseInt(opts.ancestorDepth, 10);
+
+        const result = await client.execute('list_children', payload);
+        console.log(
+          formatResult(result, format, (data) => {
+            const r = data as Record<string, unknown>;
+            return formatSearchText({
+              results: r.children,
+              hasMore: r.hasMore,
+              nextCursor: r.nextCursor,
+            });
+          })
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(formatError(message, format));
+        process.exit(EXIT.ERROR);
+      } finally {
+        await client.close();
+      }
+    });
 }

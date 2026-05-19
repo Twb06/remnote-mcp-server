@@ -27,6 +27,38 @@ function summarizeReadResult(result: Record<string, unknown>): Record<string, un
   };
 }
 
+async function listChildrenUntilFound(
+  ctx: WorkflowContext,
+  parentRemId: string,
+  targetRemId: string
+): Promise<Record<string, unknown> | undefined> {
+  let cursor: string | undefined;
+
+  do {
+    const payload: Record<string, unknown> = {
+      parentRemId,
+      limit: 150,
+      ancestorDepth: 1,
+    };
+    if (cursor) payload.cursor = cursor;
+
+    const result = (await ctx.client.callTool('remnote_list_children', payload)) as Record<
+      string,
+      unknown
+    >;
+    assertIsArray(result.children, 'list children result');
+
+    const children = result.children as Array<Record<string, unknown>>;
+    const found = children.find((child) => child.remId === targetRemId);
+    if (found) return found;
+
+    cursor = typeof result.nextCursor === 'string' ? result.nextCursor : undefined;
+    if (result.hasMore !== true) cursor = undefined;
+  } while (cursor);
+
+  return undefined;
+}
+
 function findMatchingSearchResult(
   results: Array<Record<string, unknown>>,
   remId: string
@@ -42,7 +74,7 @@ async function resolveExpectedSearchByTagTarget(
 ): Promise<string> {
   const tagged = (await ctx.client.callTool('remnote_read_note', {
     remId: taggedRemId,
-    includeContent: 'none',
+    contentMode: 'none',
   })) as Record<string, unknown>;
 
   let currentParentId =
@@ -54,7 +86,7 @@ async function resolveExpectedSearchByTagTarget(
   while (currentParentId) {
     const parent = (await ctx.client.callTool('remnote_read_note', {
       remId: currentParentId,
-      includeContent: 'none',
+      contentMode: 'none',
     })) as Record<string, unknown>;
 
     const parentRemId = parent.remId as string;
@@ -177,16 +209,138 @@ export async function readUpdateWorkflow(
     }
   }
 
-  // Step 2-4: Read rich note includeContent modes
+  // Step 1b: Read ancestors for hierarchy placement context
+  {
+    const start = Date.now();
+    try {
+      const result = (await ctx.client.callTool('remnote_read_note', {
+        remId: state.noteAId,
+        contentMode: 'none',
+        ancestorDepth: 5,
+      })) as Record<string, unknown>;
+      assertIsArray(result.ancestors, 'read note ancestors');
+      const ancestors = result.ancestors as Array<Record<string, unknown>>;
+      assertTruthy(ancestors.length > 0, 'read note should include at least one ancestor');
+      assertEqual(
+        ancestors[0].remId as string,
+        state.integrationParentRemId as string,
+        'first ancestor should be direct integration parent'
+      );
+      steps.push({
+        label: 'Read note with ancestors',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Read note with ancestors',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
+  // Step 1c: List direct children without reading a whole subtree
+  {
+    const start = Date.now();
+    try {
+      assertTruthy(
+        await listChildrenUntilFound(
+          ctx,
+          state.integrationParentRemId as string,
+          state.noteAId as string
+        ),
+        'list children should include note A as a direct child'
+      );
+      steps.push({ label: 'List direct children', passed: true, durationMs: Date.now() - start });
+    } catch (e) {
+      steps.push({
+        label: 'List direct children',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
+  // Step 1d: Dry-run and apply a safe move on a temporary note
+  {
+    const start = Date.now();
+    try {
+      const created = (await ctx.client.callTool('remnote_create_note', {
+        title: `[MCP-TEST] Move Candidate ${ctx.runId}`,
+        parentId: state.integrationParentRemId,
+      })) as { remIds: string[] };
+      assertIsArray(created.remIds, 'move candidate remIds');
+      const moveCandidateRemId = created.remIds[0];
+      assertTruthy(
+        typeof moveCandidateRemId === 'string',
+        'move candidate Rem ID should be string'
+      );
+
+      const dryRun = (await ctx.client.callTool('remnote_move_note', {
+        remId: moveCandidateRemId,
+        newParentRemId: state.noteAId,
+        expectedOldParentRemId: state.integrationParentRemId,
+        ancestorDepth: 2,
+      })) as Record<string, unknown>;
+      assertEqual(dryRun.dryRun as boolean, true, 'move dry-run should not mutate');
+
+      const afterDryRun = (await ctx.client.callTool('remnote_read_note', {
+        remId: moveCandidateRemId,
+        contentMode: 'none',
+      })) as Record<string, unknown>;
+      assertEqual(
+        afterDryRun.parentRemId as string,
+        state.integrationParentRemId as string,
+        'dry-run should leave parent unchanged'
+      );
+
+      const moved = (await ctx.client.callTool('remnote_move_note', {
+        remId: moveCandidateRemId,
+        newParentRemId: state.noteAId,
+        expectedOldParentRemId: state.integrationParentRemId,
+        dryRun: false,
+        ancestorDepth: 2,
+      })) as Record<string, unknown>;
+      assertEqual(moved.dryRun as boolean, false, 'move mutation should report dryRun=false');
+
+      const afterMove = (await ctx.client.callTool('remnote_read_note', {
+        remId: moveCandidateRemId,
+        contentMode: 'none',
+      })) as Record<string, unknown>;
+      assertEqual(
+        afterMove.parentRemId as string,
+        state.noteAId as string,
+        'move should update direct parent'
+      );
+
+      steps.push({
+        label: 'Move note dry-run and apply',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Move note dry-run and apply',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
+  // Step 2-4: Read rich note contentMode modes
   for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();
-    const label = `Read rich note includeContent=${mode} returns expected shape`;
+    const label = `Read rich note contentMode=${mode} returns expected shape`;
     let debugResult: Record<string, unknown> | null = null;
     try {
       const result = await ctx.client.callTool('remnote_read_note', {
         remId: state.noteBId,
         depth: 3,
-        includeContent: mode,
+        contentMode: mode,
       });
       debugResult = result;
       assertHasField(result, 'remId', 'read rich note remId');
@@ -319,7 +473,7 @@ export async function readUpdateWorkflow(
         const reread = await ctx.client.callTool('remnote_read_note', {
           remId: state.noteAId,
           depth: 2,
-          includeContent: 'markdown',
+          contentMode: 'markdown',
         });
         assertTruthy(typeof reread.content === 'string', 're-read content should be string');
         assertContains(
@@ -368,7 +522,7 @@ export async function readUpdateWorkflow(
       const reread = await ctx.client.callTool('remnote_read_note', {
         remId: state.noteAId,
         depth: 2,
-        includeContent: 'markdown',
+        contentMode: 'markdown',
       });
       assertEqual(
         reread.content as string,
@@ -413,7 +567,7 @@ export async function readUpdateWorkflow(
       assertIsArray(result.remIds, 'add tag remIds');
       const taggedSearch = await ctx.client.callTool('remnote_search_by_tag', {
         tagRemId: tagVerificationRemId,
-        includeContent: 'none',
+        contentMode: 'none',
         limit: 10,
       });
       assertHasField(taggedSearch, 'results', 'search_by_tag after add tag');
@@ -422,7 +576,7 @@ export async function readUpdateWorkflow(
       findMatchingSearchResult(taggedResults, expectedTargetRemId);
       const taggedRead = (await ctx.client.callTool('remnote_read_note', {
         remId: state.noteAId,
-        includeContent: 'none',
+        contentMode: 'none',
       })) as Record<string, unknown>;
       assertTagsInclude(taggedRead, tagVerificationName, 'read after add tag');
       steps.push({ label: 'Add tag', passed: true, durationMs: Date.now() - start });
@@ -453,7 +607,7 @@ export async function readUpdateWorkflow(
       assertIsArray(result.remIds, 'remove tag remIds');
       const taggedSearch = await ctx.client.callTool('remnote_search_by_tag', {
         tagRemId: tagVerificationRemId as string,
-        includeContent: 'none',
+        contentMode: 'none',
         limit: 10,
       });
       assertHasField(taggedSearch, 'results', 'search_by_tag after remove tag');
@@ -463,7 +617,7 @@ export async function readUpdateWorkflow(
       assertTruthy(!match, 'removed tag should no longer resolve to the tagged target');
       const taggedRead = (await ctx.client.callTool('remnote_read_note', {
         remId: state.noteAId,
-        includeContent: 'none',
+        contentMode: 'none',
       })) as Record<string, unknown>;
       assertTagsExclude(taggedRead, tagVerificationName, 'read after remove tag');
       steps.push({ label: 'Remove tag', passed: true, durationMs: Date.now() - start });
