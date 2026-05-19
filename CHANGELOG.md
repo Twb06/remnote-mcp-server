@@ -35,6 +35,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Tighten the MCP tool smoke-test prompt so required tools, hierarchy traversal, and dry-run move validation match the
+  discovery API contract.
 - Update the bundled `remnote-cli` skill guidance for the current `search-by-tag`, split write, exact-ID tag, and
   `read-table` command surface.
 - Link the bundled RemNote CLI skill from the README for OpenClaw/Hermes-style local agent workflows.

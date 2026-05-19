@@ -16,7 +16,9 @@ This smoke test requires:
 - `remnote_search`
 - `remnote_create_note`
 - `remnote_read_note`
+- `remnote_list_children`
 - `remnote_update_note`
+- `remnote_move_note`
 - `remnote_insert_children`
 - `remnote_update_tags`
 - `remnote_search_by_tag`
@@ -39,6 +41,7 @@ required call fails.
 
 2. Call `remnote_get_playbook` and briefly confirm that it returned guidance.
    - Confirm the playbook mentions tag navigation or strict tag verification through `resultMode` or `matchedRems`.
+   - Confirm the playbook mentions `ancestorDepth`, `remnote_list_children`, and dry-run-first `remnote_move_note`.
 
 3. Resolve the shared temporary integration-test root.
    - Search for the exact title `RemNote Automation Bridge [temporary integration test data]`.
@@ -72,13 +75,20 @@ required call fails.
    - Insert at least two children, for example:
      - `status: created by MCP agent validation`
      - `timestamp: <current ISO timestamp>`
+   - Keep one inserted direct-child Rem ID from the response as `moveCandidateRemId`.
    - Read the run note again with structured content and confirm the inserted children are present.
+
 9. List direct children of the run note with `remnote_list_children`.
    - Confirm only direct children are returned.
+   - Confirm `moveCandidateRemId` appears as a direct child.
    - If `hasMore` is true, report the `nextCursor`.
+
 10. Dry-run a move with `remnote_move_note`.
-   - Use a temporary child Rem, `dryRun=true`, and `expectedOldParentRemId`.
-   - Confirm the response previews old/new parent data without changing the Rem parent.
+   - Use `remId: moveCandidateRemId`, `newParentRemId: <root note Rem ID>`, `dryRun: true`, and
+     `expectedOldParentRemId: <run note Rem ID>`.
+   - Confirm the response previews old/new parent data.
+   - Read or list the run note again and confirm `moveCandidateRemId` is still a direct child, proving dry-run did not
+     change the Rem parent.
 
 11. Create a test tag note under the same root note.
    - Title: `[MCP-AGENT-TEST] tag <current ISO timestamp>`
@@ -117,7 +127,7 @@ required call fails.
     - If `remnote_read_table` is available, report that table validation requires an existing Advanced Table title or
       Rem ID and skip it for this zero-config smoke test.
 
-16. Final response:
+18. Final response:
     - Report PASS or FAIL.
     - Include the root note Rem ID, run note Rem ID, and test tag Rem ID if created.
     - List every required tool and whether it was used successfully.
