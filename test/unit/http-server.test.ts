@@ -3,7 +3,7 @@ import { getOAuthProtectedResourceMetadataUrl } from '@modelcontextprotocol/sdk/
 import { HttpMcpServer } from '../../src/http-server.js';
 import { WebSocketServer } from '../../src/websocket-server.js';
 import { createMockLogger } from '../setup.js';
-import { waitForHttpServer } from '../helpers/test-server.js';
+import { getAvailablePort, waitForHttpServer } from '../helpers/test-server.js';
 
 // Mock WebSocketServer
 vi.mock('../../src/websocket-server.js', () => ({
@@ -23,9 +23,8 @@ describe('HttpMcpServer', () => {
   let mockLogger: ReturnType<typeof createMockLogger>;
   let port: number;
 
-  beforeEach(() => {
-    // Use random port to avoid conflicts
-    port = 30000 + Math.floor(Math.random() * 10000);
+  beforeEach(async () => {
+    port = await getAvailablePort();
     mockWsServer = new WebSocketServer(3002, '127.0.0.1', createMockLogger());
     mockLogger = createMockLogger();
 
