@@ -35,6 +35,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Update `AGENTS.md` contract maps for the current discovery API tool and CLI surface, including
+  `remnote_list_children`, `remnote_move_note`, `list-children`, and `move-note`.
 - Tighten the MCP tool smoke-test prompt so required tools, hierarchy traversal, and dry-run move validation match the
   discovery API contract.
 - Update the bundled `remnote-cli` skill guidance for the current `search-by-tag`, split write, exact-ID tag, and
