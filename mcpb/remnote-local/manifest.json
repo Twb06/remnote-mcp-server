@@ -45,6 +45,10 @@
       "description": "Update note metadata in RemNote. Use this tool for title changes only."
     },
     {
+      "name": "remnote_set_document_status",
+      "description": "Preview or set whether an existing Rem is marked as a document. Uses dryRun=true by default, preserves Rem ID, children, parent, tags, and concept/card status, and requires write operations to be enabled."
+    },
+    {
       "name": "remnote_move_note",
       "description": "Safely move an existing Rem and its subtree under a new parent. Defaults to dryRun=true; pass dryRun=false only after user approval. expectedOldParentRemId rejects stale move proposals."
     },

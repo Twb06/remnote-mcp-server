@@ -24,7 +24,7 @@ When changing action names, payloads, or response semantics, validate this repo 
 
 ## Contract Map (Current)
 
-### External MCP Tool Surface (14)
+### External MCP Tool Surface (15)
 
 - `remnote_create_note`
 - `remnote_search`
@@ -33,6 +33,7 @@ When changing action names, payloads, or response semantics, validate this repo 
 - `remnote_list_children`
 - `remnote_move_note`
 - `remnote_update_note`
+- `remnote_set_document_status`
 - `remnote_insert_children`
 - `remnote_replace_children`
 - `remnote_update_tags`
@@ -60,7 +61,7 @@ When changing action names, payloads, or response semantics, validate this repo 
 ### Bridge Action Mapping and Compatibility
 
 - Most tools map to same conceptual bridge actions (`create_note`, `search`, `search_by_tag`, `read_note`,
-  `list_children`, `move_note`, `update_note`, `insert_children`, `replace_children`, `update_tags`,
+  `list_children`, `move_note`, `update_note`, `set_document_status`, `insert_children`, `replace_children`, `update_tags`,
   `append_journal`, `read_table`, `get_status`).
 - Bridge plugin sends WebSocket `hello` with plugin version.
 - `remnote_status` enriches output with server version + optional `version_warning` for compatibility drift.

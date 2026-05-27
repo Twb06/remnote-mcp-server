@@ -16,6 +16,7 @@ export function registerCreateCommand(program: Command): void {
     .option('--content-file <path>', 'Read note content from UTF-8 file ("-" for stdin)', validate)
     .option('--parent-id <id>', 'Parent Rem ID', validate)
     .option('--tag-ids <tagRemIds...>', 'Exact tag Rem IDs to add')
+    .option('--as-document', 'Mark the created title/root Rem as a document')
     .action(async (titleArg: string | undefined, opts) => {
       const globalOpts = program.opts();
       const format: OutputFormat = globalOpts.text ? 'text' : 'json';
@@ -39,6 +40,7 @@ export function registerCreateCommand(program: Command): void {
         if (content !== undefined) payload.content = content;
         if (opts.parentId) payload.parentId = opts.parentId;
         if (opts.tagIds && opts.tagIds.length > 0) payload.tagRemIds = opts.tagIds;
+        if (opts.asDocument) payload.asDocument = true;
 
         const result = await client.execute('create_note', payload);
         console.log(

@@ -2,6 +2,14 @@ import { z } from 'zod';
 
 const ContentModeSchema = z.enum(['none', 'markdown', 'structured']);
 const ViewSchema = z.enum(['compact', 'standard', 'full']);
+const RemClassificationSchema = z.enum([
+  'document',
+  'dailyDocument',
+  'concept',
+  'descriptor',
+  'portal',
+  'text',
+]);
 const AncestorDepthSchema = z
   .number()
   .int()
@@ -45,6 +53,10 @@ export const CreateNoteSchema = z
     content: z.string().optional().describe('Content as child bullets (markdown supported)'),
     parentId: z.string().optional().describe('Parent Rem ID'),
     tagRemIds: z.array(z.string()).optional().describe('Exact tag Rem IDs to apply'),
+    asDocument: z
+      .boolean()
+      .optional()
+      .describe('Mark the created title/root Rem as a document without changing card status'),
   })
   .strict()
   .refine((value) => value.title !== undefined || value.content !== undefined, {
@@ -182,6 +194,17 @@ export const UpdateNoteSchema = z
     message: 'remnote_update_note requires title',
     path: ['title'],
   });
+
+export const SetDocumentStatusSchema = z
+  .object({
+    remId: z.string().min(1).describe('The Rem ID whose document status should change'),
+    isDocument: z.boolean().describe('Whether the Rem should be marked as a document'),
+    dryRun: z.boolean().default(true).describe('Preview the change without mutating RemNote'),
+    expectedOldRemType: RemClassificationSchema.optional().describe(
+      'Reject if the current bridge remType differs from this stale-context guard'
+    ),
+  })
+  .strict();
 
 export const InsertChildrenSchema = z
   .object({

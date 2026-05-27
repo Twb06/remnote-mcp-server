@@ -15,12 +15,13 @@ JSON in a top-level `content` text block for compatibility with older clients an
 
 | Tool | Description | Use Case |
 |------|-------------|----------|
-| `remnote_create_note` | Create new notes or flashcards | Adding new knowledge, ideas, references, or flashcards. Supports hierarchical markdown, flashcard syntax, and exact tag Rem IDs. |
+| `remnote_create_note` | Create new notes or flashcards | Adding new knowledge, ideas, references, or flashcards. Supports hierarchical markdown, flashcard syntax, exact tag Rem IDs, and optional root document status. |
 | `remnote_search` | Search knowledge base | Finding existing notes, exploring topics |
 | `remnote_search_by_tag` | Search by exact tag Rem ID | Finding ancestor context for tagged notes |
 | `remnote_read_note` | Read note content | Retrieving details, reading hierarchies |
 | `remnote_list_children` | List direct child Rems | Cheap branch traversal without subtree rendering |
 | `remnote_update_note` | Update note metadata | Renaming |
+| `remnote_set_document_status` | Set document status | Dry-run-first document marking without removing concept/card status |
 | `remnote_move_note` | Move a Rem safely | Dry-run-first hierarchy reorganization |
 | `remnote_insert_children` | Insert child Rems | Ordered hierarchy maintenance, tag descriptions |
 | `remnote_replace_children` | Replace direct child Rems | Explicitly approved destructive rewrites |
@@ -42,6 +43,7 @@ Create a new note/flashcard in RemNote with optional parent hierarchy and exact 
 | `content` | string | No | Child content as bullet points or hierarchical markdown |
 | `parentId` | string | No | Parent Rem ID to nest this note under |
 | `tagRemIds` | string[] | No | Exact tag Rem IDs to apply |
+| `asDocument` | boolean | No | Mark the created title/root Rem as a document while preserving flashcard/concept status |
 
 ### Usage
 
@@ -66,6 +68,13 @@ Create a note "Chapter 1" under the note with ID abc123
 **Create with tag Rem IDs:**
 ```
 Create a note "Important Meeting" with tagRemIds ["workTagRemId", "urgentTagRemId"]
+```
+
+**Create the root Rem as a document:**
+```
+Create a note "Project Brief" with asDocument true and content:
+- Scope
+- Decisions
 ```
 
 **Create a flashcard:**
@@ -364,6 +373,7 @@ Update note metadata. This tool is intentionally limited to title changes.
 - Use `remnote_replace_children` for explicitly approved direct-child replacement.
 - Use `remnote_update_tags` for exact-ID tag mutation.
 - Use `remnote_move_note` for dry-run-first hierarchy reparenting.
+- Use `remnote_set_document_status` to mark or unmark an existing Rem as a document.
 
 ### Usage
 
@@ -371,6 +381,39 @@ Update note metadata. This tool is intentionally limited to title changes.
 ```
 Rename note abc123 to "Updated Project Name"
 ```
+
+## remnote_set_document_status
+
+Preview or set whether an existing Rem is marked as a document. This preserves the Rem ID, parent, children, tags, and
+concept/card status. A Rem can be both a concept/card and a document; this tool changes only document status.
+
+Dry-run is enabled by default. Use a dry run first, inspect `oldRemType`, `newRemType`, `wouldChange`, and `warnings`,
+then call again with `dryRun: false` and `expectedOldRemType` when the preview matches your intent.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `remId` | string | Yes | Rem ID to update |
+| `isDocument` | boolean | Yes | Desired document status |
+| `dryRun` | boolean | No | Preview without mutation (default: `true`) |
+| `expectedOldRemType` | string | No | Stale-context guard: `document`, `dailyDocument`, `concept`, `descriptor`, `portal`, or `text` |
+
+**Preview marking a concept as a document:**
+```
+remnote_set_document_status({ "remId": "abc123", "isDocument": true })
+```
+
+**Apply after preview:**
+```
+remnote_set_document_status({
+  "remId": "abc123",
+  "isDocument": true,
+  "dryRun": false,
+  "expectedOldRemType": "concept"
+})
+```
+
+After a successful write, `remnote_read_note` should report `remType: "document"` for the same Rem ID. Existing card
+metadata may still appear through fields such as `cardDirection`.
 
 ## remnote_list_children
 
@@ -567,7 +610,7 @@ Use this tool when an agent needs built-in guidance for:
 - hierarchy traversal presets for whole-KB navigation,
 - tag navigation vs strict direct-tag verification guidance,
 - `markdown` vs `structured` content-mode decisions,
-- write/replace safety checks.
+- write/replace/document-status safety checks.
 
 ### Parameters
 
@@ -596,14 +639,15 @@ Returns a structured playbook object, including:
   true.
 - `remnote_search_by_tag` guidance - when to use default context results, `matchedRems`, `resultMode: "tagged"`, or a
   bounded `timeoutMs` fallback.
-- `writePolicy` - how to interpret `acceptWriteOperations` / `acceptReplaceOperation` and exact-ID tag writes.
+- `writePolicy` - how to interpret `acceptWriteOperations` / `acceptReplaceOperation`, document-status writes, and
+  exact-ID tag writes.
 - `currentStatus` - live `remnote_status` snapshot when available.
 
 ### Tips
 
 - Treat this as guidance, not rigid policy.
 - Use the playbook's write guidance to choose between metadata updates, ordered child insertion, destructive replacement,
-  and exact-ID tag writes without overloading `remnote_update_note`.
+  document-status writes, and exact-ID tag writes without overloading `remnote_update_note`.
 - Call `remnote_status` once per session (recommended) and before high-risk writes.
 - For whole-KB orientation, start shallow and ID-first:
   - `structured` mode, `depth: 1`, `childLimit: 500`.

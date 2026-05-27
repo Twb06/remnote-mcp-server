@@ -10,6 +10,7 @@ import {
   SearchByTagSchema,
   ReadNoteSchema,
   UpdateNoteSchema,
+  SetDocumentStatusSchema,
   InsertChildrenSchema,
   ReplaceChildrenSchema,
   UpdateTagsSchema,
@@ -38,6 +39,7 @@ describe('CreateNoteSchema', () => {
       content: 'Content',
       parentId: 'parent-123',
       tagRemIds: ['tag-rem-id-1', 'tag-rem-id-2'],
+      asDocument: true,
     };
     const result = CreateNoteSchema.parse(input);
     expect(result).toEqual(input);
@@ -268,6 +270,53 @@ describe('UpdateNoteSchema', () => {
 
   it('should reject missing remId', () => {
     expect(() => UpdateNoteSchema.parse({ title: 'New Title' })).toThrow();
+  });
+});
+
+describe('SetDocumentStatusSchema', () => {
+  it('should validate required fields and default dryRun to true', () => {
+    const result = SetDocumentStatusSchema.parse({
+      remId: 'rem-456',
+      isDocument: true,
+    });
+
+    expect(result).toEqual({
+      remId: 'rem-456',
+      isDocument: true,
+      dryRun: true,
+    });
+  });
+
+  it('should validate expectedOldRemType', () => {
+    const result = SetDocumentStatusSchema.parse({
+      remId: 'rem-456',
+      isDocument: true,
+      dryRun: false,
+      expectedOldRemType: 'concept',
+    });
+
+    expect(result.expectedOldRemType).toBe('concept');
+    expect(result.dryRun).toBe(false);
+  });
+
+  it('should reject unknown expectedOldRemType', () => {
+    expect(() =>
+      SetDocumentStatusSchema.parse({
+        remId: 'rem-456',
+        isDocument: true,
+        expectedOldRemType: 'folder',
+      })
+    ).toThrow();
+  });
+
+  it('should reject unknown fields', () => {
+    expect(() =>
+      SetDocumentStatusSchema.parse({
+        remId: 'rem-456',
+        isDocument: true,
+        remType: 'document',
+      })
+    ).toThrow();
   });
 });
 

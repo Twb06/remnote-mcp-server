@@ -18,6 +18,7 @@ This smoke test requires:
 - `remnote_read_note`
 - `remnote_list_children`
 - `remnote_update_note`
+- `remnote_set_document_status`
 - `remnote_move_note`
 - `remnote_insert_children`
 - `remnote_update_tags`
@@ -42,6 +43,7 @@ required call fails.
 2. Call `remnote_get_playbook` and briefly confirm that it returned guidance.
    - Confirm the playbook mentions tag navigation or strict tag verification through `resultMode` or `matchedRems`.
    - Confirm the playbook mentions `ancestorDepth`, `remnote_list_children`, and dry-run-first `remnote_move_note`.
+   - Confirm the playbook mentions dry-run-first `remnote_set_document_status`.
 
 3. Resolve the shared temporary integration-test root.
    - Search for the exact title `RemNote Automation Bridge [temporary integration test data]`.
@@ -66,6 +68,8 @@ required call fails.
    - Confirm the title and parent context are consistent with the root note.
    - If `inlineRefs` appears on the note or structured children, confirm each item includes `text`, `targetRemId`, and
      `kind: "rem"`.
+   - Dry-run `remnote_set_document_status` on the run note with `isDocument: true` and `expectedOldRemType` set to the
+     current `remType`; confirm `dryRun` is true and the same Rem ID is returned.
 
 7. Rename the run note with `remnote_update_note`.
    - New title: `[MCP-AGENT-TEST] Tool smoke test updated <current ISO timestamp>`

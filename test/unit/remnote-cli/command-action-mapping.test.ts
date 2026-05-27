@@ -77,6 +77,15 @@ describe('command bridge action mapping', () => {
     executeSpy.mockRestore();
   });
 
+  it('maps create --as-document to create_note asDocument payload', async () => {
+    const executeSpy = await runCommand(['create', 'Title', '--as-document']);
+    expect(executeSpy).toHaveBeenCalledWith('create_note', {
+      title: 'Title',
+      asDocument: true,
+    });
+    executeSpy.mockRestore();
+  });
+
   it('maps create command with title-only positional args', async () => {
     const executeSpy = await runCommand(['create', 'Title']);
     expect(executeSpy).toHaveBeenCalledWith('create_note', {

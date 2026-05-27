@@ -6,6 +6,7 @@ import { SearchSchema } from '../schemas/remnote-schemas.js';
 import { SearchByTagSchema } from '../schemas/remnote-schemas.js';
 import { ReadNoteSchema } from '../schemas/remnote-schemas.js';
 import { UpdateNoteSchema } from '../schemas/remnote-schemas.js';
+import { SetDocumentStatusSchema } from '../schemas/remnote-schemas.js';
 import { ListChildrenSchema } from '../schemas/remnote-schemas.js';
 import { MoveNoteSchema } from '../schemas/remnote-schemas.js';
 import { InsertChildrenSchema } from '../schemas/remnote-schemas.js';
@@ -121,6 +122,11 @@ export const CREATE_NOTE_TOOL = {
         type: 'array',
         items: { type: 'string' },
         description: 'Exact tag Rem IDs to apply',
+      },
+      asDocument: {
+        type: 'boolean',
+        description:
+          'Mark the created title/root Rem as a document while preserving any concept/card status',
       },
     },
     required: [],
@@ -730,6 +736,103 @@ export const UPDATE_NOTE_TOOL = {
   },
 };
 
+export const SET_DOCUMENT_STATUS_TOOL = {
+  name: 'remnote_set_document_status',
+  description:
+    'Preview or set whether an existing Rem is marked as a document. Uses dryRun=true by default, preserves Rem ID, children, parent, tags, and concept/card status, and requires write operations to be enabled.',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {
+      remId: { type: 'string', description: 'The Rem ID whose document status should change' },
+      isDocument: {
+        type: 'boolean',
+        description: 'Whether the Rem should be marked as a document',
+      },
+      dryRun: {
+        type: 'boolean',
+        description: 'Preview the document-status change without mutating RemNote (default: true)',
+      },
+      expectedOldRemType: {
+        type: 'string',
+        enum: ['document', 'dailyDocument', 'concept', 'descriptor', 'portal', 'text'],
+        description:
+          'Optional stale-context guard; reject if current remType differs from this value',
+      },
+    },
+    required: ['remId', 'isDocument'],
+    additionalProperties: false,
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      remId: { type: 'string', description: 'The Rem ID that was checked or changed' },
+      title: { type: 'string', description: 'Rendered title/front text' },
+      oldRemType: {
+        type: 'string',
+        description: 'Bridge remType before the requested document-status change',
+      },
+      newRemType: {
+        type: 'string',
+        description: 'Bridge remType after the change, or previewed remType for dry runs',
+      },
+      oldIsDocument: {
+        type: 'boolean',
+        description: 'Document status before the requested change',
+      },
+      newIsDocument: {
+        type: 'boolean',
+        description: 'Document status after the change, or previewed status for dry runs',
+      },
+      requestedIsDocument: {
+        type: 'boolean',
+        description: 'Requested document status',
+      },
+      dryRun: {
+        type: 'boolean',
+        description: 'Whether the request was only a preview',
+      },
+      changed: {
+        type: 'boolean',
+        description: 'Whether RemNote was actually mutated by this call',
+      },
+      wouldChange: {
+        type: 'boolean',
+        description: 'Whether the requested status differs from the current status',
+      },
+      sdkSupportsDocumentStatus: {
+        type: 'boolean',
+        description: 'Whether the bridge runtime exposes a safe SDK document-status setter',
+      },
+      warnings: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Important side-effect notes, especially around preserved card status',
+      },
+      cardDirectionBefore: {
+        type: 'string',
+        description: 'Card direction before the change when available',
+      },
+      cardDirectionAfter: {
+        type: 'string',
+        description: 'Card direction after the change when available',
+      },
+    },
+    required: [
+      'remId',
+      'title',
+      'oldRemType',
+      'newRemType',
+      'oldIsDocument',
+      'newIsDocument',
+      'requestedIsDocument',
+      'dryRun',
+      'changed',
+      'wouldChange',
+      'sdkSupportsDocumentStatus',
+    ],
+  },
+};
+
 export const INSERT_CHILDREN_TOOL = {
   name: 'remnote_insert_children',
   description:
@@ -1030,6 +1133,7 @@ export const ALL_TOOLS = [
   READ_NOTE_TOOL,
   LIST_CHILDREN_TOOL,
   UPDATE_NOTE_TOOL,
+  SET_DOCUMENT_STATUS_TOOL,
   MOVE_NOTE_TOOL,
   INSERT_CHILDREN_TOOL,
   REPLACE_CHILDREN_TOOL,
@@ -1120,6 +1224,12 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           break;
         }
 
+        case 'remnote_set_document_status': {
+          const args = SetDocumentStatusSchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('set_document_status', args);
+          break;
+        }
+
         case 'remnote_insert_children': {
           const args = InsertChildrenSchema.parse(request.params.arguments);
           result = await wsServer.sendRequest('insert_children', args);
@@ -1163,9 +1273,9 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           }
 
           result = {
-            playbookVersion: '1.4.0',
+            playbookVersion: '1.5.0',
             summary:
-              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, request nearby ancestors when hierarchy context matters, choose compact/full output views, and apply safe exact-ID writes.',
+              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, request nearby ancestors when hierarchy context matters, choose compact/full output views, and apply safe exact-ID writes including dry-run-first document status changes.',
             recommendedStatusCheck: {
               tool: 'remnote_status',
               cadence: 'recommended once per session and before risky writes',
@@ -1186,7 +1296,8 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
               'Need tabular/structured data from an Advanced Table? Use remnote_read_table with either tableTitle or tableRemId. Use propertyFilter to limit columns for large tables.',
               'Need a human-readable summary? Switch to contentMode="markdown" on search/read results.',
               'Need to rename a note? Use remnote_update_note with remId and title only.',
-              'Need to create a note? Use remnote_create_note; pass tagRemIds for exact-ID tag assignment.',
+              'Need to create a note? Use remnote_create_note; pass tagRemIds for exact-ID tag assignment and asDocument=true when the title/root Rem should be a document.',
+              'Need to mark an existing Rem as a document? Use remnote_set_document_status dryRun first, include expectedOldRemType for stale-context protection, then rerun with dryRun=false after approval.',
               'Need to append to today journal? Use remnote_append_journal; pass tagRemIds when the journal entry should be tagged.',
               'Need to insert children? Use remnote_insert_children with an explicit position.',
               'Need to move a note? Use remnote_move_note dryRun first, include expectedOldParentRemId for stale-context protection, then rerun with dryRun=false after approval.',
@@ -1216,6 +1327,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
               guidance: [
                 'Create/update/insert/replace/tag/journal writes require acceptWriteOperations=true.',
                 'remnote_update_note is metadata-only; use insert_children, replace_children, and update_tags for structural or tag writes.',
+                'remnote_set_document_status changes only document status; it preserves concept/card status and defaults to dryRun=true.',
                 'remnote_replace_children requires acceptReplaceOperation=true.',
                 'remnote_insert_children preserves existing child Rem IDs; remnote_replace_children removes them.',
                 'remnote_move_note preserves the moved Rem ID and subtree; dryRun defaults to true.',

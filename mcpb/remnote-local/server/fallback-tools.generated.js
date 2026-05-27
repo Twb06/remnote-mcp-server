@@ -26,6 +26,11 @@ export const FALLBACK_TOOLS = [
           },
           description: 'Exact tag Rem IDs to apply',
         },
+        asDocument: {
+          type: 'boolean',
+          description:
+            'Mark the created title/root Rem as a document while preserving any concept/card status',
+        },
       },
       required: [],
       additionalProperties: false,
@@ -234,6 +239,37 @@ export const FALLBACK_TOOLS = [
         },
       },
       required: ['remId', 'title'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'remnote_set_document_status',
+    description:
+      'Preview or set whether an existing Rem is marked as a document. Uses dryRun=true by default, preserves Rem ID, children, parent, tags, and concept/card status, and requires write operations to be enabled.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        remId: {
+          type: 'string',
+          description: 'The Rem ID whose document status should change',
+        },
+        isDocument: {
+          type: 'boolean',
+          description: 'Whether the Rem should be marked as a document',
+        },
+        dryRun: {
+          type: 'boolean',
+          description:
+            'Preview the document-status change without mutating RemNote (default: true)',
+        },
+        expectedOldRemType: {
+          type: 'string',
+          enum: ['document', 'dailyDocument', 'concept', 'descriptor', 'portal', 'text'],
+          description:
+            'Optional stale-context guard; reject if current remType differs from this value',
+        },
+      },
+      required: ['remId', 'isDocument'],
       additionalProperties: false,
     },
   },

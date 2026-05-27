@@ -67,6 +67,7 @@ remnote-cli create [title] [options]
 | `--content-file <path>` | none    | Read initial content from UTF-8 file (`-` for stdin) |
 | `--parent-id <id>`      | none    | Parent Rem ID                                        |
 | `--tag-ids <id...>`     | none    | Exact tag Rem IDs to add                             |
+| `--as-document`         | false   | Mark the created title/root Rem as a document        |
 
 Behavior rules:
 
@@ -78,6 +79,7 @@ Behavior rules:
 - Write content from `--content-file` and stdin is capped at 100 KB.
 - If `parent-id` is not provided, the note will be created under the default root rem in the setting.
 - Tag Rem IDs are applied only to the top-level Rems created. Tag names are not accepted.
+- `--as-document` requires a title/root Rem and preserves any flashcard/concept status created by markdown syntax.
 
 Examples:
 
@@ -91,6 +93,9 @@ remnote-cli create --title "Meeting Notes" --parent-id <parent-rem-id>
 
 # Create a new note with title, content, and exact tag Rem IDs
 remnote-cli create --title "Project Plan" --content "Phase 1" --tag-ids <tag-rem-id>
+
+# Create a title/root Rem as a document
+remnote-cli create --title "Project Plan" --content "Phase 1" --as-document
 
 # Create a new note with markdown content directly under parent rem id
 # Note: if the content is in markdown format, --content/--content-file must be used to avoid misinterpretation of the content as command options

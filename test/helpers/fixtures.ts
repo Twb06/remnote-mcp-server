@@ -35,6 +35,13 @@ export const validUpdateNoteInput = {
   title: 'Updated Title',
 };
 
+export const validSetDocumentStatusInput = {
+  remId: 'rem-id-456',
+  isDocument: true,
+  dryRun: false,
+  expectedOldRemType: 'concept',
+};
+
 export const validInsertChildrenInput = {
   parentRemId: 'rem-id-456',
   content: 'Inserted content',

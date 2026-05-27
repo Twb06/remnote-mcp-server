@@ -11,6 +11,7 @@ import {
   SEARCH_BY_TAG_TOOL,
   READ_NOTE_TOOL,
   UPDATE_NOTE_TOOL,
+  SET_DOCUMENT_STATUS_TOOL,
   LIST_CHILDREN_TOOL,
   INSERT_CHILDREN_TOOL,
   MOVE_NOTE_TOOL,
@@ -30,6 +31,7 @@ import {
   validSearchByTagInput,
   validReadNoteInput,
   validUpdateNoteInput,
+  validSetDocumentStatusInput,
   validInsertChildrenInput,
   validReplaceChildrenInput,
   validUpdateTagsInput,
@@ -107,6 +109,11 @@ describe('Tool Definitions', () => {
     const properties = CREATE_NOTE_TOOL.inputSchema.properties as Record<string, unknown>;
     expect(properties.tagRemIds).toBeDefined();
     expect(properties.tags).toBeUndefined();
+  });
+
+  it('should advertise optional asDocument for CREATE_NOTE_TOOL', () => {
+    const properties = CREATE_NOTE_TOOL.inputSchema.properties as Record<string, unknown>;
+    expect(properties.asDocument).toBeDefined();
   });
 
   it('should have correct name for SEARCH_TOOL', () => {
@@ -306,10 +313,19 @@ describe('Tool Definitions', () => {
     expect(properties.removeTags).toBeUndefined();
   });
 
+  it('should advertise document status mutation as a dry-run-first tool', () => {
+    expect(SET_DOCUMENT_STATUS_TOOL.name).toBe('remnote_set_document_status');
+    expect(SET_DOCUMENT_STATUS_TOOL.inputSchema.required).toEqual(['remId', 'isDocument']);
+    expect(SET_DOCUMENT_STATUS_TOOL.inputSchema.properties).toHaveProperty('dryRun');
+    expect(SET_DOCUMENT_STATUS_TOOL.inputSchema.properties).toHaveProperty('expectedOldRemType');
+    expect(SET_DOCUMENT_STATUS_TOOL.outputSchema.required).toContain('wouldChange');
+  });
+
   it('should expose split write tools', () => {
     expect(LIST_CHILDREN_TOOL.name).toBe('remnote_list_children');
     expect(INSERT_CHILDREN_TOOL.name).toBe('remnote_insert_children');
     expect(MOVE_NOTE_TOOL.name).toBe('remnote_move_note');
+    expect(SET_DOCUMENT_STATUS_TOOL.name).toBe('remnote_set_document_status');
     expect(REPLACE_CHILDREN_TOOL.name).toBe('remnote_replace_children');
     expect(UPDATE_TAGS_TOOL.name).toBe('remnote_update_tags');
   });
@@ -416,14 +432,14 @@ describe('Tool Registration', () => {
     expect(mockServer.hasHandler(ListToolsRequestSchema)).toBe(true);
   });
 
-  it('should return all 12 tools in list', async () => {
+  it('should return all 15 tools in list', async () => {
     registerAllTools(mockServer as never, mockWsServer as never, createMockLogger());
 
     const result = (await mockServer.callHandler(ListToolsRequestSchema, {})) as {
       tools: unknown[];
     };
 
-    expect(result.tools).toHaveLength(14);
+    expect(result.tools).toHaveLength(15);
   });
 
   it('should include all tool names in list', async () => {
@@ -439,6 +455,7 @@ describe('Tool Registration', () => {
     expect(names).toContain('remnote_search_by_tag');
     expect(names).toContain('remnote_read_note');
     expect(names).toContain('remnote_update_note');
+    expect(names).toContain('remnote_set_document_status');
     expect(names).toContain('remnote_insert_children');
     expect(names).toContain('remnote_replace_children');
     expect(names).toContain('remnote_update_tags');
@@ -484,6 +501,20 @@ describe('Tool Handlers - create_note', () => {
 
     expect(result.isError).toBeUndefined();
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('create_note', { content: '- item' });
+  });
+
+  it('should forward asDocument to the bridge', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_create_note',
+        arguments: { ...validCreateNoteInput, asDocument: true },
+      },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('create_note', {
+      ...validCreateNoteInput,
+      asDocument: true,
+    });
   });
 });
 
@@ -820,6 +851,82 @@ describe('Tool Handlers - update_note', () => {
           remId: 'rem-456',
           appendContent: 'append',
           replaceContent: 'replace',
+        },
+      },
+    })) as { isError: boolean; content: { text: string }[] };
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('Unrecognized');
+  });
+});
+
+describe('Tool Handlers - set_document_status', () => {
+  let mockServer: MockMCPServer;
+  let mockWsServer: { sendRequest: ReturnType<typeof vi.fn> };
+  const sampleSetDocumentStatusResult = {
+    remId: 'rem-id-456',
+    title: 'Updated Title',
+    oldRemType: 'concept',
+    newRemType: 'document',
+    oldIsDocument: false,
+    newIsDocument: true,
+    requestedIsDocument: true,
+    dryRun: false,
+    changed: true,
+    wouldChange: true,
+    sdkSupportsDocumentStatus: true,
+  };
+
+  beforeEach(() => {
+    mockServer = new MockMCPServer();
+    mockWsServer = {
+      sendRequest: vi.fn().mockResolvedValue(sampleSetDocumentStatusResult),
+    };
+    registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never);
+  });
+
+  it('should call wsServer.sendRequest with set_document_status action', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_set_document_status', arguments: validSetDocumentStatusInput },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith(
+      'set_document_status',
+      validSetDocumentStatusInput
+    );
+  });
+
+  it('should default dryRun to true before forwarding', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_set_document_status',
+        arguments: { remId: 'rem-id-456', isDocument: true },
+      },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('set_document_status', {
+      remId: 'rem-id-456',
+      isDocument: true,
+      dryRun: true,
+    });
+  });
+
+  it('should return formatted JSON result', async () => {
+    const result = (await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_set_document_status', arguments: validSetDocumentStatusInput },
+    })) as ToolSuccessResult;
+
+    expectStructuredToolResult(result, sampleSetDocumentStatusResult);
+  });
+
+  it('should reject unknown fields', async () => {
+    const result = (await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_set_document_status',
+        arguments: {
+          remId: 'rem-id-456',
+          isDocument: true,
+          remType: 'document',
         },
       },
     })) as { isError: boolean; content: { text: string }[] };
@@ -1176,14 +1283,17 @@ describe('Tool Handlers - get_playbook', () => {
       params: { name: 'remnote_get_playbook', arguments: {} },
     })) as ToolSuccessResult;
 
-    expect(result.structuredContent?.playbookVersion).toBe('1.4.0');
+    expect(result.structuredContent?.playbookVersion).toBe('1.5.0');
     expect(Array.isArray(result.structuredContent?.decisionTree)).toBe(true);
     expect((result.structuredContent?.decisionTree as unknown[])?.length).toBeGreaterThan(0);
     expect(result.structuredContent?.decisionTree).toContain(
       'Need to rename a note? Use remnote_update_note with remId and title only.'
     );
     expect(result.structuredContent?.decisionTree).toContain(
-      'Need to create a note? Use remnote_create_note; pass tagRemIds for exact-ID tag assignment.'
+      'Need to create a note? Use remnote_create_note; pass tagRemIds for exact-ID tag assignment and asDocument=true when the title/root Rem should be a document.'
+    );
+    expect(result.structuredContent?.decisionTree).toContain(
+      'Need to mark an existing Rem as a document? Use remnote_set_document_status dryRun first, include expectedOldRemType for stale-context protection, then rerun with dryRun=false after approval.'
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need to append to today journal? Use remnote_append_journal; pass tagRemIds when the journal entry should be tagged.'
@@ -1214,6 +1324,7 @@ describe('Tool Handlers - get_playbook', () => {
     expect(result.structuredContent?.writePolicy).toMatchObject({
       guidance: expect.arrayContaining([
         'All production tag writes use exact tag Rem IDs: create_note.tagRemIds, append_journal.tagRemIds, and update_tags add/remove arrays.',
+        'remnote_set_document_status changes only document status; it preserves concept/card status and defaults to dryRun=true.',
       ]),
     });
   });
