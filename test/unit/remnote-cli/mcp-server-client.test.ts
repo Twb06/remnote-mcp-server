@@ -1,8 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRequire } from 'node:module';
-import { McpServerClient } from '../../../src/remnote-cli/client/mcp-server-client.js';
+import { readdir, readFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  BRIDGE_ACTION_TO_TOOL,
+  McpServerClient,
+} from '../../../src/remnote-cli/client/mcp-server-client.js';
 
 const require = createRequire(import.meta.url);
+const testDir = dirname(fileURLToPath(import.meta.url));
+const projectRoot = join(testDir, '..', '..', '..');
+const cliCommandsDir = join(projectRoot, 'src', 'remnote-cli', 'commands');
 const packageJson = require('../../../package.json') as { version: string };
 const SAME_LINE_SERVER_VERSION = packageJson.version;
 const MISMATCH_SERVER_VERSION = packageJson.version.replace(
@@ -59,6 +68,45 @@ describe('McpServerClient', () => {
       arguments: { title: 'Test' },
     });
     expect(result).toEqual({ remId: 'abc123' });
+  });
+
+  it.each([
+    ['list_children', 'remnote_list_children', { parentRemId: 'parent123' }],
+    ['move_note', 'remnote_move_note', { remId: 'rem123', newParentRemId: 'parent123' }],
+    [
+      'set_document_status',
+      'remnote_set_document_status',
+      { remId: 'rem123', isDocument: true, dryRun: true },
+    ],
+  ])('maps %s bridge action to %s', async (action, toolName, payload) => {
+    mocks.callTool.mockResolvedValue({
+      structuredContent: { ok: true },
+      content: [{ type: 'text', text: '{"ok":true}' }],
+    });
+
+    const client = new McpServerClient('http://127.0.0.1:3001');
+    await client.execute(action, payload);
+
+    expect(mocks.callTool).toHaveBeenCalledWith({
+      name: toolName,
+      arguments: payload,
+    });
+  });
+
+  it('maps every bridge action used by CLI commands to an MCP tool', async () => {
+    const actionPattern = /\.execute\(\s*['"]([^'"]+)['"]/g;
+    const actions = new Set<string>();
+
+    for (const file of await readdir(cliCommandsDir)) {
+      if (!file.endsWith('.ts')) continue;
+      const source = await readFile(join(cliCommandsDir, file), 'utf8');
+      for (const match of source.matchAll(actionPattern)) {
+        actions.add(match[1]);
+      }
+    }
+
+    expect(actions.size).toBeGreaterThan(0);
+    expect([...actions].filter((action) => !(action in BRIDGE_ACTION_TO_TOOL)).sort()).toEqual([]);
   });
 
   it('normalizes an already-suffixed MCP URL with a trailing slash', async () => {

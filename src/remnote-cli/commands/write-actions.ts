@@ -1,4 +1,4 @@
-import { Command } from 'commander';
+import { Command, InvalidArgumentError } from 'commander';
 import { createCommandClient } from '../client/command-client.js';
 import { formatResult, formatError, type OutputFormat } from '../output/formatter.js';
 import { EXIT } from '../config.js';
@@ -6,6 +6,24 @@ import { resolveOptionalInlineOrFileContent } from './content-input.js';
 import { validateNotFlag } from './arg-utils.js';
 
 type InsertPosition = 'first' | 'last' | 'before' | 'after';
+const REM_CLASSIFICATIONS = [
+  'document',
+  'dailyDocument',
+  'concept',
+  'descriptor',
+  'portal',
+  'text',
+] as const;
+
+function validateExpectedOldRemType(value: string, command: Command): string {
+  validateNotFlag(value, command);
+  if (!REM_CLASSIFICATIONS.includes(value as (typeof REM_CLASSIFICATIONS)[number])) {
+    throw new InvalidArgumentError(
+      `expectedOldRemType must be one of: ${REM_CLASSIFICATIONS.join(', ')}`
+    );
+  }
+  return value;
+}
 
 function formatRemResult(data: unknown, emptyMessage: string): string {
   const r = data as { remIds?: string[]; titles?: string[] };
@@ -200,6 +218,59 @@ export function registerMoveNoteCommand(program: Command): void {
           formatResult(result, format, (data) => {
             const r = data as Record<string, unknown>;
             return `${r.dryRun ? 'Dry-run move' : 'Moved'}: ${r.title ?? remId} (${r.remId ?? remId}) -> ${r.newParentTitle ?? r.newParentRemId}`;
+          })
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(formatError(message, format));
+        process.exit(EXIT.ERROR);
+      } finally {
+        await client.close();
+      }
+    });
+}
+
+export function registerSetDocumentStatusCommand(program: Command): void {
+  const subprogram = program.command('set-document-status <rem-id>');
+  const validateExpectedType = (val: string) => validateExpectedOldRemType(val, subprogram);
+
+  subprogram
+    .description('Preview or set document status on an existing Rem')
+    .option('--document', 'Mark the Rem as a document')
+    .option('--no-document', 'Unmark the Rem as a document')
+    .option('--apply', 'Apply the change. Without this flag, the command runs as dry-run.')
+    .option(
+      '--expected-old-rem-type <type>',
+      `Reject if current remType differs from this value (${REM_CLASSIFICATIONS.join(', ')})`,
+      validateExpectedType
+    )
+    .action(async (remId: string, opts) => {
+      const globalOpts = program.opts();
+      const format: OutputFormat = globalOpts.text ? 'text' : 'json';
+      const client = createCommandClient(program);
+
+      try {
+        if (typeof opts.document !== 'boolean') {
+          throw new Error('Provide --document or --no-document.');
+        }
+
+        const payload: Record<string, unknown> = {
+          remId,
+          isDocument: opts.document,
+          dryRun: !opts.apply,
+        };
+        if (opts.expectedOldRemType) payload.expectedOldRemType = opts.expectedOldRemType;
+
+        const result = await client.execute('set_document_status', payload);
+        console.log(
+          formatResult(result, format, (data) => {
+            const r = data as Record<string, unknown>;
+            const label = r.dryRun
+              ? 'Dry-run document status'
+              : r.changed
+                ? 'Updated document status'
+                : 'Document status unchanged';
+            return `${label}: ${r.title ?? remId} (${r.remId ?? remId}) ${r.oldRemType ?? '?'} -> ${r.newRemType ?? '?'}; isDocument=${String(r.newIsDocument ?? r.requestedIsDocument)}`;
           })
         );
       } catch (error) {

@@ -14,8 +14,9 @@ Most commands require a running `remnote-mcp-server`:
 remnote-mcp-server
 ```
 
-Bridge actions (`create`, `search`, `search-by-tag`, `read`, `update`, `journal`, `status`) also require RemNote with
-the RemNote Automation Bridge plugin connected to that MCP server.
+Bridge actions (`create`, `search`, `search-by-tag`, `read`, `list-children`, `move-note`, `update`,
+`set-document-status`, `insert-children`, `replace-children`, `update-tags`, `journal`, `read-table`, `status`) also
+require RemNote with the RemNote Automation Bridge plugin connected to that MCP server.
 
 ## Global Options
 
@@ -268,6 +269,26 @@ Examples:
 ```bash
 remnote-cli update abc123def --title "Updated Title"
 ```
+
+## set-document-status
+
+Preview or set document status on an existing Rem. The command is a dry-run unless `--apply` is provided. Concept/card
+status is preserved.
+
+```bash
+remnote-cli set-document-status <rem-id> --document
+remnote-cli set-document-status <rem-id> --document --expected-old-rem-type concept --apply
+remnote-cli set-document-status <rem-id> --no-document --apply
+```
+
+| Option                          | Default | Description                                                   |
+| ------------------------------- | ------- | ------------------------------------------------------------- |
+| `--document`                    | none    | Mark the Rem as a document                                    |
+| `--no-document`                 | none    | Remove document status from the Rem                           |
+| `--apply`                       | false   | Perform the change instead of dry-run preview                 |
+| `--expected-old-rem-type <type>` | none    | Reject stale context before changing document status          |
+
+Accepted `--expected-old-rem-type` values: `document`, `dailyDocument`, `concept`, `descriptor`, `portal`, `text`.
 
 ## list-children
 

@@ -183,6 +183,113 @@ export async function readUpdateWorkflow(
     }
   }
 
+  // Step 1b: Set document status on an existing Rem with dry-run first
+  {
+    const start = Date.now();
+    try {
+      if (acceptWriteOperations) {
+        const created = (await ctx.cli.runExpectSuccess([
+          'create',
+          '--title',
+          `[CLI-TEST] Document Status Candidate ${ctx.runId}`,
+          '--parent-id',
+          state.integrationParentRemId as string,
+        ])) as Record<string, unknown>;
+        assertHasField(created, 'remIds', 'document status candidate remIds');
+        assertTruthy(
+          Array.isArray(created.remIds) && created.remIds.length > 0,
+          'document status candidate should create a Rem'
+        );
+        const candidateRemId = (created.remIds as string[])[0];
+
+        const before = (await ctx.cli.runExpectSuccess([
+          'read',
+          candidateRemId,
+          '--content-mode',
+          'none',
+        ])) as Record<string, unknown>;
+        assertTruthy(typeof before.remType === 'string', 'candidate should expose remType');
+        const oldRemType = before.remType as string;
+
+        const dryRun = (await ctx.cli.runExpectSuccess([
+          'set-document-status',
+          candidateRemId,
+          '--document',
+          '--expected-old-rem-type',
+          oldRemType,
+        ])) as Record<string, unknown>;
+        assertEqual(dryRun.remId as string, candidateRemId, 'dry-run should preserve Rem ID');
+        assertEqual(dryRun.dryRun as boolean, true, 'document status dry-run should report true');
+        assertEqual(dryRun.changed as boolean, false, 'dry-run should not mutate');
+        assertEqual(dryRun.newIsDocument as boolean, true, 'dry-run should preview document');
+
+        const afterDryRun = (await ctx.cli.runExpectSuccess([
+          'read',
+          candidateRemId,
+          '--content-mode',
+          'none',
+        ])) as Record<string, unknown>;
+        assertEqual(
+          afterDryRun.remType as string,
+          oldRemType,
+          'dry-run should leave remType unchanged'
+        );
+
+        const applied = (await ctx.cli.runExpectSuccess([
+          'set-document-status',
+          candidateRemId,
+          '--document',
+          '--expected-old-rem-type',
+          oldRemType,
+          '--apply',
+        ])) as Record<string, unknown>;
+        assertEqual(applied.remId as string, candidateRemId, 'apply should preserve Rem ID');
+        assertEqual(applied.dryRun as boolean, false, 'document status apply should report false');
+        assertEqual(applied.newIsDocument as boolean, true, 'apply should mark document');
+
+        const reread = (await ctx.cli.runExpectSuccess([
+          'read',
+          candidateRemId,
+          '--content-mode',
+          'none',
+        ])) as Record<string, unknown>;
+        assertEqual(reread.remId as string, candidateRemId, 're-read should preserve Rem ID');
+        assertEqual(reread.remType as string, 'document', 're-read should show document remType');
+
+        steps.push({
+          label: 'Set document status dry-run and apply',
+          passed: true,
+          durationMs: Date.now() - start,
+        });
+      } else {
+        const result = await ctx.cli.runExpectError([
+          'set-document-status',
+          state.noteAId as string,
+          '--document',
+        ]);
+        assertContains(
+          result.stderr,
+          'Write operations are disabled',
+          'set document status should be blocked when write operations are disabled'
+        );
+        steps.push({
+          label: 'Set document status blocked by write gate',
+          passed: true,
+          durationMs: Date.now() - start,
+        });
+      }
+    } catch (e) {
+      steps.push({
+        label: acceptWriteOperations
+          ? 'Set document status dry-run and apply'
+          : 'Set document status blocked by write gate',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
   // Step 2-4: Read note B contentMode modes
   for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();

@@ -11,6 +11,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Add `remnote_set_document_status` for dry-run-first document status updates that preserve Rem IDs, hierarchy, tags,
   and concept/card status.
+- Add `remnote-cli set-document-status` for dry-run-first document status updates on existing Rems.
 - Add `remnote_create_note.asDocument` and `remnote-cli create --as-document` to mark a created title/root Rem as a
   document.
 - Add discovery-oriented API support for parent-first `ancestors`, compact/full output `view`, `remnote_list_children`,
@@ -40,14 +41,20 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Update `remnote_get_playbook`, tool docs, and the MCP smoke prompt for document-status workflows.
+- Update the bundled `remnote-cli` skill guidance for document-root creation and document-status workflows.
 - Update `AGENTS.md` contract maps for the current discovery API tool and CLI surface, including
-  `remnote_list_children`, `remnote_move_note`, `list-children`, and `move-note`.
+  `remnote_list_children`, `remnote_move_note`, `remnote_set_document_status`, `list-children`, `move-note`, and
+  `set-document-status`.
 - Tighten the MCP tool smoke-test prompt so required tools, hierarchy traversal, and dry-run move validation match the
   discovery API contract.
 - Update the bundled `remnote-cli` skill guidance for the current `search-by-tag`, split write, exact-ID tag, and
   `read-table` command surface.
 - Link the bundled RemNote CLI skill from the README for OpenClaw/Hermes-style local agent workflows.
 - Mark `skills/remnote/SKILL.md` as a critical agent-facing update target in the API-change checklist.
+
+### Fixed
+
+- Fix bundled CLI runtime mapping for `list-children` and `move-note`.
 
 ## [0.15.0] - 2026-05-15
 

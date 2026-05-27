@@ -22,6 +22,7 @@ describe('createProgram', () => {
     expect(commandNames).not.toContain('search-tag');
     expect(commandNames).toContain('read');
     expect(commandNames).toContain('update');
+    expect(commandNames).toContain('set-document-status');
     expect(commandNames).toContain('journal');
     expect(commandNames).toContain('status');
   });

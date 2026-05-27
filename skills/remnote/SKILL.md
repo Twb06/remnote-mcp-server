@@ -40,6 +40,8 @@ skill customization when needed.
 - "Read this RemNote by ID: `<rem-id>`."
 - "Map the top-level structure of my whole RemNote knowledge base."
 - "Create a RemNote note titled X with this content." (requires `confirm write`)
+- "Create a RemNote document note titled X with this content." (requires `confirm write`)
+- "Mark this existing RemNote note as a document." (requires `confirm write`)
 - "Append this to my journal in RemNote." (requires `confirm write`)
 
 ## Preconditions (required)
@@ -63,8 +65,8 @@ If any precondition is missing, stop and fix setup first.
 
 - Default to read-only flows: `status`, `search`, `search-by-tag`, `read`, `read-table`.
 - Do not run mutating commands by default.
-- For writes (`create`, `update`, `insert-children`, `replace-children`, `update-tags`, `journal`), require the exact
-  phrase `confirm write` from the user in the same turn.
+- For writes (`create`, `update`, `set-document-status`, `insert-children`, `replace-children`, `update-tags`,
+  `journal`), require the exact phrase `confirm write` from the user in the same turn.
 - If `confirm write` is not present, ask for confirmation and do not execute writes.
 
 ## Command Invocation Rule (critical)
@@ -150,7 +152,16 @@ If any precondition is missing, stop and fix setup first.
 - Create (preferred): `remnote-cli create "Title" --content-file /tmp/body.md --text`
 - Create under a parent or apply tags:
   - `remnote-cli create "Title" --parent-id <rem-id> --tag-ids <tag-rem-id> --text`
+- Create the title/root Rem as a document:
+  - `remnote-cli create "Title" --content-file /tmp/body.md --as-document --text`
+  - `--as-document` requires an explicit title/root Rem and preserves any concept/card status created by markdown
+    syntax.
 - Update title: `remnote-cli update <rem-id> --title "New Title" --text`
+- Set document status on an existing Rem (dry-run first):
+  - `remnote-cli set-document-status <rem-id> --document --text`
+  - Apply after preview:
+    `remnote-cli set-document-status <rem-id> --document --expected-old-rem-type concept --apply --text`
+  - Use `--no-document` to remove document status; concept/card status is preserved.
 - Insert children (preferred for append-like child writes):
   - `remnote-cli insert-children <parent-rem-id> --content-file /tmp/children.md --position last --text`
   - `remnote-cli insert-children <parent-rem-id> --content-file /tmp/children.md --position before --sibling-rem-id <rem-id> --text`
@@ -172,11 +183,13 @@ If any precondition is missing, stop and fix setup first.
   - Treat replace as destructive and require the user to clearly request replace semantics.
   - Quote text values with spaces or special characters, and use explicit empty-value syntax like `--title=""` to avoid
     argument shifting.
+  - Use `set-document-status` dry-run first and include `--expected-old-rem-type` when applying from a prior read.
 
 ## Failure Handling
 
 When a bridge-backed operation fails (`search`, `search-by-tag`, `read`, `read-table`, `create`, `update`,
-`insert-children`, `replace-children`, `update-tags`, `journal`, `status`), run this sequence in order:
+`set-document-status`, `insert-children`, `replace-children`, `update-tags`, `journal`, `status`), run this sequence in
+order:
 
 1. Check bridge status first:
    - `remnote-cli status --text`

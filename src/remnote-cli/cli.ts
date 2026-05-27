@@ -13,6 +13,7 @@ import {
   registerInsertChildrenCommand,
   registerMoveNoteCommand,
   registerReplaceChildrenCommand,
+  registerSetDocumentStatusCommand,
   registerUpdateTagsCommand,
 } from './commands/write-actions.js';
 import { registerJournalCommand } from './commands/journal.js';
@@ -46,6 +47,7 @@ export function createProgram(version: string): Command {
   registerUpdateCommand(program);
   registerInsertChildrenCommand(program);
   registerMoveNoteCommand(program);
+  registerSetDocumentStatusCommand(program);
   registerReplaceChildrenCommand(program);
   registerUpdateTagsCommand(program);
   registerJournalCommand(program);

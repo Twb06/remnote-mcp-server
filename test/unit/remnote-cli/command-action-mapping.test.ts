@@ -404,6 +404,66 @@ describe('command bridge action mapping', () => {
     executeSpy.mockRestore();
   });
 
+  it('maps set-document-status to dry-run set_document_status by default', async () => {
+    const executeSpy = await runCommand([
+      'set-document-status',
+      'rem123',
+      '--document',
+      '--expected-old-rem-type',
+      'concept',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('set_document_status', {
+      remId: 'rem123',
+      isDocument: true,
+      dryRun: true,
+      expectedOldRemType: 'concept',
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('maps set-document-status --apply with --no-document', async () => {
+    const executeSpy = await runCommand([
+      'set-document-status',
+      'rem123',
+      '--no-document',
+      '--apply',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('set_document_status', {
+      remId: 'rem123',
+      isDocument: false,
+      dryRun: false,
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('rejects set-document-status without an explicit target status', async () => {
+    const executeSpy = vi
+      .spyOn(McpServerClient.prototype, 'execute')
+      .mockResolvedValue({ ok: true });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const originalExit = process.exit;
+    process.exit = vi.fn() as never;
+    const program = createProgram('0.1.0-test');
+
+    try {
+      await program.parseAsync(['node', 'remnote-cli', 'set-document-status', 'rem123'], {
+        from: 'node',
+      });
+
+      expect(executeSpy).not.toHaveBeenCalled();
+      expect(errSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Provide --document or --no-document')
+      );
+      expect(process.exit).toHaveBeenCalledWith(1);
+    } finally {
+      process.exit = originalExit;
+      logSpy.mockRestore();
+      errSpy.mockRestore();
+      executeSpy.mockRestore();
+    }
+  });
+
   it('maps journal command with positional content', async () => {
     const executeSpy = await runCommand([
       'journal',

@@ -87,6 +87,62 @@ describe('command text output', () => {
     tagResult.executeSpy.mockRestore();
   });
 
+  it('formats document-status results', async () => {
+    const { output, executeSpy } = await runTextCommand(
+      ['set-document-status', 'rem-1', '--document'],
+      {
+        remId: 'rem-1',
+        title: 'Project Plan',
+        oldRemType: 'concept',
+        newRemType: 'document',
+        newIsDocument: true,
+        dryRun: true,
+        changed: false,
+      }
+    );
+
+    expect(output).toBe(
+      'Dry-run document status: Project Plan (rem-1) concept -> document; isDocument=true'
+    );
+    executeSpy.mockRestore();
+  });
+
+  it('formats applied document-status results', async () => {
+    const updated = await runTextCommand(
+      ['set-document-status', 'rem-1', '--document', '--apply'],
+      {
+        remId: 'rem-1',
+        title: 'Project Plan',
+        oldRemType: 'text',
+        newRemType: 'document',
+        newIsDocument: true,
+        dryRun: false,
+        changed: true,
+      }
+    );
+    expect(updated.output).toBe(
+      'Updated document status: Project Plan (rem-1) text -> document; isDocument=true'
+    );
+    updated.executeSpy.mockRestore();
+
+    const unchanged = await runTextCommand(
+      ['set-document-status', 'rem-1', '--document', '--apply'],
+      {
+        remId: 'rem-1',
+        title: 'Project Plan',
+        oldRemType: 'document',
+        newRemType: 'document',
+        newIsDocument: true,
+        dryRun: false,
+        changed: false,
+      }
+    );
+    expect(unchanged.output).toBe(
+      'Document status unchanged: Project Plan (rem-1) document -> document; isDocument=true'
+    );
+    unchanged.executeSpy.mockRestore();
+  });
+
   it('formats journal results with and without created Rems', async () => {
     const withRems = await runTextCommand(['journal', 'Entry'], {
       remIds: ['journal-1'],

@@ -6,12 +6,15 @@ import { checkVersionCompatibility } from '../version-compat.js';
 const require = createRequire(import.meta.url);
 const packageJson = require('../../../package.json') as { version: string };
 
-const ACTION_TO_TOOL: Record<string, string> = {
+export const BRIDGE_ACTION_TO_TOOL: Readonly<Record<string, string>> = {
   create_note: 'remnote_create_note',
   search: 'remnote_search',
   search_by_tag: 'remnote_search_by_tag',
   read_note: 'remnote_read_note',
+  list_children: 'remnote_list_children',
+  move_note: 'remnote_move_note',
   update_note: 'remnote_update_note',
+  set_document_status: 'remnote_set_document_status',
   insert_children: 'remnote_insert_children',
   replace_children: 'remnote_replace_children',
   update_tags: 'remnote_update_tags',
@@ -37,7 +40,7 @@ export class McpServerClient {
   }
 
   async execute(action: string, payload: Record<string, unknown>): Promise<unknown> {
-    const toolName = ACTION_TO_TOOL[action];
+    const toolName = BRIDGE_ACTION_TO_TOOL[action];
     if (!toolName) {
       throw new Error(`Unknown bridge action: ${action}`);
     }

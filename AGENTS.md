@@ -51,6 +51,7 @@ When changing action names, payloads, or response semantics, validate this repo 
 - `remnote-cli list-children`
 - `remnote-cli move-note`
 - `remnote-cli update`
+- `remnote-cli set-document-status`
 - `remnote-cli insert-children`
 - `remnote-cli replace-children`
 - `remnote-cli update-tags`
