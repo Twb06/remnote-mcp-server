@@ -7,50 +7,29 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-06-05
+
 ### Added
 
-- Add `remnote_set_document_status` for dry-run-first document status updates that preserve Rem IDs, hierarchy, tags,
-  and concept/card status.
-- Add `remnote-cli set-document-status` for dry-run-first document status updates on existing Rems.
-- Add `remnote_create_note.asDocument` and `remnote-cli create --as-document` to mark a created title/root Rem as a
-  document.
+- Add document-status support through `remnote_set_document_status`, `remnote-cli set-document-status`,
+  `remnote_create_note.asDocument`, and `remnote-cli create --as-document`.
 - Add discovery-oriented API support for parent-first `ancestors`, compact/full output `view`, `remnote_list_children`,
   and dry-run-first `remnote_move_note`.
-- Invite users to contribute advanced RemNote MCP use-case ideas through pull requests or issues.
-- Add an agent-facing idea file for RemNote knowledge-base discovery and tagging workflows and link advanced use cases from the README.
-- Add advanced RemNote MCP use-case documentation for knowledge-base discovery, tag design, reviewed exact-ID tag writes, and strict audit loops.
-- Add cursor paging support to `remnote_search_by_tag` and `remnote-cli search-by-tag`, with `hasMore`, `nextCursor`,
-  and explicit snapshot-cap truncation metadata.
+- Add advanced RemNote MCP use-case documentation for knowledge-base discovery, tag design, reviewed exact-ID tag
+  writes, and strict audit loops.
+- Add cursor paging support to `remnote_search`, `remnote_search_by_tag`, `remnote-cli search`, and
+  `remnote-cli search-by-tag`, with `hasMore`, `nextCursor`, and explicit snapshot-cap truncation metadata.
 - Add bounded per-call bridge wait timeout support for `remnote_search_by_tag.timeoutMs` and
   `remnote-cli search-by-tag --timeout-ms`.
-- Update `remnote_get_playbook` guidance for search cursor paging and bounded tag-search timeout fallback.
-- Refine the `remnote_get_playbook` summary to cover status checks, remId traversal, paging, content modes, tag/table
-  retrieval, and exact-ID writes.
-- Document the API-change checklist requirement to consider `remnote_get_playbook` updates.
-- Add cursor paging support to `remnote_search` and `remnote-cli search`, with `hasMore`, `nextCursor`, and explicit
-  snapshot-cap truncation metadata.
 - Add `inlineRefs` metadata to `remnote_search`, `remnote_search_by_tag`, and `remnote_read_note` output schemas so
   clients can follow inline Rem references by exact target Rem ID.
 - Add `remnote_search_by_tag.resultMode` and CLI `search-by-tag --result-mode` for direct tagged Rem results while
   preserving context navigation with `matchedRems`.
-- Add playbook guidance for choosing tag context navigation versus strict direct-tag verification.
-- Update the MCP tool smoke-test prompt to validate `matchedRems` and `resultMode: "tagged"` behavior.
-- Document the MCP contract-change checklist for keeping tests, playbook guidance, smoke prompts, and generated tool
-  metadata aligned.
 
 ### Changed
 
-- Update `remnote_get_playbook`, tool docs, and the MCP smoke prompt for document-status workflows.
-- Update the bundled `remnote-cli` skill guidance for document-root creation and document-status workflows.
-- Update `AGENTS.md` contract maps for the current discovery API tool and CLI surface, including
-  `remnote_list_children`, `remnote_move_note`, `remnote_set_document_status`, `list-children`, `move-note`, and
-  `set-document-status`.
-- Tighten the MCP tool smoke-test prompt so required tools, hierarchy traversal, and dry-run move validation match the
-  discovery API contract.
-- Update the bundled `remnote-cli` skill guidance for the current `search-by-tag`, split write, exact-ID tag, and
-  `read-table` command surface.
-- Link the bundled RemNote CLI skill from the README for OpenClaw/Hermes-style local agent workflows.
-- Mark `skills/remnote/SKILL.md` as a critical agent-facing update target in the API-change checklist.
+- Update `remnote_get_playbook`, tool docs, and bundled `remnote-cli` skill guidance for document status, hierarchy
+  traversal, cursor paging, direct-tag verification, exact-ID writes, and tag/table retrieval workflows.
 
 ### Fixed
 
