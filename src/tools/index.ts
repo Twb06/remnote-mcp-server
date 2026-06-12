@@ -158,6 +158,11 @@ export const SEARCH_TOOL = {
     type: 'object' as const,
     properties: {
       query: { type: 'string', description: 'Search query text' },
+      parentRemId: {
+        type: 'string',
+        description:
+          "Optional. Scope the search to within this Rem's subtree. The Rem itself is excluded from results.",
+      },
       limit: { type: 'number', description: 'Maximum results (1-150, default: 50)' },
       cursor: {
         type: 'string',

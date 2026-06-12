@@ -119,6 +119,7 @@ export function registerSearchCommand(program: Command): void {
     program.command('search <query>').description('Search for notes in RemNote')
   )
     .option('--cursor <cursor>', 'Opaque cursor returned by a previous search page')
+    .option('--parent-id <remId>', "Optional. Scope search to within this Rem's subtree")
     .action(async (query: string, opts) => {
       const globalOpts = program.opts();
       const format: OutputFormat = globalOpts.text ? 'text' : 'json';
@@ -130,6 +131,7 @@ export function registerSearchCommand(program: Command): void {
           limit: parseInt(opts.limit, 10),
         };
         if (opts.cursor) payload.cursor = opts.cursor;
+        if (opts.parentId) payload.parentRemId = opts.parentId;
         applySearchOptions(payload, opts);
 
         const result = await client.execute('search', payload);
