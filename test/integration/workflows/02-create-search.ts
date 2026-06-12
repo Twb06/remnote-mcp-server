@@ -448,13 +448,60 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 7: Search pages through cursor results
+  // Step 7: Search with parentRemId scopes search successfully
+  {
+    const start = Date.now();
+    try {
+      const scopedResult = await ctx.client.callTool('remnote_search', {
+        query: simpleSearchToken,
+        parentRemId: state.integrationParentRemId,
+        limit: 20,
+      });
+      assertHasField(scopedResult, 'results', 'scoped search results');
+      assertIsArray(scopedResult.results, 'scoped search results array');
+      const scopedResults = scopedResult.results as Array<Record<string, unknown>>;
+      const foundInParent = scopedResults.some(
+        (r) => typeof r.title === 'string' && r.title.includes(simpleSearchToken)
+      );
+      assertTruthy(foundInParent, 'scoped search under correct parent should find simple note');
+
+      assertTruthy(typeof state.noteBId === 'string', 'rich note remId should be recorded');
+      const nonScopedResult = await ctx.client.callTool('remnote_search', {
+        query: simpleSearchToken,
+        parentRemId: state.noteBId,
+        limit: 20,
+      });
+      assertHasField(nonScopedResult, 'results', 'non-scoped search results');
+      assertIsArray(nonScopedResult.results, 'non-scoped search results array');
+      const nonScopedResults = nonScopedResult.results as Array<Record<string, unknown>>;
+      const foundInDummy = nonScopedResults.some(
+        (r) => typeof r.title === 'string' && r.title.includes(simpleSearchToken)
+      );
+      assertTruthy(!foundInDummy, 'scoped search under unrelated parent should NOT find simple note');
+
+      steps.push({
+        label: 'Search with parentRemId scopes search successfully',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Search with parentRemId scopes search successfully',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
+  // Step 8: Search pages through cursor results
   {
     const start = Date.now();
     try {
       assertEqual(pagingNoteIds.length, 5, 'paging fixture note count');
       const firstPage = await ctx.client.callTool('remnote_search', {
         query: pagingSearchToken,
+        parentRemId: state.integrationParentRemId,
         limit: 2,
         contentMode: 'none',
       });
@@ -477,6 +524,7 @@ export async function createSearchWorkflow(
       for (let page = 2; page <= 4 && cursor; page += 1) {
         const nextPage = await ctx.client.callTool('remnote_search', {
           query: pagingSearchToken,
+          parentRemId: state.integrationParentRemId,
           limit: 2,
           cursor,
           contentMode: 'none',
@@ -519,7 +567,7 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 8: Search by tag pages through cursor results
+  // Step 9: Search by tag pages through cursor results
   {
     const start = Date.now();
     try {
@@ -594,7 +642,7 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 9-11: Search with contentMode modes
+  // Step 10-12: Search with contentMode modes
   for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();
     const label = `Search contentMode=${mode} returns expected shape`;
@@ -638,7 +686,7 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 12: Search finds markdown tree root
+  // Step 13: Search finds markdown tree root
   {
     const start = Date.now();
     let debugResults: Array<Record<string, unknown>> | null = null;
@@ -675,7 +723,7 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 13: Root-only markdown tree tag does not bleed to descendants
+  // Step 14: Root-only markdown tree tag does not bleed to descendants
   {
     const start = Date.now();
     let debugResults: Array<Record<string, unknown>> | null = null;
@@ -725,7 +773,7 @@ export async function createSearchWorkflow(
     }
   }
 
-  // Step 14-16: Search by exact tag Rem ID with contentMode modes
+  // Step 15: Resolve expected search-by-tag ancestor target
   let expectedTagTarget: ExpectedTagTarget | undefined;
   {
     const start = Date.now();
@@ -746,6 +794,8 @@ export async function createSearchWorkflow(
       });
     }
   }
+
+  // Step 16-18: Search by exact tag Rem ID with contentMode modes
 
   for (const mode of ['markdown', 'structured', 'none'] as const) {
     const start = Date.now();

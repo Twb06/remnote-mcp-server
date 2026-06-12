@@ -610,6 +610,27 @@ describe('Tool Handlers - search', () => {
       view: 'standard',
     });
   });
+
+  it('should pass through parentRemId', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_search',
+        arguments: { query: 'test', parentRemId: 'some-parent-rem-id' },
+      },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('search', {
+      query: 'test',
+      parentRemId: 'some-parent-rem-id',
+      limit: 50,
+      contentMode: 'none',
+      depth: 1,
+      childLimit: 20,
+      maxContentLength: 3000,
+      ancestorDepth: 0,
+      view: 'standard',
+    });
+  });
 });
 
 describe('Tool Handlers - search_by_tag', () => {

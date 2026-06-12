@@ -93,6 +93,11 @@ describe('SearchSchema', () => {
     expect(result.cursor).toBe('search:v1:id:50:hash');
   });
 
+  it('should validate with parentRemId', () => {
+    const result = SearchSchema.parse({ query: 'test', parentRemId: 'some-parent-rem-id' });
+    expect(result.parentRemId).toBe('some-parent-rem-id');
+  });
+
   it('should validate with contentMode markdown', () => {
     const result = SearchSchema.parse({ query: 'test', contentMode: 'markdown' });
     expect(result.contentMode).toBe('markdown');
