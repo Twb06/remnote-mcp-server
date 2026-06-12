@@ -126,6 +126,7 @@ Shared options for `search` and `search-by-tag`:
 | `--content-mode <mode>`    | `none`  | `none`, `markdown`, or `structured`  |
 | `--view <view>`            | default | `compact`, `standard`, or `full`     |
 | `--ancestor-depth <n>`     | `0`     | Parent Rems to include, parent-first |
+| `--parent-id <id>`         | none    | Parent Rem ID to scope search        |
 | `--depth <n>`              | `1`     | Child depth for rendered content     |
 | `--child-limit <n>`        | `20`    | Max children per hierarchy level     |
 | `--max-content-length <n>` | `3000`  | Max rendered content character count |
@@ -147,6 +148,7 @@ Behavior rules:
 - `--depth`, `--child-limit`, and `--max-content-length` are most relevant when content rendering is enabled.
 - `tags` is optional and present when the matched Rem has readable tag identity metadata. JSON output preserves
   `{ tagRemId, name }` objects.
+- `--cursor` is bound to the specific search `query` and `--parent-id`; the parameter was mandatory to include with `--cursor` flag; it cannot be reused across different queries or parameters.
 
 Examples:
 
@@ -154,6 +156,8 @@ Examples:
 remnote-cli search "meeting"
 remnote-cli search "weekly" --limit 10 --content-mode structured --depth 2 --child-limit 10 --text
 remnote-cli search "weekly" --limit 10 --cursor "search:v1:..."
+remnote-cli search "meeting" --limit 10 --parent-id <parent-rem-id>
+remnote-cli search "meeting" --limit 10 --parent-id <parent-rem-id> --cursor "search:v1:..."
 ```
 
 ## search-by-tag

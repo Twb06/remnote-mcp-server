@@ -9,6 +9,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Add `parentRemId` to `remnote_search` input schema and `--parent-id` option to `remnote-cli search` to support scoping search within a Rem's subtree.
 - Add `remnote_set_document_status` for dry-run-first document status updates that preserve Rem IDs, hierarchy, tags,
   and concept/card status.
 - Add `remnote-cli set-document-status` for dry-run-first document status updates on existing Rems.
@@ -40,6 +41,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Update `remnote_search` tools reference, CLI command `search` reference, and agent skill documentation to include advanced scoped search with parent ID and document cursor limitations.
 - Update `remnote_get_playbook`, tool docs, and the MCP smoke prompt for document-status workflows.
 - Update the bundled `remnote-cli` skill guidance for document-root creation and document-status workflows.
 - Update `AGENTS.md` contract maps for the current discovery API tool and CLI surface, including

@@ -141,6 +141,7 @@ Search your RemNote knowledge base with full-text search.
 | `view` | string | No | Output detail level: `compact`, `standard` (default), or `full` |
 | `ancestorDepth` | number | No | Number of parent Rems to include, direct parent first |
 | `depth` | number | No | Max child depth for rendered content (0-10, default: 1) |
+| `parentRemId` | string | No | Scope search within this Rem's subtree |
 
 ### Usage
 
@@ -223,6 +224,7 @@ Returns matching notes plus paging metadata:
 ### Tips
 
 - Use specific terms for better results
+- Use `parentRemId` to scope your search within a specific Rem's subtree (e.g. search within a specific folder or document)
 - Increase `limit` for comprehensive searches
 - Use `contentMode: "none"` (default) for faster searches when you only need titles
 - Use `contentMode: "markdown"` when you need rendered child context
