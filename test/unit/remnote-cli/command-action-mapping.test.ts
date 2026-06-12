@@ -156,6 +156,21 @@ describe('command bridge action mapping', () => {
     executeSpy.mockRestore();
   });
 
+  it('passes through search parent-id option', async () => {
+    const executeSpy = await runCommand([
+      'search',
+      'ml',
+      '--parent-id',
+      'parentRemId123',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('search', {
+      query: 'ml',
+      limit: 50,
+      parentRemId: 'parentRemId123',
+    });
+    executeSpy.mockRestore();
+  });
+
   it('passes through structured search content mode', async () => {
     const executeSpy = await runCommand(['search', 'folders', '--content-mode', 'structured']);
     expect(executeSpy).toHaveBeenCalledWith('search', {
