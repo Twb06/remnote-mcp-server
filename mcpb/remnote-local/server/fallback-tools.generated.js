@@ -47,6 +47,11 @@ export const FALLBACK_TOOLS = [
           type: 'string',
           description: 'Search query text',
         },
+        parentRemId: {
+          type: 'string',
+          description:
+            "Optional. Scope the search to within this Rem's subtree. The Rem itself is excluded from results.",
+        },
         limit: {
           type: 'number',
           description: 'Maximum results (1-150, default: 50)',

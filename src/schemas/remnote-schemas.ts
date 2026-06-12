@@ -66,6 +66,12 @@ export const CreateNoteSchema = z
 export const SearchSchema = z
   .object({
     query: z.string().describe('Search query text'),
+    parentRemId: z
+      .string()
+      .optional()
+      .describe(
+        "Optional. Scope the search to within this Rem's subtree. The Rem itself is excluded from results."
+      ),
     limit: z.number().int().min(1).max(150).default(50).describe('Maximum results'),
     cursor: z
       .string()
