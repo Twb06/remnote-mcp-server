@@ -119,7 +119,7 @@ If any precondition is missing, stop and fix setup first.
 
 ### Read-Only Operations (default)
 
-- Search notes: `remnote-cli search "query"`
+- Search notes: `remnote-cli search "query"` (use `--parent-id <parent-rem-id>` to scope search within a Rem's subtree)
 - Search by exact tag Rem ID: `remnote-cli search-by-tag --tag-id <tag-rem-id>`
 - Read note by Rem ID: `remnote-cli read <rem-id>`
 - Read Advanced Table by title or Rem ID:
