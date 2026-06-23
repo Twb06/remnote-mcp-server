@@ -157,12 +157,7 @@ describe('command bridge action mapping', () => {
   });
 
   it('passes through search parent-id option', async () => {
-    const executeSpy = await runCommand([
-      'search',
-      'ml',
-      '--parent-id',
-      'parentRemId123',
-    ]);
+    const executeSpy = await runCommand(['search', 'ml', '--parent-id', 'parentRemId123']);
     expect(executeSpy).toHaveBeenCalledWith('search', {
       query: 'ml',
       limit: 50,

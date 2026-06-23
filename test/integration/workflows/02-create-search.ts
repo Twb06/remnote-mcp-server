@@ -477,7 +477,10 @@ export async function createSearchWorkflow(
       const foundInDummy = nonScopedResults.some(
         (r) => typeof r.title === 'string' && r.title.includes(simpleSearchToken)
       );
-      assertTruthy(!foundInDummy, 'scoped search under unrelated parent should NOT find simple note');
+      assertTruthy(
+        !foundInDummy,
+        'scoped search under unrelated parent should NOT find simple note'
+      );
 
       steps.push({
         label: 'Search with parentRemId scopes search successfully',
@@ -511,6 +514,18 @@ export async function createSearchWorkflow(
       assertEqual(firstPage.hasMore as boolean, true, 'first page hasMore');
       assertTruthy(typeof firstPage.nextCursor === 'string', 'first page nextCursor');
       assertEqual(firstPage.truncated as boolean, false, 'first page truncated');
+      assertTruthy(typeof state.noteBId === 'string', 'rich note remId should be recorded');
+      const mismatchedCursorError = await ctx.client.callToolExpectError('remnote_search', {
+        query: pagingSearchToken,
+        parentRemId: state.noteBId,
+        limit: 2,
+        cursor: firstPage.nextCursor,
+        contentMode: 'none',
+      });
+      assertTruthy(
+        mismatchedCursorError.includes('cursor') && mismatchedCursorError.includes('parent'),
+        `scoped search cursor should reject changed parentRemId, got ${mismatchedCursorError}`
+      );
 
       const seenRemIds = new Set<string>();
       addSearchPageRemIds(
@@ -734,7 +749,7 @@ export async function createSearchWorkflow(
       );
       const expectedTarget = await resolveExpectedSearchByTagTarget(
         ctx,
-        state.mdTreeIds[0] as string
+        state.mdTreeIds?.[0] as string
       );
       assertTruthy(mdTreeRootOnlyTagRemId, 'markdown tree root-only tag Rem ID should be recorded');
       const result = await ctx.client.callTool('remnote_search_by_tag', {

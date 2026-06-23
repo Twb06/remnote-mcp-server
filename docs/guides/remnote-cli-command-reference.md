@@ -134,7 +134,7 @@ Shared options for `search` and `search-by-tag`:
 
 | Option              | Default | Description                                      |
 | ------------------- | ------- | ------------------------------------------------ |
-| `--parent-id <id>`  | none    | Parent Rem ID to scope search within its subtree |
+| `--parent-id <id>`  | none    | Non-empty parent Rem ID to scope search within its subtree |
 | `--cursor <cursor>` | n/a     | Opaque cursor from a previous `search` response  |
 
 Behavior rules:

@@ -313,7 +313,7 @@ export async function createSearchWorkflow(
           'create',
           `[CLI-TEST] Rich Note ${ctx.runId}`,
           '--parent-id',
-          state.integrationParentRemId,
+          state.integrationParentRemId as string,
           '--content-file',
           contentPath,
           '--tag-ids',
@@ -520,7 +520,7 @@ export async function createSearchWorkflow(
         'search',
         simpleSearchToken,
         '--parent-id',
-        state.noteBId,
+        state.noteBId as string,
         '--limit',
         '20',
       ])) as Record<string, unknown>;
@@ -530,7 +530,10 @@ export async function createSearchWorkflow(
       const foundInDummy = nonScopedResults.some(
         (r) => typeof r.title === 'string' && r.title.includes(simpleSearchToken)
       );
-      assertTruthy(!foundInDummy, 'scoped search under unrelated parent should NOT find simple note');
+      assertTruthy(
+        !foundInDummy,
+        'scoped search under unrelated parent should NOT find simple note'
+      );
 
       steps.push({
         label: 'Search with parent-id scopes search successfully via CLI',
@@ -568,6 +571,24 @@ export async function createSearchWorkflow(
       assertEqual(firstPage.hasMore as boolean, true, 'first page hasMore');
       assertTruthy(typeof firstPage.nextCursor === 'string', 'first page nextCursor');
       assertEqual(firstPage.truncated as boolean, false, 'first page truncated');
+      assertTruthy(typeof state.noteBId === 'string', 'rich note remId should be recorded');
+      const mismatchedCursorResult = await ctx.cli.runExpectError([
+        'search',
+        pagingSearchToken,
+        '--parent-id',
+        state.noteBId as string,
+        '--limit',
+        '2',
+        '--cursor',
+        firstPage.nextCursor as string,
+        '--content-mode',
+        'none',
+      ]);
+      const mismatchedCursorOutput = `${mismatchedCursorResult.stderr}\n${mismatchedCursorResult.stdout}`;
+      assertTruthy(
+        mismatchedCursorOutput.includes('cursor') && mismatchedCursorOutput.includes('parent'),
+        `scoped search cursor should reject changed parent-id, got ${mismatchedCursorOutput}`
+      );
 
       const seenRemIds = new Set<string>();
       addSearchPageRemIds(
@@ -773,7 +794,7 @@ export async function createSearchWorkflow(
       );
       const expectedTarget = await resolveExpectedSearchByTagTarget(
         ctx,
-        state.mdTreeIds[0] as string
+        state.mdTreeIds?.[0] as string
       );
       assertTruthy(mdTreeRootOnlyTagRemId, 'markdown tree root-only tag Rem ID should be recorded');
       const result = (await ctx.cli.runExpectSuccess([

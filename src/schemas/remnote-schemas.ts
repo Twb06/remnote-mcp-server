@@ -68,9 +68,10 @@ export const SearchSchema = z
     query: z.string().describe('Search query text'),
     parentRemId: z
       .string()
+      .min(1)
       .optional()
       .describe(
-        "Optional. Scope the search to within this Rem's subtree. The Rem itself is excluded from results."
+        "Optional non-empty Rem ID. Scope the search to within this Rem's subtree. The Rem itself is excluded from results."
       ),
     limit: z.number().int().min(1).max(150).default(50).describe('Maximum results'),
     cursor: z

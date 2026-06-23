@@ -49,8 +49,9 @@ export const FALLBACK_TOOLS = [
         },
         parentRemId: {
           type: 'string',
+          minLength: 1,
           description:
-            "Optional. Scope the search to within this Rem's subtree. The Rem itself is excluded from results.",
+            "Optional non-empty Rem ID. Scope the search to within this Rem's subtree. The Rem itself is excluded from results.",
         },
         limit: {
           type: 'number',

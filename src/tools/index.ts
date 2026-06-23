@@ -160,8 +160,9 @@ export const SEARCH_TOOL = {
       query: { type: 'string', description: 'Search query text' },
       parentRemId: {
         type: 'string',
+        minLength: 1,
         description:
-          "Optional. Scope the search to within this Rem's subtree. The Rem itself is excluded from results.",
+          "Optional non-empty Rem ID. Scope the search to within this Rem's subtree. The Rem itself is excluded from results.",
       },
       limit: { type: 'number', description: 'Maximum results (1-150, default: 50)' },
       cursor: {
@@ -1278,7 +1279,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           }
 
           result = {
-            playbookVersion: '1.5.0',
+            playbookVersion: '1.6.0',
             summary:
               'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, request nearby ancestors when hierarchy context matters, choose compact/full output views, and apply safe exact-ID writes including dry-run-first document status changes.',
             recommendedStatusCheck: {
@@ -1291,6 +1292,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
               'Need connection/capability context? Call remnote_status first.',
               'Need to orient across the KB? Use remnote_search with contentMode="structured", view="compact", depth=1, childLimit=500.',
               'Need broad search enumeration? Continue remnote_search or remnote_search_by_tag with nextCursor while hasMore is true.',
+              'Need to search within a specific branch? Use remnote_search with parentRemId; keep the same parentRemId when continuing with nextCursor.',
               'Need tagged-note context/navigation? Use remnote_search_by_tag with tagRemId and default resultMode="context"; inspect matchedRems to see the direct tagged Rems behind each context result.',
               'Need hierarchy placement context? Add ancestorDepth, typically 5, to search/read/search_by_tag/list_children; ancestors are direct-parent first.',
               'Need strict tag verification? Use remnote_search_by_tag with resultMode="tagged", or verify the exact Rem in matchedRems from context mode.',

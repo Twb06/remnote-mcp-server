@@ -141,7 +141,7 @@ Search your RemNote knowledge base with full-text search.
 | `view` | string | No | Output detail level: `compact`, `standard` (default), or `full` |
 | `ancestorDepth` | number | No | Number of parent Rems to include, direct parent first |
 | `depth` | number | No | Max child depth for rendered content (0-10, default: 1) |
-| `parentRemId` | string | No | Scope search within this Rem's subtree |
+| `parentRemId` | string | No | Non-empty Rem ID to scope search within this Rem's subtree |
 
 ### Usage
 
@@ -611,6 +611,7 @@ Use this tool when an agent needs built-in guidance for:
 - status-first session preflight recommendations,
 - hierarchy traversal presets for whole-KB navigation,
 - tag navigation vs strict direct-tag verification guidance,
+- scoped branch search with `remnote_search.parentRemId`,
 - `markdown` vs `structured` content-mode decisions,
 - write/replace/document-status safety checks.
 
@@ -639,6 +640,8 @@ Returns a structured playbook object, including:
 - `contentModes` - when to use `structured` vs `markdown` vs `none`.
 - Search paging guidance - continue `remnote_search` / `remnote_search_by_tag` with `nextCursor` while `hasMore` is
   true.
+- Scoped search guidance - pass `parentRemId` to `remnote_search` when searching inside a known branch; reuse the same
+  `parentRemId` with `nextCursor`.
 - `remnote_search_by_tag` guidance - when to use default context results, `matchedRems`, `resultMode: "tagged"`, or a
   bounded `timeoutMs` fallback.
 - `writePolicy` - how to interpret `acceptWriteOperations` / `acceptReplaceOperation`, document-status writes, and

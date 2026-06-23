@@ -98,6 +98,10 @@ describe('SearchSchema', () => {
     expect(result.parentRemId).toBe('some-parent-rem-id');
   });
 
+  it('should reject empty parentRemId', () => {
+    expect(() => SearchSchema.parse({ query: 'test', parentRemId: '' })).toThrow();
+  });
+
   it('should validate with contentMode markdown', () => {
     const result = SearchSchema.parse({ query: 'test', contentMode: 'markdown' });
     expect(result.contentMode).toBe('markdown');

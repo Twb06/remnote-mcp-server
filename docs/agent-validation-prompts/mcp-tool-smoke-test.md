@@ -42,6 +42,7 @@ required call fails.
 
 2. Call `remnote_get_playbook` and briefly confirm that it returned guidance.
    - Confirm the playbook mentions tag navigation or strict tag verification through `resultMode` or `matchedRems`.
+   - Confirm the playbook mentions scoped branch search through `parentRemId`.
    - Confirm the playbook mentions `ancestorDepth`, `remnote_list_children`, and dry-run-first `remnote_move_note`.
    - Confirm the playbook mentions dry-run-first `remnote_set_document_status`.
 
@@ -60,7 +61,8 @@ required call fails.
    - Content: short text stating the agent/client name if known and the timestamp
    - Keep the created run note Rem ID.
 
-5. Search for the exact run-note title with `remnote_search` and confirm the created run note appears.
+5. Search for the exact run-note title with `remnote_search`, scoped with `parentRemId` set to the root note Rem ID,
+   and confirm the created run note appears.
 
 6. Read the run note with `remnote_read_note`.
    - Use `contentMode="structured"` when available.

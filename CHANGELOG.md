@@ -9,11 +9,16 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- Add `parentRemId` to `remnote_search` input schema and `--parent-id` option to `remnote-cli search` to support scoping search within a Rem's subtree.
+- Add `parentRemId` to `remnote_search` input schema and `--parent-id` option to `remnote-cli search` to support scoping search within a Rem's subtree. Contributed by Twb06.
 
 ### Changed
 
 - Update `remnote_search` tools reference, CLI command `search` reference, and agent skill documentation to include advanced scoped search with parent ID and document cursor limitations.
+- Update `remnote_get_playbook` guidance and MCP smoke-test instructions for scoped branch search with `parentRemId`.
+
+### Fixed
+
+- Reject empty `parentRemId` values for `remnote_search` instead of treating them as unscoped search.
 
 ## [0.16.0] - 2026-06-05
 
