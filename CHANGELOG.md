@@ -16,6 +16,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   property fixture.
 - Add exact inline Rem reference guidance for `[[id:<remId>]]` in markdown-capable write fields across MCP tools,
   `remnote-cli`, and `remnote_get_playbook`.
+- Add live MCP, MCPB, CLI, and smoke-prompt coverage for exact inline Rem reference tokens in create, update, insert,
+  replace, journal, and text property write paths.
 
 ### Changed
 

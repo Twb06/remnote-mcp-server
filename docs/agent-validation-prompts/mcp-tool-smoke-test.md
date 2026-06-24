@@ -77,15 +77,19 @@ required call fails.
      current `remType`; confirm `dryRun` is true and the same Rem ID is returned.
 
 7. Rename the run note with `remnote_update_note`.
-   - New title: `[MCP-AGENT-TEST] Tool smoke test updated <current ISO timestamp>`
-   - Read it again and confirm the updated title.
+   - New title: `[MCP-AGENT-TEST] Tool smoke test updated <current ISO timestamp> [[id:<root note Rem ID>]]`
+   - Read it again with `contentMode="structured"` and `view="full"`.
+   - Confirm the updated title.
+   - Confirm `inlineRefs` includes an item with `targetRemId` equal to the root note Rem ID and `kind: "rem"`.
 
 8. Insert children under the run note with `remnote_insert_children`.
    - Insert at least two children, for example:
-     - `status: created by MCP agent validation`
+     - `status: created by MCP agent validation [[id:<root note Rem ID>]]`
      - `timestamp: <current ISO timestamp>`
    - Keep one inserted direct-child Rem ID from the response as `moveCandidateRemId`.
-   - Read the run note again with structured content and confirm the inserted children are present.
+   - Read the run note again with structured content and `view="full"`.
+   - Confirm the inserted children are present.
+   - Confirm a structured child has `inlineRefs` containing `targetRemId` equal to the root note Rem ID.
 
 9. List direct children of the run note with `remnote_list_children`.
    - Confirm only direct children are returned.
@@ -127,8 +131,10 @@ required call fails.
       a top-level result.
 
 16. Append a journal entry with `remnote_append_journal`.
-    - Content: `[MCP-AGENT-TEST] Journal smoke test <current ISO timestamp>`
+    - Content: `[MCP-AGENT-TEST] Journal smoke test <current ISO timestamp> [[id:<run note Rem ID>]]`
     - Use the test tag Rem ID as `tagRemIds` if the tool supports journal tag IDs in this client.
+    - Read the created journal Rem with `contentMode="structured"` and `view="full"`.
+    - Confirm `inlineRefs` includes an item with `targetRemId` equal to the run note Rem ID.
 
 17. Validate property writes with `remnote_set_property`.
     - Search for the exact title `Automation Bridge Test Tag`.
@@ -139,8 +145,8 @@ required call fails.
     - Find a column whose exact name is `automation-level`.
     - If the property is missing, report FAIL for property-write validation because the fixture property is missing.
     - Keep that column's `propertyId` as `automationLevelPropertyRemId`.
-    - Generate a unique random text value such as `mcp-smoke-<current ISO timestamp>-<short random suffix>`, and keep
-      it as `automationLevelValue`.
+    - Generate a unique random text prefix such as `mcp-smoke-<current ISO timestamp>-<short random suffix>`.
+    - Set `automationLevelValue` to `<that prefix> [[id:<root note Rem ID>]]`.
     - Call `remnote_set_property`:
       - `remId: <run note Rem ID>`
       - `tagRemId: propertyFixtureTagRemId`
@@ -151,13 +157,18 @@ required call fails.
       - `tableRemId: propertyFixtureTagRemId`
       - `propertyFilter: ["automation-level"]`
     - If needed, page with `offset`/`limit` until all returned rows have been checked.
-    - Confirm a row with the exact run note Rem ID appears and that its `automation-level` value equals
-      `automationLevelValue`.
+    - Confirm a row with the exact run note Rem ID appears and that its `automation-level` value equals the generated
+      prefix followed by the rendered root-note reference, for example
+      `<prefix> [[RemNote Automation Bridge [temporary integration test data]]]`.
     - Do not clear the property. The kept value is part of the validation artifact.
 
 18. Optional/report-only checks:
     - If `remnote_replace_children` is available and `remnote_status.acceptReplaceOperation` is `true`, report that
-      destructive replacement is enabled. Do not call it unless the user explicitly asks for destructive validation.
+      destructive replacement is enabled.
+    - If destructive validation is explicitly approved, call `remnote_replace_children` on the run note with content
+      containing `[[id:<root note Rem ID>]]`, then read the replacement child with `contentMode="structured"` and
+      `view="full"` and confirm `inlineRefs.targetRemId` equals the root note Rem ID.
+    - Do not call `remnote_replace_children` unless destructive validation is explicitly approved.
 
 19. Final response:
     - Report PASS or FAIL.

@@ -5,6 +5,7 @@
  */
 
 import { assertTruthy, assertHasField, assertIsArray, assertContains } from '../assertions.js';
+import { assertInlineRefTarget } from '../reference-assertions.js';
 import type { WorkflowContext, WorkflowResult, SharedState, StepResult } from '../types.js';
 
 async function assertJournalReadback(
@@ -27,9 +28,24 @@ async function assertJournalReadback(
   }
 }
 
+async function assertJournalInlineRef(
+  ctx: WorkflowContext,
+  remId: string,
+  targetRemId: string,
+  label: string
+): Promise<void> {
+  const reread = await ctx.client.callTool('remnote_read_note', {
+    remId,
+    depth: 4,
+    contentMode: 'structured',
+    view: 'full',
+  });
+  assertInlineRefTarget(reread, targetRemId, label);
+}
+
 export async function journalWorkflow(
   ctx: WorkflowContext,
-  _state: SharedState
+  state: SharedState
 ): Promise<WorkflowResult> {
   const steps: StepResult[] = [];
 
@@ -66,8 +82,10 @@ export async function journalWorkflow(
     const start = Date.now();
     try {
       const expectedEntry = `[MCP-TEST] No-timestamp entry ${ctx.runId}`;
+      const targetRemId = state.integrationParentRemId;
+      assertTruthy(typeof targetRemId === 'string', 'journal exact reference target remId');
       const result = (await ctx.client.callTool('remnote_append_journal', {
-        content: expectedEntry,
+        content: `${expectedEntry} [[id:${targetRemId}]]`,
         timestamp: false,
       })) as { remIds: string[] };
       assertHasField(result, 'remIds', 'journal append without timestamp');
@@ -78,6 +96,12 @@ export async function journalWorkflow(
         result.remIds[0] as string,
         [expectedEntry],
         'non-timestamped journal entry'
+      );
+      await assertJournalInlineRef(
+        ctx,
+        result.remIds[0] as string,
+        targetRemId,
+        'append_journal exact reference token readback'
       );
       steps.push({
         label: 'Append without timestamp',

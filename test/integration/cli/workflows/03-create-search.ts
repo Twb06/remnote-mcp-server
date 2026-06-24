@@ -9,6 +9,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { assertHasField, assertTruthy, assertIsArray, assertEqual } from '../assertions.js';
+import { assertInlineRefTargetCountAtLeast } from '../../reference-assertions.js';
 import type { WorkflowContext, WorkflowResult, SharedState, StepResult } from '../types.js';
 
 const INDEXING_DELAY_MS = parseInt(process.env.CLI_TEST_DELAY ?? '2000', 10);
@@ -360,6 +361,61 @@ export async function createSearchWorkflow(
     } catch (e) {
       steps.push({
         label: 'Create flashcard with positional arguments checks',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
+  // Step 3b: Create note with exact reference tokens in title and content
+  {
+    const start = Date.now();
+    try {
+      assertTruthy(typeof state.noteAId === 'string', 'reference target note remId');
+      const result = (await withTempContentFile(
+        `Created content exact ref [[id:${state.noteAId}]]`,
+        async (contentPath) =>
+          (await ctx.cli.runExpectSuccess([
+            'create',
+            '--title',
+            `[CLI-TEST] Exact Ref Create ${ctx.runId} [[id:${state.noteAId}]]`,
+            '--parent-id',
+            state.integrationParentRemId as string,
+            '--content-file',
+            contentPath,
+          ])) as Record<string, unknown>
+      )) as Record<string, unknown>;
+      assertHasField(result, 'remIds', 'create exact reference note');
+      assertIsArray(result.remIds, 'exact reference note remIds');
+      const createdRemId = (result.remIds as string[])[0];
+      assertTruthy(typeof createdRemId === 'string', 'exact reference note remId');
+
+      const reread = await ctx.cli.runExpectSuccess([
+        'read',
+        createdRemId,
+        '--content-mode',
+        'structured',
+        '--depth',
+        '2',
+        '--view',
+        'full',
+      ]);
+      assertInlineRefTargetCountAtLeast(
+        reread,
+        state.noteAId as string,
+        2,
+        'CLI create exact reference token readback'
+      );
+
+      steps.push({
+        label: 'Create note with exact reference tokens',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Create note with exact reference tokens',
         passed: false,
         durationMs: Date.now() - start,
         error: (e as Error).message,

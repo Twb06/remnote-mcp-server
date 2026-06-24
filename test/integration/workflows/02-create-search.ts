@@ -6,6 +6,7 @@
  */
 
 import { assertTruthy, assertHasField, assertIsArray, assertEqual } from '../assertions.js';
+import { assertInlineRefTargetCountAtLeast } from '../reference-assertions.js';
 import type { WorkflowContext, WorkflowResult, SharedState, StepResult } from '../types.js';
 
 function summarizeSearchResults(
@@ -298,6 +299,49 @@ export async function createSearchWorkflow(
     } catch (e) {
       steps.push({
         label: 'Create rich note with content and tags',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
+  // Step 2b: Create note with exact reference tokens in title and content
+  {
+    const start = Date.now();
+    try {
+      assertTruthy(typeof state.noteAId === 'string', 'reference target note remId');
+      const result = (await ctx.client.callTool('remnote_create_note', {
+        title: `[MCP-TEST] Exact Ref Create ${ctx.runId} [[id:${state.noteAId}]]`,
+        parentId: state.integrationParentRemId,
+        content: `Created content exact ref [[id:${state.noteAId}]]`,
+      })) as { remIds: string[] };
+      assertHasField(result, 'remIds', 'create exact reference note');
+      assertIsArray(result.remIds, 'exact reference note remIds');
+      const createdRemId = result.remIds[0];
+      assertTruthy(typeof createdRemId === 'string', 'exact reference note remId');
+
+      const reread = await ctx.client.callTool('remnote_read_note', {
+        remId: createdRemId,
+        contentMode: 'structured',
+        depth: 2,
+        view: 'full',
+      });
+      assertInlineRefTargetCountAtLeast(
+        reread,
+        state.noteAId as string,
+        2,
+        'create_note exact reference token readback'
+      );
+
+      steps.push({
+        label: 'Create note with exact reference tokens',
+        passed: true,
+        durationMs: Date.now() - start,
+      });
+    } catch (e) {
+      steps.push({
+        label: 'Create note with exact reference tokens',
         passed: false,
         durationMs: Date.now() - start,
         error: (e as Error).message,

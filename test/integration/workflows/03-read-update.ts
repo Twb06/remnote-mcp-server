@@ -12,6 +12,7 @@ import {
   assertEqual,
   assertIsArray,
 } from '../assertions.js';
+import { assertInlineRefTarget } from '../reference-assertions.js';
 import type { WorkflowContext, WorkflowResult, SharedState, StepResult } from '../types.js';
 
 function summarizeReadResult(result: Record<string, unknown>): Record<string, unknown> {
@@ -418,12 +419,25 @@ export async function readUpdateWorkflow(
   {
     const start = Date.now();
     try {
+      assertTruthy(typeof state.noteBId === 'string', 'update title reference target remId');
       const result = (await ctx.client.callTool('remnote_update_note', {
         remId: state.noteAId,
-        title: `[MCP-TEST] Updated Note ${ctx.runId}`,
+        title: `[MCP-TEST] Updated Note ${ctx.runId} [[id:${state.noteBId}]]`,
       })) as { remIds: string[] };
       assertHasField(result, 'remIds', 'update title should succeed');
       assertIsArray(result.remIds, 'update title remIds');
+
+      const reread = await ctx.client.callTool('remnote_read_note', {
+        remId: state.noteAId,
+        contentMode: 'none',
+        view: 'full',
+      });
+      assertInlineRefTarget(
+        reread,
+        state.noteBId as string,
+        'update_note.title exact reference token readback'
+      );
+
       steps.push({ label: 'Update title', passed: true, durationMs: Date.now() - start });
     } catch (e) {
       steps.push({
@@ -439,13 +453,28 @@ export async function readUpdateWorkflow(
   {
     const start = Date.now();
     try {
+      assertTruthy(typeof state.noteBId === 'string', 'insert content reference target remId');
       const result = (await ctx.client.callTool('remnote_insert_children', {
         parentRemId: state.noteAId,
-        content: 'Inserted via integration test',
+        content: `Inserted via integration test [[id:${state.noteBId}]]`,
         position: 'last',
       })) as { remIds: string[] };
       assertHasField(result, 'remIds', 'insert content should succeed');
       assertIsArray(result.remIds, 'insert content remIds');
+
+      const insertedRemId = result.remIds[0];
+      assertTruthy(typeof insertedRemId === 'string', 'inserted exact reference child remId');
+      const reread = await ctx.client.callTool('remnote_read_note', {
+        remId: insertedRemId,
+        contentMode: 'none',
+        view: 'full',
+      });
+      assertInlineRefTarget(
+        reread,
+        state.noteBId as string,
+        'insert_children exact reference token readback'
+      );
+
       steps.push({ label: 'Insert content', passed: true, durationMs: Date.now() - start });
     } catch (e) {
       steps.push({
@@ -462,7 +491,8 @@ export async function readUpdateWorkflow(
     const start = Date.now();
     try {
       if (acceptReplaceOperation) {
-        const replaceBody = `[MCP-TEST] Replaced via integration test ${ctx.runId}`;
+        assertTruthy(typeof state.noteBId === 'string', 'replace content reference target remId');
+        const replaceBody = `[MCP-TEST] Replaced via integration test ${ctx.runId} [[id:${state.noteBId}]]`;
         const result = (await ctx.client.callTool('remnote_replace_children', {
           parentRemId: state.noteAId,
           content: replaceBody,
@@ -478,8 +508,21 @@ export async function readUpdateWorkflow(
         assertTruthy(typeof reread.content === 'string', 're-read content should be string');
         assertContains(
           reread.content as string,
-          replaceBody,
+          `[MCP-TEST] Replaced via integration test ${ctx.runId}`,
           're-read content should include replaced body'
+        );
+
+        const replacedRemId = result.remIds[0];
+        assertTruthy(typeof replacedRemId === 'string', 'replaced exact reference child remId');
+        const rereadChild = await ctx.client.callTool('remnote_read_note', {
+          remId: replacedRemId,
+          contentMode: 'none',
+          view: 'full',
+        });
+        assertInlineRefTarget(
+          rereadChild,
+          state.noteBId as string,
+          'replace_children exact reference token readback'
         );
         steps.push({ label: 'Replace content', passed: true, durationMs: Date.now() - start });
       } else {

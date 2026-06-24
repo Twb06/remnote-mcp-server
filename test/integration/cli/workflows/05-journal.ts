@@ -8,6 +8,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { assertContains, assertHasField, assertTruthy } from '../assertions.js';
+import { assertInlineRefTarget } from '../../reference-assertions.js';
 import type { WorkflowContext, WorkflowResult, SharedState, StepResult } from '../types.js';
 
 async function withTempContentFile<T>(
@@ -45,6 +46,25 @@ async function assertJournalReadback(
   for (const fragment of expectedFragments) {
     assertContains(combined, fragment, `${label} should include ${fragment}`);
   }
+}
+
+async function assertJournalInlineRef(
+  ctx: WorkflowContext,
+  remId: string,
+  targetRemId: string,
+  label: string
+): Promise<void> {
+  const reread = await ctx.cli.runExpectSuccess([
+    'read',
+    remId,
+    '--content-mode',
+    'structured',
+    '--depth',
+    '4',
+    '--view',
+    'full',
+  ]);
+  assertInlineRefTarget(reread, targetRemId, label);
 }
 
 export async function journalWorkflow(
@@ -94,8 +114,10 @@ export async function journalWorkflow(
     const start = Date.now();
     try {
       const expectedEntry = `[CLI-TEST] No-timestamp entry ${ctx.runId}`;
+      const targetRemId = state.integrationParentRemId;
+      assertTruthy(typeof targetRemId === 'string', 'journal exact reference target remId');
       const result = (await withTempContentFile(
-        expectedEntry,
+        `${expectedEntry} [[id:${targetRemId}]]`,
         async (contentPath) =>
           (await ctx.cli.runExpectSuccess([
             'journal',
@@ -115,6 +137,12 @@ export async function journalWorkflow(
         state.journalEntryBId as string,
         [expectedEntry],
         'non-timestamped journal entry'
+      );
+      await assertJournalInlineRef(
+        ctx,
+        state.journalEntryBId as string,
+        targetRemId,
+        'CLI journal exact reference token readback'
       );
       steps.push({
         label: 'Append without timestamp',

@@ -125,6 +125,7 @@ export async function setPropertyWorkflow(
   let propertyFixtureTagRemId: string | undefined;
   let automationLevelPropertyRemId: string | undefined;
   let automationLevelValue: string | undefined;
+  let automationLevelRenderedValue: string | undefined;
 
   // Step 1: Resolve the property-bearing test tag by exact title.
   {
@@ -233,7 +234,17 @@ export async function setPropertyWorkflow(
     try {
       assertTruthy(propertyFixtureTagRemId, 'property fixture tag remId');
       assertTruthy(automationLevelPropertyRemId, 'automation-level property remId');
-      automationLevelValue = makePropertyValue(ctx.runId);
+      assertTruthy(
+        typeof state.integrationParentRemId === 'string',
+        'property exact reference target remId'
+      );
+      assertTruthy(
+        typeof state.integrationParentTitle === 'string',
+        'property exact reference target title'
+      );
+      const propertyValuePrefix = makePropertyValue(ctx.runId);
+      automationLevelValue = `${propertyValuePrefix} [[id:${state.integrationParentRemId}]]`;
+      automationLevelRenderedValue = `${propertyValuePrefix} [[${state.integrationParentTitle}]]`;
 
       const result = (await ctx.client.callTool('remnote_set_property', {
         remId: targetRemId,
@@ -270,6 +281,7 @@ export async function setPropertyWorkflow(
       assertTruthy(propertyFixtureTagRemId, 'property fixture tag remId');
       assertTruthy(automationLevelPropertyRemId, 'automation-level property remId');
       assertTruthy(automationLevelValue, 'automation-level value');
+      assertTruthy(automationLevelRenderedValue, 'automation-level rendered value');
 
       await findVerifiedPropertyRow(
         ctx,
@@ -277,11 +289,11 @@ export async function setPropertyWorkflow(
         PROPERTY_FIXTURE_NAME,
         automationLevelPropertyRemId,
         targetRemId,
-        automationLevelValue
+        automationLevelRenderedValue
       );
 
       steps.push({
-        label: `Verify kept ${PROPERTY_FIXTURE_NAME} value via read_table`,
+        label: `Verify kept ${PROPERTY_FIXTURE_NAME} exact reference value via read_table`,
         passed: true,
         durationMs: Date.now() - start,
       });

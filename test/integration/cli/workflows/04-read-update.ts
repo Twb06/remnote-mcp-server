@@ -9,6 +9,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { assertHasField, assertTruthy, assertEqual, assertContains } from '../assertions.js';
+import { assertInlineRefTarget } from '../../reference-assertions.js';
 import type { WorkflowContext, WorkflowResult, SharedState, StepResult } from '../types.js';
 
 function summarizeReadResult(result: Record<string, unknown>): Record<string, unknown> {
@@ -360,13 +361,77 @@ export async function readUpdateWorkflow(
     }
   }
 
+  // Step 2b: Update note A title with an exact reference token
+  {
+    const start = Date.now();
+    try {
+      if (acceptWriteOperations) {
+        assertTruthy(typeof state.noteBId === 'string', 'update title reference target remId');
+        const result = (await ctx.cli.runExpectSuccess([
+          'update',
+          state.noteAId as string,
+          '--title',
+          `[CLI-TEST] Updated Note ${ctx.runId} [[id:${state.noteBId}]]`,
+        ])) as Record<string, unknown>;
+        assertHasField(result, 'remIds', 'update note A title');
+
+        const reread = await ctx.cli.runExpectSuccess([
+          'read',
+          state.noteAId as string,
+          '--content-mode',
+          'none',
+          '--view',
+          'full',
+        ]);
+        assertInlineRefTarget(
+          reread,
+          state.noteBId as string,
+          'CLI update title exact reference token readback'
+        );
+
+        steps.push({
+          label: 'Update note A title with exact reference token',
+          passed: true,
+          durationMs: Date.now() - start,
+        });
+      } else {
+        const result = await ctx.cli.runExpectError([
+          'update',
+          state.noteAId as string,
+          '--title',
+          'Should be blocked',
+        ]);
+        assertContains(
+          result.stderr,
+          'Write operations are disabled',
+          'update title should be blocked when write operations are disabled'
+        );
+        steps.push({
+          label: 'Update note A title blocked by write gate',
+          passed: true,
+          durationMs: Date.now() - start,
+        });
+      }
+    } catch (e) {
+      steps.push({
+        label: acceptWriteOperations
+          ? 'Update note A title with exact reference token'
+          : 'Update note A title blocked by write gate',
+        passed: false,
+        durationMs: Date.now() - start,
+        error: (e as Error).message,
+      });
+    }
+  }
+
   // Step 3: Update note A — insert content (or validate write gate rejection)
   {
     const start = Date.now();
     try {
       if (acceptWriteOperations) {
+        assertTruthy(typeof state.noteBId === 'string', 'insert content reference target remId');
         const result = (await withTempContentFile(
-          'Appended by CLI integration test',
+          `Appended by CLI integration test [[id:${state.noteBId}]]`,
           async (contentPath) =>
             (await ctx.cli.runExpectSuccess([
               'insert-children',
@@ -378,6 +443,23 @@ export async function readUpdateWorkflow(
             ])) as Record<string, unknown>
         )) as Record<string, unknown>;
         assertHasField(result, 'remIds', 'update note A');
+        const insertedRemId = (result.remIds as string[])[0];
+        assertTruthy(typeof insertedRemId === 'string', 'inserted exact reference child remId');
+
+        const reread = await ctx.cli.runExpectSuccess([
+          'read',
+          insertedRemId,
+          '--content-mode',
+          'none',
+          '--view',
+          'full',
+        ]);
+        assertInlineRefTarget(
+          reread,
+          state.noteBId as string,
+          'CLI insert-children exact reference token readback'
+        );
+
         steps.push({
           label: 'Update note A (insert)',
           passed: true,
@@ -580,7 +662,8 @@ export async function readUpdateWorkflow(
     const start = Date.now();
     try {
       if (acceptReplaceOperation) {
-        const replaceBody = `[CLI-TEST] Replaced via integration test ${ctx.runId}`;
+        assertTruthy(typeof state.noteBId === 'string', 'replace content reference target remId');
+        const replaceBody = `[CLI-TEST] Replaced via integration test ${ctx.runId} [[id:${state.noteBId}]]`;
         const result = (await withTempContentFile(
           replaceBody,
           async (contentPath) =>
@@ -602,8 +685,24 @@ export async function readUpdateWorkflow(
         assertTruthy(typeof reread.content === 'string', 're-read content should be a string');
         assertContains(
           reread.content as string,
-          replaceBody,
+          `[CLI-TEST] Replaced via integration test ${ctx.runId}`,
           're-read content should include replaced body'
+        );
+
+        const replacedRemId = (result.remIds as string[])[0];
+        assertTruthy(typeof replacedRemId === 'string', 'replaced exact reference child remId');
+        const rereadChild = await ctx.cli.runExpectSuccess([
+          'read',
+          replacedRemId,
+          '--content-mode',
+          'none',
+          '--view',
+          'full',
+        ]);
+        assertInlineRefTarget(
+          rereadChild,
+          state.noteBId as string,
+          'CLI replace-children exact reference token readback'
         );
         steps.push({
           label: 'Update note A (replace)',
