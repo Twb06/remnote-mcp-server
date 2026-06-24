@@ -59,6 +59,13 @@ export const validUpdateTagsInput = {
   removeTagRemIds: ['tag-rem-id-2'],
 };
 
+export const validSetPropertyInput = {
+  remId: 'rem-id-456',
+  tagRemId: 'tag-rem-id-1',
+  propertyRemId: 'property-rem-id-1',
+  value: { kind: 'rem_reference', remId: 'option-rem-id-1' },
+};
+
 export const validAppendJournalInput = {
   content: 'Journal entry',
   timestamp: false,

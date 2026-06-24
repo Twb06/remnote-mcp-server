@@ -257,6 +257,38 @@ export const UpdateTagsSchema = z
     path: ['addTagRemIds'],
   });
 
+export const SetPropertyValueSchema = z.discriminatedUnion('kind', [
+  z
+    .object({
+      kind: z.literal('text'),
+      text: z.string().describe('Plain text or markdown value to store in the property'),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('rem_reference'),
+      remId: z
+        .string()
+        .min(1)
+        .describe('Referenced Rem ID; use this for select-option Rem IDs too'),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('clear'),
+    })
+    .strict(),
+]);
+
+export const SetPropertySchema = z
+  .object({
+    remId: z.string().min(1).describe('The Rem ID whose tag property should be set'),
+    tagRemId: z.string().min(1).describe('Exact tag/table Rem ID that owns the property'),
+    propertyRemId: z.string().min(1).describe('Exact property Rem ID under the tag/table Rem'),
+    value: SetPropertyValueSchema.describe('Property value payload'),
+  })
+  .strict();
+
 export const AppendJournalSchema = z
   .object({
     content: z.string().describe("Content to append to today's daily document"),

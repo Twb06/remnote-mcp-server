@@ -402,6 +402,77 @@ export const FALLBACK_TOOLS = [
     },
   },
   {
+    name: 'remnote_set_property',
+    description:
+      'Set or clear a tag/table property value on a Rem by exact IDs. The bridge verifies the property belongs to the supplied tag/table Rem, adds the tag idempotently, then writes the property value. For select properties, pass the option Rem ID as value.kind="rem_reference".',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        remId: {
+          type: 'string',
+          description: 'The Rem ID whose tag property should be set',
+        },
+        tagRemId: {
+          type: 'string',
+          description: 'Exact tag/table Rem ID that owns the property',
+        },
+        propertyRemId: {
+          type: 'string',
+          description: 'Exact property Rem ID under the tag/table Rem',
+        },
+        value: {
+          oneOf: [
+            {
+              type: 'object',
+              properties: {
+                kind: {
+                  type: 'string',
+                  const: 'text',
+                },
+                text: {
+                  type: 'string',
+                  description: 'Plain text or markdown property value',
+                },
+              },
+              required: ['kind', 'text'],
+              additionalProperties: false,
+            },
+            {
+              type: 'object',
+              properties: {
+                kind: {
+                  type: 'string',
+                  const: 'rem_reference',
+                },
+                remId: {
+                  type: 'string',
+                  description: 'Referenced Rem ID; use select-option Rem IDs here too',
+                },
+              },
+              required: ['kind', 'remId'],
+              additionalProperties: false,
+            },
+            {
+              type: 'object',
+              properties: {
+                kind: {
+                  type: 'string',
+                  const: 'clear',
+                },
+              },
+              required: ['kind'],
+              additionalProperties: false,
+            },
+          ],
+          description:
+            'Property value. Use text for plain values, rem_reference for Rem references and select options, or clear to remove the value.',
+        },
+      },
+      required: ['remId', 'tagRemId', 'propertyRemId', 'value'],
+      additionalProperties: false,
+    },
+  },
+  {
     name: 'remnote_append_journal',
     description:
       "Append content to today's daily document in RemNote with optional exact tag Rem IDs. Recommended preflight once per session: remnote_status.",

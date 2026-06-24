@@ -210,3 +210,9 @@ Run the integration suite as usual:
 ```
 
 The `read_table` workflow is skipped when either field is missing or the config is invalid.
+
+### Property write validation
+
+`remnote_set_property` requires a property-bearing tag or Advanced Table plus exact target, tag/table, property, and
+value Rem IDs. Zero-config integration runs do not create RemNote property schema, so property writes should be
+validated manually or through a future configured fixture, similar to `read_table`.

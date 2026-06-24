@@ -176,6 +176,68 @@ export function registerUpdateTagsCommand(program: Command): void {
     });
 }
 
+export function registerSetPropertyCommand(program: Command): void {
+  const subprogram = program.command('set-property <rem-id>');
+  const validate = (val: string) => validateNotFlag(val, subprogram);
+
+  subprogram
+    .description('Set or clear a tag/table property value by exact IDs')
+    .requiredOption('--tag-id <id>', 'Exact tag/table Rem ID that owns the property', validate)
+    .requiredOption('--property-id <id>', 'Exact property Rem ID under the tag/table Rem', validate)
+    .option('--value <text>', 'Set a plain text or markdown property value', validate)
+    .option(
+      '--rem-reference-id <id>',
+      'Set a Rem reference value; use select-option Rem IDs here too',
+      validate
+    )
+    .option('--clear', 'Clear the property value')
+    .action(async (remId: string, opts) => {
+      const globalOpts = program.opts();
+      const format: OutputFormat = globalOpts.text ? 'text' : 'json';
+      const client = createCommandClient(program);
+
+      try {
+        const selectedValueOptions = [
+          opts.value !== undefined,
+          opts.remReferenceId !== undefined,
+          Boolean(opts.clear),
+        ].filter(Boolean).length;
+
+        if (selectedValueOptions !== 1) {
+          throw new Error('Provide exactly one of --value, --rem-reference-id, or --clear.');
+        }
+
+        const value =
+          opts.value !== undefined
+            ? { kind: 'text', text: opts.value }
+            : opts.remReferenceId !== undefined
+              ? { kind: 'rem_reference', remId: opts.remReferenceId }
+              : { kind: 'clear' };
+
+        const payload: Record<string, unknown> = {
+          remId,
+          tagRemId: opts.tagId,
+          propertyRemId: opts.propertyId,
+          value,
+        };
+
+        const result = await client.execute('set_property', payload);
+        console.log(
+          formatResult(result, format, (data) => {
+            const r = data as Record<string, unknown>;
+            return `Set property: ${r.propertyRemId ?? opts.propertyId} on ${r.remId ?? remId} (${r.valueKind ?? 'unknown'})`;
+          })
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(formatError(message, format));
+        process.exit(EXIT.ERROR);
+      } finally {
+        await client.close();
+      }
+    });
+}
+
 export function registerMoveNoteCommand(program: Command): void {
   const subprogram = program.command('move-note <rem-id>');
   const validate = (val: string) => validateNotFlag(val, subprogram);

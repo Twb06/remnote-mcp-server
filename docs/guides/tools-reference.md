@@ -26,6 +26,7 @@ JSON in a top-level `content` text block for compatibility with older clients an
 | `remnote_insert_children` | Insert child Rems | Ordered hierarchy maintenance, tag descriptions |
 | `remnote_replace_children` | Replace direct child Rems | Explicitly approved destructive rewrites |
 | `remnote_update_tags` | Mutate tags by exact Rem ID | Production tagging workflows |
+| `remnote_set_property` | Set tag/table property values | Exact-ID property writes for property-bearing tags and tables |
 | `remnote_append_journal` | Add to daily document | Journaling, logging, daily notes, optional exact tag Rem IDs |
 | `remnote_read_table` | Read Advanced Tables | Fetching tabular rows, schema metadata, and filtered columns |
 | `remnote_get_playbook` | Get operating playbook | Session preflight, traversal defaults, write safety guidance |
@@ -488,6 +489,41 @@ Add or remove tags using exact tag Rem IDs.
 Use this for production tagging workflows. Name-based tag mutation is intentionally absent from the write tool surface
 because same-name Rems can exist in different branches.
 
+## remnote_set_property
+
+Set or clear a tag/table property value on a Rem using exact IDs.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `remId` | string | Yes | Rem ID whose property value should change |
+| `tagRemId` | string | Yes | Exact tag/table Rem ID that owns the property |
+| `propertyRemId` | string | Yes | Exact property Rem ID under the tag/table Rem |
+| `value` | object | Yes | `{ kind: "text", text }`, `{ kind: "rem_reference", remId }`, or `{ kind: "clear" }` |
+
+The bridge verifies that `propertyRemId` is a property child of `tagRemId`, adds the tag idempotently to `remId`, and
+then writes the property value. For single-select and multi-select properties, pass the option Rem ID through
+`value.kind: "rem_reference"`.
+
+Examples:
+
+```json
+{
+  "remId": "targetRemId",
+  "tagRemId": "nounTypeTagRemId",
+  "propertyRemId": "nounUseContextPropertyRemId",
+  "value": { "kind": "rem_reference", "remId": "peopleOptionRemId" }
+}
+```
+
+```json
+{
+  "remId": "targetRemId",
+  "tagRemId": "tagRemId",
+  "propertyRemId": "propertyRemId",
+  "value": { "kind": "clear" }
+}
+```
+
 ## remnote_append_journal
 
 Append content to today's daily document in RemNote with optional exact tag Rem IDs.
@@ -644,15 +680,15 @@ Returns a structured playbook object, including:
   `parentRemId` with `nextCursor`.
 - `remnote_search_by_tag` guidance - when to use default context results, `matchedRems`, `resultMode: "tagged"`, or a
   bounded `timeoutMs` fallback.
-- `writePolicy` - how to interpret `acceptWriteOperations` / `acceptReplaceOperation`, document-status writes, and
-  exact-ID tag writes.
+- `writePolicy` - how to interpret `acceptWriteOperations` / `acceptReplaceOperation`, document-status writes,
+  exact-ID tag writes, and property writes.
 - `currentStatus` - live `remnote_status` snapshot when available.
 
 ### Tips
 
 - Treat this as guidance, not rigid policy.
 - Use the playbook's write guidance to choose between metadata updates, ordered child insertion, destructive replacement,
-  document-status writes, and exact-ID tag writes without overloading `remnote_update_note`.
+  document-status writes, exact-ID tag writes, and property writes without overloading `remnote_update_note`.
 - Call `remnote_status` once per session (recommended) and before high-risk writes.
 - For whole-KB orientation, start shallow and ID-first:
   - `structured` mode, `depth: 1`, `childLimit: 500`.

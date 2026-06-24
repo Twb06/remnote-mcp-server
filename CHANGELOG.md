@@ -10,6 +10,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Add `parentRemId` to `remnote_search` input schema and `--parent-id` option to `remnote-cli search` to support scoping search within a Rem's subtree. Contributed by Twb06.
+- Add exact-ID tag/table property writes through `remnote_set_property` and `remnote-cli set-property`, supporting
+  text, Rem-reference/select-option, and clear value payloads.
 
 ### Changed
 

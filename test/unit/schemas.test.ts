@@ -14,6 +14,7 @@ import {
   InsertChildrenSchema,
   ReplaceChildrenSchema,
   UpdateTagsSchema,
+  SetPropertySchema,
   AppendJournalSchema,
   ReadTableSchema,
 } from '../../src/schemas/remnote-schemas.js';
@@ -421,6 +422,68 @@ describe('UpdateTagsSchema', () => {
     expect(() => UpdateTagsSchema.parse({ remId: 'note' })).toThrow(
       'remnote_update_tags requires addTagRemIds or removeTagRemIds'
     );
+  });
+});
+
+describe('SetPropertySchema', () => {
+  it('should validate text property writes', () => {
+    expect(
+      SetPropertySchema.parse({
+        remId: 'note',
+        tagRemId: 'tag',
+        propertyRemId: 'property',
+        value: { kind: 'text', text: 'People' },
+      })
+    ).toEqual({
+      remId: 'note',
+      tagRemId: 'tag',
+      propertyRemId: 'property',
+      value: { kind: 'text', text: 'People' },
+    });
+  });
+
+  it('should validate Rem reference property writes', () => {
+    expect(
+      SetPropertySchema.parse({
+        remId: 'note',
+        tagRemId: 'tag',
+        propertyRemId: 'property',
+        value: { kind: 'rem_reference', remId: 'option-rem-id' },
+      }).value
+    ).toEqual({ kind: 'rem_reference', remId: 'option-rem-id' });
+  });
+
+  it('should validate property clearing', () => {
+    expect(
+      SetPropertySchema.parse({
+        remId: 'note',
+        tagRemId: 'tag',
+        propertyRemId: 'property',
+        value: { kind: 'clear' },
+      }).value
+    ).toEqual({ kind: 'clear' });
+  });
+
+  it('should reject unknown property value kinds', () => {
+    expect(() =>
+      SetPropertySchema.parse({
+        remId: 'note',
+        tagRemId: 'tag',
+        propertyRemId: 'property',
+        value: { kind: 'select_option', optionRemId: 'option' },
+      })
+    ).toThrow();
+  });
+
+  it('should reject empty exact IDs', () => {
+    expect(() =>
+      SetPropertySchema.parse({
+        remId: '',
+        tagRemId: 'tag',
+        propertyRemId: 'property',
+        value: { kind: 'text', text: 'People' },
+      })
+    ).toThrow();
   });
 });
 

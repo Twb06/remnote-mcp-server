@@ -29,6 +29,7 @@ Optional/report-only tools:
 
 - `remnote_replace_children`
 - `remnote_read_table`
+- `remnote_set_property`
 
 If your client can inspect the available tool list, check it first. If not, continue and report any missing tool when a
 required call fails.
@@ -45,6 +46,7 @@ required call fails.
    - Confirm the playbook mentions scoped branch search through `parentRemId`.
    - Confirm the playbook mentions `ancestorDepth`, `remnote_list_children`, and dry-run-first `remnote_move_note`.
    - Confirm the playbook mentions dry-run-first `remnote_set_document_status`.
+   - Confirm the playbook mentions setting tag/table property values with `remnote_set_property`.
 
 3. Resolve the shared temporary integration-test root.
    - Search for the exact title `RemNote Automation Bridge [temporary integration test data]`.
@@ -132,6 +134,8 @@ required call fails.
       destructive replacement is enabled. Do not call it unless the user explicitly asks for destructive validation.
     - If `remnote_read_table` is available, report that table validation requires an existing Advanced Table title or
       Rem ID and skip it for this zero-config smoke test.
+    - If `remnote_set_property` is available, report that property-write validation requires an existing property-bearing
+      tag/table Rem plus exact property/value Rem IDs and skip it for this zero-config smoke test.
 
 18. Final response:
     - Report PASS or FAIL.

@@ -15,8 +15,8 @@ remnote-mcp-server
 ```
 
 Bridge actions (`create`, `search`, `search-by-tag`, `read`, `list-children`, `move-note`, `update`,
-`set-document-status`, `insert-children`, `replace-children`, `update-tags`, `journal`, `read-table`, `status`) also
-require RemNote with the RemNote Automation Bridge plugin connected to that MCP server.
+`set-document-status`, `insert-children`, `replace-children`, `update-tags`, `set-property`, `journal`, `read-table`,
+`status`) also require RemNote with the RemNote Automation Bridge plugin connected to that MCP server.
 
 ## Global Options
 
@@ -376,6 +376,30 @@ remnote-cli update-tags <rem-id> --add-tag-ids <tag-rem-id...>
 | `--remove-tag-ids <tag-rem-id...>` | none    | Exact tag Rem IDs to remove |
 
 Use exact IDs for production tagging workflows. Name-based tag mutation is intentionally not exposed.
+
+## set-property
+
+Set or clear a tag/table property value by exact IDs.
+
+```bash
+remnote-cli set-property <rem-id> --tag-id <tag-rem-id> --property-id <property-rem-id> (--value <text> | --rem-reference-id <id> | --clear)
+```
+
+| Option                    | Default | Description                                           |
+| ------------------------- | ------- | ----------------------------------------------------- |
+| `--tag-id <id>`           | none    | Exact tag/table Rem ID that owns the property         |
+| `--property-id <id>`      | none    | Exact property Rem ID under the tag/table Rem         |
+| `--value <text>`          | none    | Set a plain text or markdown property value           |
+| `--rem-reference-id <id>` | none    | Set a Rem reference value; use select option IDs here |
+| `--clear`                 | false   | Clear the property value                              |
+
+Examples:
+
+```bash
+remnote-cli set-property abc123def --tag-id tag123 --property-id prop123 --value "People" --text
+remnote-cli set-property abc123def --tag-id tag123 --property-id prop123 --rem-reference-id option123 --text
+remnote-cli set-property abc123def --tag-id tag123 --property-id prop123 --clear --text
+```
 
 ## journal
 

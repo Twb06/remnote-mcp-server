@@ -12,6 +12,7 @@ import { MoveNoteSchema } from '../schemas/remnote-schemas.js';
 import { InsertChildrenSchema } from '../schemas/remnote-schemas.js';
 import { ReplaceChildrenSchema } from '../schemas/remnote-schemas.js';
 import { UpdateTagsSchema } from '../schemas/remnote-schemas.js';
+import { SetPropertySchema } from '../schemas/remnote-schemas.js';
 import { AppendJournalSchema } from '../schemas/remnote-schemas.js';
 import { ReadTableSchema } from '../schemas/remnote-schemas.js';
 import { checkVersionCompatibility } from '../version-compat.js';
@@ -917,6 +918,77 @@ export const UPDATE_TAGS_TOOL = {
   outputSchema: UPDATE_NOTE_TOOL.outputSchema,
 };
 
+export const SET_PROPERTY_TOOL = {
+  name: 'remnote_set_property',
+  description:
+    'Set or clear a tag/table property value on a Rem by exact IDs. The bridge verifies the property belongs to the supplied tag/table Rem, adds the tag idempotently, then writes the property value. For select properties, pass the option Rem ID as value.kind="rem_reference".',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {
+      remId: { type: 'string', description: 'The Rem ID whose tag property should be set' },
+      tagRemId: {
+        type: 'string',
+        description: 'Exact tag/table Rem ID that owns the property',
+      },
+      propertyRemId: {
+        type: 'string',
+        description: 'Exact property Rem ID under the tag/table Rem',
+      },
+      value: {
+        oneOf: [
+          {
+            type: 'object',
+            properties: {
+              kind: { type: 'string', const: 'text' },
+              text: { type: 'string', description: 'Plain text or markdown property value' },
+            },
+            required: ['kind', 'text'],
+            additionalProperties: false,
+          },
+          {
+            type: 'object',
+            properties: {
+              kind: { type: 'string', const: 'rem_reference' },
+              remId: {
+                type: 'string',
+                description: 'Referenced Rem ID; use select-option Rem IDs here too',
+              },
+            },
+            required: ['kind', 'remId'],
+            additionalProperties: false,
+          },
+          {
+            type: 'object',
+            properties: {
+              kind: { type: 'string', const: 'clear' },
+            },
+            required: ['kind'],
+            additionalProperties: false,
+          },
+        ],
+        description:
+          'Property value. Use text for plain values, rem_reference for Rem references and select options, or clear to remove the value.',
+      },
+    },
+    required: ['remId', 'tagRemId', 'propertyRemId', 'value'],
+    additionalProperties: false,
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      remId: { type: 'string', description: 'The Rem ID whose property was set' },
+      tagRemId: { type: 'string', description: 'Exact tag/table Rem ID' },
+      propertyRemId: { type: 'string', description: 'Exact property Rem ID' },
+      valueKind: {
+        type: 'string',
+        enum: ['text', 'rem_reference', 'clear'],
+        description: 'The value payload kind applied by the bridge',
+      },
+    },
+    required: ['remId', 'tagRemId', 'propertyRemId', 'valueKind'],
+  },
+};
+
 export const APPEND_JOURNAL_TOOL = {
   name: 'remnote_append_journal',
   description:
@@ -1144,6 +1216,7 @@ export const ALL_TOOLS = [
   INSERT_CHILDREN_TOOL,
   REPLACE_CHILDREN_TOOL,
   UPDATE_TAGS_TOOL,
+  SET_PROPERTY_TOOL,
   APPEND_JOURNAL_TOOL,
   PLAYBOOK_TOOL,
   STATUS_TOOL,
@@ -1260,6 +1333,12 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           break;
         }
 
+        case 'remnote_set_property': {
+          const args = SetPropertySchema.parse(request.params.arguments);
+          result = await wsServer.sendRequest('set_property', args);
+          break;
+        }
+
         case 'remnote_append_journal': {
           const args = AppendJournalSchema.parse(request.params.arguments);
           result = await wsServer.sendRequest('append_journal', args);
@@ -1281,7 +1360,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           result = {
             playbookVersion: '1.6.0',
             summary:
-              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, request nearby ancestors when hierarchy context matters, choose compact/full output views, and apply safe exact-ID writes including dry-run-first document status changes.',
+              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, request nearby ancestors when hierarchy context matters, choose compact/full output views, and apply safe exact-ID writes including tag property values and dry-run-first document status changes.',
             recommendedStatusCheck: {
               tool: 'remnote_status',
               cadence: 'recommended once per session and before risky writes',
@@ -1310,6 +1389,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
               'Need to move a note? Use remnote_move_note dryRun first, include expectedOldParentRemId for stale-context protection, then rerun with dryRun=false after approval.',
               'Need to replace children? Check remnote_status first; remnote_replace_children requires acceptReplaceOperation=true.',
               'Need to update tags on an existing note? Use remnote_update_tags with exact tag Rem IDs.',
+              'Need to set a tag/table property value? Use remnote_set_property with exact remId, tagRemId, propertyRemId, and a text/rem_reference/clear value payload. For select properties, pass the option Rem ID as rem_reference.remId.',
             ],
             navigationPresets: {
               orientation: NAVIGATION_PRESET,
@@ -1339,6 +1419,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
                 'remnote_insert_children preserves existing child Rem IDs; remnote_replace_children removes them.',
                 'remnote_move_note preserves the moved Rem ID and subtree; dryRun defaults to true.',
                 'All production tag writes use exact tag Rem IDs: create_note.tagRemIds, append_journal.tagRemIds, and update_tags add/remove arrays.',
+                'remnote_set_property writes exact-ID tag/table property values and requires acceptWriteOperations=true.',
               ],
             },
             currentStatus,

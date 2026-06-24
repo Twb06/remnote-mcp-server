@@ -17,6 +17,7 @@ import {
   MOVE_NOTE_TOOL,
   REPLACE_CHILDREN_TOOL,
   UPDATE_TAGS_TOOL,
+  SET_PROPERTY_TOOL,
   APPEND_JOURNAL_TOOL,
   PLAYBOOK_TOOL,
   STATUS_TOOL,
@@ -35,6 +36,7 @@ import {
   validInsertChildrenInput,
   validReplaceChildrenInput,
   validUpdateTagsInput,
+  validSetPropertyInput,
   validAppendJournalInput,
   validReadTableInput,
   sampleMutatingResult,
@@ -328,6 +330,7 @@ describe('Tool Definitions', () => {
     expect(SET_DOCUMENT_STATUS_TOOL.name).toBe('remnote_set_document_status');
     expect(REPLACE_CHILDREN_TOOL.name).toBe('remnote_replace_children');
     expect(UPDATE_TAGS_TOOL.name).toBe('remnote_update_tags');
+    expect(SET_PROPERTY_TOOL.name).toBe('remnote_set_property');
   });
 
   it('should advertise insert children as a plain top-level object schema', () => {
@@ -432,14 +435,14 @@ describe('Tool Registration', () => {
     expect(mockServer.hasHandler(ListToolsRequestSchema)).toBe(true);
   });
 
-  it('should return all 15 tools in list', async () => {
+  it('should return all 16 tools in list', async () => {
     registerAllTools(mockServer as never, mockWsServer as never, createMockLogger());
 
     const result = (await mockServer.callHandler(ListToolsRequestSchema, {})) as {
       tools: unknown[];
     };
 
-    expect(result.tools).toHaveLength(15);
+    expect(result.tools).toHaveLength(16);
   });
 
   it('should include all tool names in list', async () => {
@@ -459,6 +462,7 @@ describe('Tool Registration', () => {
     expect(names).toContain('remnote_insert_children');
     expect(names).toContain('remnote_replace_children');
     expect(names).toContain('remnote_update_tags');
+    expect(names).toContain('remnote_set_property');
     expect(names).toContain('remnote_append_journal');
     expect(names).toContain('remnote_get_playbook');
     expect(names).toContain('remnote_status');
@@ -1028,6 +1032,14 @@ describe('Tool Handlers - split write tools', () => {
     expect(mockWsServer.sendRequest).toHaveBeenCalledWith('update_tags', validUpdateTagsInput);
   });
 
+  it('should call wsServer.sendRequest with set_property action', async () => {
+    await mockServer.callHandler(CallToolRequestSchema, {
+      params: { name: 'remnote_set_property', arguments: validSetPropertyInput },
+    });
+
+    expect(mockWsServer.sendRequest).toHaveBeenCalledWith('set_property', validSetPropertyInput);
+  });
+
   it('should call wsServer.sendRequest with move_note action', async () => {
     await mockServer.callHandler(CallToolRequestSchema, {
       params: {
@@ -1348,6 +1360,7 @@ describe('Tool Handlers - get_playbook', () => {
     expect(result.structuredContent?.writePolicy).toMatchObject({
       guidance: expect.arrayContaining([
         'All production tag writes use exact tag Rem IDs: create_note.tagRemIds, append_journal.tagRemIds, and update_tags add/remove arrays.',
+        'remnote_set_property writes exact-ID tag/table property values and requires acceptWriteOperations=true.',
         'remnote_set_document_status changes only document status; it preserves concept/card status and defaults to dryRun=true.',
       ]),
     });

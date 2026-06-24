@@ -65,6 +65,10 @@
       "description": "Add or remove tags from a note by exact tag Rem IDs. Use this for production tagging workflows to avoid ambiguous name lookup."
     },
     {
+      "name": "remnote_set_property",
+      "description": "Set or clear a tag/table property value on a Rem by exact IDs. The bridge verifies the property belongs to the supplied tag/table Rem, adds the tag idempotently, then writes the property value. For select properties, pass the option Rem ID as value.kind=\"rem_reference\"."
+    },
+    {
       "name": "remnote_append_journal",
       "description": "Append content to today's daily document in RemNote with optional exact tag Rem IDs. Recommended preflight once per session: remnote_status."
     },

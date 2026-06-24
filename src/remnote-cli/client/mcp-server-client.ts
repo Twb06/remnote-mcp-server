@@ -18,6 +18,7 @@ export const BRIDGE_ACTION_TO_TOOL: Readonly<Record<string, string>> = {
   insert_children: 'remnote_insert_children',
   replace_children: 'remnote_replace_children',
   update_tags: 'remnote_update_tags',
+  set_property: 'remnote_set_property',
   append_journal: 'remnote_append_journal',
   get_status: 'remnote_status',
   read_table: 'remnote_read_table',

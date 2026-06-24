@@ -66,7 +66,7 @@ If any precondition is missing, stop and fix setup first.
 - Default to read-only flows: `status`, `search`, `search-by-tag`, `read`, `read-table`.
 - Do not run mutating commands by default.
 - For writes (`create`, `update`, `set-document-status`, `insert-children`, `replace-children`, `update-tags`,
-  `journal`), require the exact phrase `confirm write` from the user in the same turn.
+  `set-property`, `journal`), require the exact phrase `confirm write` from the user in the same turn.
 - If `confirm write` is not present, ask for confirmation and do not execute writes.
 
 ## Command Invocation Rule (critical)
@@ -167,6 +167,11 @@ If any precondition is missing, stop and fix setup first.
   - `remnote-cli insert-children <parent-rem-id> --content-file /tmp/children.md --position before --sibling-rem-id <rem-id> --text`
 - Update tags by exact tag Rem ID:
   - `remnote-cli update-tags <rem-id> --add-tag-ids <tag-rem-id> --remove-tag-ids <tag-rem-id> --text`
+- Set or clear a tag/table property value by exact IDs:
+  - `remnote-cli set-property <rem-id> --tag-id <tag-rem-id> --property-id <property-rem-id> --value "People" --text`
+  - `remnote-cli set-property <rem-id> --tag-id <tag-rem-id> --property-id <property-rem-id> --rem-reference-id <option-rem-id> --text`
+  - `remnote-cli set-property <rem-id> --tag-id <tag-rem-id> --property-id <property-rem-id> --clear --text`
+  - For select properties, pass the option Rem ID with `--rem-reference-id`.
 - Replace direct children (destructive, only with explicit user intent):
   - `remnote-cli replace-children <parent-rem-id> --content-file /tmp/replacement.md --text`
   - Use an empty content file to clear all direct children.
@@ -188,8 +193,8 @@ If any precondition is missing, stop and fix setup first.
 ## Failure Handling
 
 When a bridge-backed operation fails (`search`, `search-by-tag`, `read`, `read-table`, `create`, `update`,
-`set-document-status`, `insert-children`, `replace-children`, `update-tags`, `journal`, `status`), run this sequence in
-order:
+`set-document-status`, `insert-children`, `replace-children`, `update-tags`, `set-property`, `journal`, `status`), run
+this sequence in order:
 
 1. Check bridge status first:
    - `remnote-cli status --text`

@@ -29,6 +29,10 @@ Proposed tag changes should be written to a review file first, with each candida
 and short evidence. After human approval, the client applies tags with exact tag Rem IDs, for example through
 `remnote_update_tags`, avoiding ambiguous name-based tag lookup.
 
+When a tag carries required properties, use `remnote_set_property` after applying the tag. Pass the target Rem ID, the
+owning tag/table Rem ID, and the property Rem ID exactly; for dropdown/select values, pass the option Rem ID as a
+`rem_reference` value.
+
 Finally, the client audits the write with strict tag lookup, such as `remnote_search_by_tag` in direct tagged-result
 mode, and records an applied log so future sessions can continue from durable state instead of chat history. This
 pattern works especially well when false negatives are more costly than occasional broad matches, because the purpose

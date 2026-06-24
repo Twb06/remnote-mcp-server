@@ -371,6 +371,178 @@ describe('command bridge action mapping', () => {
     executeSpy.mockRestore();
   });
 
+  it('maps set-property --value to set_property payload', async () => {
+    const executeSpy = await runCommand([
+      'set-property',
+      'abc123',
+      '--tag-id',
+      'tag1',
+      '--property-id',
+      'prop1',
+      '--value',
+      'People',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('set_property', {
+      remId: 'abc123',
+      tagRemId: 'tag1',
+      propertyRemId: 'prop1',
+      value: { kind: 'text', text: 'People' },
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('maps set-property --rem-reference-id to set_property payload', async () => {
+    const executeSpy = await runCommand([
+      'set-property',
+      'abc123',
+      '--tag-id',
+      'tag1',
+      '--property-id',
+      'prop1',
+      '--rem-reference-id',
+      'option1',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('set_property', {
+      remId: 'abc123',
+      tagRemId: 'tag1',
+      propertyRemId: 'prop1',
+      value: { kind: 'rem_reference', remId: 'option1' },
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('maps set-property --clear to set_property payload', async () => {
+    const executeSpy = await runCommand([
+      'set-property',
+      'abc123',
+      '--tag-id',
+      'tag1',
+      '--property-id',
+      'prop1',
+      '--clear',
+    ]);
+    expect(executeSpy).toHaveBeenCalledWith('set_property', {
+      remId: 'abc123',
+      tagRemId: 'tag1',
+      propertyRemId: 'prop1',
+      value: { kind: 'clear' },
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('formats set-property text output', async () => {
+    const executeSpy = vi.spyOn(McpServerClient.prototype, 'execute').mockResolvedValue({
+      remId: 'abc123',
+      propertyRemId: 'prop1',
+      valueKind: 'rem_reference',
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const program = createProgram('0.1.0-test');
+
+    try {
+      await program.parseAsync(
+        [
+          'node',
+          'remnote-cli',
+          '--text',
+          'set-property',
+          'abc123',
+          '--tag-id',
+          'tag1',
+          '--property-id',
+          'prop1',
+          '--rem-reference-id',
+          'option1',
+        ],
+        { from: 'node' }
+      );
+
+      expect(logSpy).toHaveBeenCalledWith('Set property: prop1 on abc123 (rem_reference)');
+    } finally {
+      logSpy.mockRestore();
+      executeSpy.mockRestore();
+    }
+  });
+
+  it('rejects set-property without a value option', async () => {
+    const executeSpy = vi
+      .spyOn(McpServerClient.prototype, 'execute')
+      .mockResolvedValue({ ok: true });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const originalExit = process.exit;
+    process.exit = vi.fn() as never;
+    const program = createProgram('0.1.0-test');
+
+    try {
+      await program.parseAsync(
+        [
+          'node',
+          'remnote-cli',
+          'set-property',
+          'abc123',
+          '--tag-id',
+          'tag1',
+          '--property-id',
+          'prop1',
+        ],
+        { from: 'node' }
+      );
+
+      expect(executeSpy).not.toHaveBeenCalled();
+      expect(errSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Provide exactly one of --value, --rem-reference-id, or --clear')
+      );
+      expect(process.exit).toHaveBeenCalledWith(1);
+    } finally {
+      process.exit = originalExit;
+      logSpy.mockRestore();
+      errSpy.mockRestore();
+      executeSpy.mockRestore();
+    }
+  });
+
+  it('rejects set-property with multiple value options', async () => {
+    const executeSpy = vi
+      .spyOn(McpServerClient.prototype, 'execute')
+      .mockResolvedValue({ ok: true });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const originalExit = process.exit;
+    process.exit = vi.fn() as never;
+    const program = createProgram('0.1.0-test');
+
+    try {
+      await program.parseAsync(
+        [
+          'node',
+          'remnote-cli',
+          'set-property',
+          'abc123',
+          '--tag-id',
+          'tag1',
+          '--property-id',
+          'prop1',
+          '--value',
+          'People',
+          '--clear',
+        ],
+        { from: 'node' }
+      );
+
+      expect(executeSpy).not.toHaveBeenCalled();
+      expect(errSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Provide exactly one of --value, --rem-reference-id, or --clear')
+      );
+      expect(process.exit).toHaveBeenCalledWith(1);
+    } finally {
+      process.exit = originalExit;
+      logSpy.mockRestore();
+      errSpy.mockRestore();
+      executeSpy.mockRestore();
+    }
+  });
+
   it('maps move-note to dry-run move_note by default', async () => {
     const executeSpy = await runCommand([
       'move-note',
