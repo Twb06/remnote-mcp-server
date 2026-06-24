@@ -1316,20 +1316,20 @@ describe('Tool Handlers - get_playbook', () => {
       params: { name: 'remnote_get_playbook', arguments: {} },
     })) as ToolSuccessResult;
 
-    expect(result.structuredContent?.playbookVersion).toBe('1.6.0');
+    expect(result.structuredContent?.playbookVersion).toBe('1.7.0');
     expect(Array.isArray(result.structuredContent?.decisionTree)).toBe(true);
     expect((result.structuredContent?.decisionTree as unknown[])?.length).toBeGreaterThan(0);
     expect(result.structuredContent?.decisionTree).toContain(
-      'Need to rename a note? Use remnote_update_note with remId and title only.'
+      'Need to rename a note? Use remnote_update_note with remId and title only; use [[id:<remId>]] inside the title for exact inline Rem references.'
     );
     expect(result.structuredContent?.decisionTree).toContain(
-      'Need to create a note? Use remnote_create_note; pass tagRemIds for exact-ID tag assignment and asDocument=true when the title/root Rem should be a document.'
+      'Need to create a note? Use remnote_create_note; pass tagRemIds for exact-ID tag assignment, [[id:<remId>]] for exact inline Rem references, and asDocument=true when the title/root Rem should be a document.'
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need to mark an existing Rem as a document? Use remnote_set_document_status dryRun first, include expectedOldRemType for stale-context protection, then rerun with dryRun=false after approval.'
     );
     expect(result.structuredContent?.decisionTree).toContain(
-      'Need to append to today journal? Use remnote_append_journal; pass tagRemIds when the journal entry should be tagged.'
+      'Need to append to today journal? Use remnote_append_journal; pass tagRemIds when the journal entry should be tagged and [[id:<remId>]] for exact inline Rem references.'
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need strict tag verification? Use remnote_search_by_tag with resultMode="tagged", or verify the exact Rem in matchedRems from context mode.'
@@ -1360,6 +1360,7 @@ describe('Tool Handlers - get_playbook', () => {
     expect(result.structuredContent?.writePolicy).toMatchObject({
       guidance: expect.arrayContaining([
         'All production tag writes use exact tag Rem IDs: create_note.tagRemIds, append_journal.tagRemIds, and update_tags add/remove arrays.',
+        'Markdown-capable write fields support [[id:<remId>]] to create real inline references to existing Rems without name lookup.',
         'remnote_set_property writes exact-ID tag/table property values and requires acceptWriteOperations=true.',
         'remnote_set_document_status changes only document status; it preserves concept/card status and defaults to dryRun=true.',
       ]),

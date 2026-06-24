@@ -34,6 +34,16 @@ describe('CreateNoteSchema', () => {
     expect(result.title).toBeUndefined();
   });
 
+  it('should accept exact reference tokens in title and content strings', () => {
+    const result = CreateNoteSchema.parse({
+      title: 'Compound [[id:component-rem-id]]',
+      content: 'Child [[id:child-rem-id]]',
+    });
+
+    expect(result.title).toBe('Compound [[id:component-rem-id]]');
+    expect(result.content).toBe('Child [[id:child-rem-id]]');
+  });
+
   it('should validate with all fields', () => {
     const input = {
       title: 'Test Note',
@@ -262,6 +272,15 @@ describe('UpdateNoteSchema', () => {
     expect(result.title).toBe('New Title');
   });
 
+  it('should accept exact reference tokens in title strings', () => {
+    const result = UpdateNoteSchema.parse({
+      remId: 'rem-456',
+      title: 'New [[id:target-rem-id]]',
+    });
+
+    expect(result.title).toBe('New [[id:target-rem-id]]');
+  });
+
   it('should reject missing title', () => {
     expect(() => UpdateNoteSchema.parse({ remId: 'rem-456' })).toThrow(
       'remnote_update_note requires title'
@@ -357,6 +376,16 @@ describe('InsertChildrenSchema', () => {
     });
   });
 
+  it('should accept exact reference tokens in inserted content', () => {
+    const result = InsertChildrenSchema.parse({
+      parentRemId: 'parent',
+      content: 'Related [[id:target-rem-id]]',
+      position: 'last',
+    });
+
+    expect(result.content).toBe('Related [[id:target-rem-id]]');
+  });
+
   it('should reject before and after without siblingRemId', () => {
     expect(() =>
       InsertChildrenSchema.parse({
@@ -405,6 +434,15 @@ describe('ReplaceChildrenSchema', () => {
       })
     ).toEqual({ parentRemId: 'parent', content: 'Replacement body' });
   });
+
+  it('should accept exact reference tokens in replacement content', () => {
+    const result = ReplaceChildrenSchema.parse({
+      parentRemId: 'parent',
+      content: 'Replacement [[id:target-rem-id]]',
+    });
+
+    expect(result.content).toBe('Replacement [[id:target-rem-id]]');
+  });
 });
 
 describe('UpdateTagsSchema', () => {
@@ -440,6 +478,17 @@ describe('SetPropertySchema', () => {
       propertyRemId: 'property',
       value: { kind: 'text', text: 'People' },
     });
+  });
+
+  it('should accept exact reference tokens in text property values', () => {
+    const result = SetPropertySchema.parse({
+      remId: 'note',
+      tagRemId: 'tag',
+      propertyRemId: 'property',
+      value: { kind: 'text', text: 'See [[id:target-rem-id]]' },
+    });
+
+    expect(result.value).toEqual({ kind: 'text', text: 'See [[id:target-rem-id]]' });
   });
 
   it('should validate Rem reference property writes', () => {
@@ -510,6 +559,12 @@ describe('AppendJournalSchema', () => {
       tagRemIds: ['tag-rem-id-1'],
     });
     expect(result.tagRemIds).toEqual(['tag-rem-id-1']);
+  });
+
+  it('should accept exact reference tokens in journal content', () => {
+    const result = AppendJournalSchema.parse({ content: 'Journal [[id:target-rem-id]]' });
+
+    expect(result.content).toBe('Journal [[id:target-rem-id]]');
   });
 
   it('should reject missing content', () => {

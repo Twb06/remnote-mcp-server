@@ -106,17 +106,19 @@ const MATCHED_REM_SCHEMA = {
 export const CREATE_NOTE_TOOL = {
   name: 'remnote_create_note',
   description:
-    'Create a new note in RemNote with optional content, parent, and exact tag Rem IDs. Supports hierarchical markdown in content and flashcard syntax (e.g. "- Term :: Definition"). At least one of title or content must be provided. Recommended preflight once per session: remnote_status.',
+    'Create a new note in RemNote with optional content, parent, and exact tag Rem IDs. Supports hierarchical markdown, flashcard syntax (e.g. "- Term :: Definition"), and exact inline Rem references as [[id:<remId>]]. At least one of title or content must be provided. Recommended preflight once per session: remnote_status.',
   inputSchema: {
     type: 'object' as const,
     properties: {
       title: {
         type: 'string',
-        description: 'The title of the note (optional if content is provided)',
+        description:
+          'The title of the note (optional if content is provided). Supports exact Rem references as [[id:<remId>]].',
       },
       content: {
         type: 'string',
-        description: 'Content as plain text, child bullets or hierarchical markdown',
+        description:
+          'Content as plain text, child bullets, or hierarchical markdown. Use [[id:<remId>]] for exact Rem references.',
       },
       parentId: { type: 'string', description: 'Parent Rem ID' },
       tagRemIds: {
@@ -715,12 +717,16 @@ export const MOVE_NOTE_TOOL = {
 
 export const UPDATE_NOTE_TOOL = {
   name: 'remnote_update_note',
-  description: 'Update note metadata in RemNote. Use this tool for title changes only.',
+  description:
+    'Update note metadata in RemNote. Use this tool for title changes only. The title supports exact Rem references as [[id:<remId>]].',
   inputSchema: {
     type: 'object' as const,
     properties: {
       remId: { type: 'string', description: 'The Rem ID to update' },
-      title: { type: 'string', description: 'New title' },
+      title: {
+        type: 'string',
+        description: 'New title. Use [[id:<remId>]] for exact Rem references.',
+      },
     },
     required: ['remId', 'title'],
     additionalProperties: false,
@@ -851,7 +857,11 @@ export const INSERT_CHILDREN_TOOL = {
         type: 'string',
         description: 'Parent Rem ID that will receive the new children',
       },
-      content: { type: 'string', description: 'Markdown content to insert as child Rems' },
+      content: {
+        type: 'string',
+        description:
+          'Markdown content to insert as child Rems. Use [[id:<remId>]] for exact Rem references.',
+      },
       position: {
         type: 'string',
         enum: ['first', 'last', 'before', 'after'],
@@ -882,7 +892,7 @@ export const REPLACE_CHILDREN_TOOL = {
       content: {
         type: 'string',
         description:
-          'Markdown content to use as replacement children; empty string clears all direct children',
+          'Markdown content to use as replacement children; empty string clears all direct children. Use [[id:<remId>]] for exact Rem references.',
       },
     },
     required: ['parentRemId', 'content'],
@@ -940,7 +950,11 @@ export const SET_PROPERTY_TOOL = {
             type: 'object',
             properties: {
               kind: { type: 'string', const: 'text' },
-              text: { type: 'string', description: 'Plain text or markdown property value' },
+              text: {
+                type: 'string',
+                description:
+                  'Plain text or markdown property value. Use [[id:<remId>]] for exact Rem references.',
+              },
             },
             required: ['kind', 'text'],
             additionalProperties: false,
@@ -998,7 +1012,8 @@ export const APPEND_JOURNAL_TOOL = {
     properties: {
       content: {
         type: 'string',
-        description: "Content to append to today's daily document (markdown supported)",
+        description:
+          "Content to append to today's daily document (markdown supported). Use [[id:<remId>]] for exact Rem references.",
       },
       timestamp: { type: 'boolean', description: 'Include timestamp (default: true)' },
       tagRemIds: {
@@ -1358,9 +1373,9 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           }
 
           result = {
-            playbookVersion: '1.6.0',
+            playbookVersion: '1.7.0',
             summary:
-              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, request nearby ancestors when hierarchy context matters, choose compact/full output views, and apply safe exact-ID writes including tag property values and dry-run-first document status changes.',
+              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, request nearby ancestors when hierarchy context matters, choose compact/full output views, and apply safe exact-ID writes including inline [[id:<remId>]] references, tag property values, and dry-run-first document status changes.',
             recommendedStatusCheck: {
               tool: 'remnote_status',
               cadence: 'recommended once per session and before risky writes',
@@ -1381,15 +1396,15 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
               'Need to follow inline graph references? Inspect inlineRefs on search/read results and structured child nodes for exact target Rem IDs.',
               'Need tabular/structured data from an Advanced Table? Use remnote_read_table with either tableTitle or tableRemId. Use propertyFilter to limit columns for large tables.',
               'Need a human-readable summary? Switch to contentMode="markdown" on search/read results.',
-              'Need to rename a note? Use remnote_update_note with remId and title only.',
-              'Need to create a note? Use remnote_create_note; pass tagRemIds for exact-ID tag assignment and asDocument=true when the title/root Rem should be a document.',
+              'Need to rename a note? Use remnote_update_note with remId and title only; use [[id:<remId>]] inside the title for exact inline Rem references.',
+              'Need to create a note? Use remnote_create_note; pass tagRemIds for exact-ID tag assignment, [[id:<remId>]] for exact inline Rem references, and asDocument=true when the title/root Rem should be a document.',
               'Need to mark an existing Rem as a document? Use remnote_set_document_status dryRun first, include expectedOldRemType for stale-context protection, then rerun with dryRun=false after approval.',
-              'Need to append to today journal? Use remnote_append_journal; pass tagRemIds when the journal entry should be tagged.',
-              'Need to insert children? Use remnote_insert_children with an explicit position.',
+              'Need to append to today journal? Use remnote_append_journal; pass tagRemIds when the journal entry should be tagged and [[id:<remId>]] for exact inline Rem references.',
+              'Need to insert children? Use remnote_insert_children with an explicit position; use [[id:<remId>]] for exact inline Rem references.',
               'Need to move a note? Use remnote_move_note dryRun first, include expectedOldParentRemId for stale-context protection, then rerun with dryRun=false after approval.',
-              'Need to replace children? Check remnote_status first; remnote_replace_children requires acceptReplaceOperation=true.',
+              'Need to replace children? Check remnote_status first; remnote_replace_children requires acceptReplaceOperation=true and supports [[id:<remId>]] for exact inline Rem references.',
               'Need to update tags on an existing note? Use remnote_update_tags with exact tag Rem IDs.',
-              'Need to set a tag/table property value? Use remnote_set_property with exact remId, tagRemId, propertyRemId, and a text/rem_reference/clear value payload. For select properties, pass the option Rem ID as rem_reference.remId.',
+              'Need to set a tag/table property value? Use remnote_set_property with exact remId, tagRemId, propertyRemId, and a text/rem_reference/clear value payload. For select properties, pass the option Rem ID as rem_reference.remId; for inline references in text values, use [[id:<remId>]].',
             ],
             navigationPresets: {
               orientation: NAVIGATION_PRESET,
@@ -1419,6 +1434,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
                 'remnote_insert_children preserves existing child Rem IDs; remnote_replace_children removes them.',
                 'remnote_move_note preserves the moved Rem ID and subtree; dryRun defaults to true.',
                 'All production tag writes use exact tag Rem IDs: create_note.tagRemIds, append_journal.tagRemIds, and update_tags add/remove arrays.',
+                'Markdown-capable write fields support [[id:<remId>]] to create real inline references to existing Rems without name lookup.',
                 'remnote_set_property writes exact-ID tag/table property values and requires acceptWriteOperations=true.',
               ],
             },

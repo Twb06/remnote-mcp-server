@@ -14,6 +14,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   text, Rem-reference/select-option, and clear value payloads.
 - Add live MCP and CLI integration coverage for `remnote_set_property` using the `Automation Bridge Test Tag`
   property fixture.
+- Add exact inline Rem reference guidance for `[[id:<remId>]]` in markdown-capable write fields across MCP tools,
+  `remnote-cli`, and `remnote_get_playbook`.
 
 ### Changed
 

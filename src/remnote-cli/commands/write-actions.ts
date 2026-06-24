@@ -59,7 +59,11 @@ export function registerInsertChildrenCommand(program: Command): void {
 
   subprogram
     .description('Insert child Rems under a parent at a deterministic position')
-    .option('--content <text>', 'Content to insert', validate)
+    .option(
+      '--content <text>',
+      'Content to insert (use [[id:<remId>]] for exact references)',
+      validate
+    )
     .option(
       '--content-file <path>',
       'Read inserted content from UTF-8 file ("-" for stdin)',
@@ -112,7 +116,11 @@ export function registerReplaceChildrenCommand(program: Command): void {
 
   subprogram
     .description('Replace all direct child Rems under a parent')
-    .option('--content <text>', 'Replacement content', validate)
+    .option(
+      '--content <text>',
+      'Replacement content (use [[id:<remId>]] for exact references)',
+      validate
+    )
     .option(
       '--content-file <path>',
       'Read replacement content from UTF-8 file ("-" for stdin; empty file clears children)',
@@ -184,7 +192,11 @@ export function registerSetPropertyCommand(program: Command): void {
     .description('Set or clear a tag/table property value by exact IDs')
     .requiredOption('--tag-id <id>', 'Exact tag/table Rem ID that owns the property', validate)
     .requiredOption('--property-id <id>', 'Exact property Rem ID under the tag/table Rem', validate)
-    .option('--value <text>', 'Set a plain text or markdown property value', validate)
+    .option(
+      '--value <text>',
+      'Set a plain text or markdown property value; use [[id:<remId>]] for exact references',
+      validate
+    )
     .option(
       '--rem-reference-id <id>',
       'Set a Rem reference value; use select-option Rem IDs here too',

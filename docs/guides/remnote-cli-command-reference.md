@@ -74,6 +74,7 @@ Behavior rules:
 
 - `title` and `content` are both optional, but **at least one must be provided**.
 - Title input support positional `[title]` (backward-compatible) and `--title <text>`.
+- Title and content input support `[[id:<remId>]]` for exact inline references to existing Rems.
 - Content input from `-c`/`--content`/`--content-file` supports RemNote's native markdown syntax for creating nested hierarchies and flashcards inline.
 - `--content` and `--content-file` are mutually exclusive.
 - Content loaded from file/stdin is passed verbatim (no templating/interpolation).
@@ -94,6 +95,9 @@ remnote-cli create --title "Meeting Notes" --parent-id <parent-rem-id>
 
 # Create a new note with title, content, and exact tag Rem IDs
 remnote-cli create --title "Project Plan" --content "Phase 1" --tag-ids <tag-rem-id>
+
+# Create content that links to an existing Rem by exact ID
+remnote-cli create --title "Compound" --content "Component [[id:<component-rem-id>]]"
 
 # Create a title/root Rem as a document
 remnote-cli create --title "Project Plan" --content "Phase 1" --as-document
@@ -262,9 +266,9 @@ Update note metadata.
 remnote-cli update <rem-id> [options]
 ```
 
-| Option           | Default | Description            |
-| ---------------- | ------- | ---------------------- |
-| `--title <text>` | none    | Replace title/headline |
+| Option           | Default | Description                                      |
+| ---------------- | ------- | ------------------------------------------------ |
+| `--title <text>` | none    | Replace title/headline; supports `[[id:<remId>]]` |
 
 Use the dedicated commands below for child content and tag writes.
 
@@ -272,6 +276,7 @@ Examples:
 
 ```bash
 remnote-cli update abc123def --title "Updated Title"
+remnote-cli update abc123def --title "See also [[id:<target-rem-id>]]"
 ```
 
 ## set-document-status
@@ -328,6 +333,7 @@ Examples:
 
 ```bash
 remnote-cli insert-children cEZH8DJYED3RQIB7k --content "description: Use for Codex app/CLI/skills/ExecPlans notes." --position first
+remnote-cli insert-children cEZH8DJYED3RQIB7k --content "Related [[id:<target-rem-id>]]" --position last
 remnote-cli insert-children cEZH8DJYED3RQIB7k --content-file /tmp/child.md --position before --sibling-rem-id abc123def
 ```
 
@@ -361,6 +367,8 @@ remnote-cli replace-children <parent-rem-id> --content-file <path>
 | ----------------------- | ------- | -------------------------------------------------------------------------------- |
 | `--content <text>`      | none    | Replacement content                                                              |
 | `--content-file <path>` | none    | Read replacement content from UTF-8 file (`-` stdin; empty file clears children) |
+
+Replacement content supports `[[id:<remId>]]` for exact inline references to existing Rems.
 
 ## update-tags
 
@@ -397,6 +405,7 @@ Examples:
 
 ```bash
 remnote-cli set-property abc123def --tag-id tag123 --property-id prop123 --value "People" --text
+remnote-cli set-property abc123def --tag-id tag123 --property-id prop123 --value "See [[id:<target-rem-id>]]" --text
 remnote-cli set-property abc123def --tag-id tag123 --property-id prop123 --rem-reference-id option123 --text
 remnote-cli set-property abc123def --tag-id tag123 --property-id prop123 --clear --text
 ```
@@ -423,6 +432,7 @@ Behavior rules:
   - `--content <text>`
   - `--content-file <path|->`
 - Content input from `--content`/`--content-file` supports RemNote's native markdown syntax for creating nested hierarchies and flashcards inline.
+- Journal content supports `[[id:<remId>]]` for exact inline references to existing Rems.
 - `--tag-ids` applies exact tag Rem IDs to the created journal entry root/top-level Rems. Tag names are not accepted.
 
 Examples:

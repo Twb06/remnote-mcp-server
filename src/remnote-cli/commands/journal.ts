@@ -11,7 +11,11 @@ export function registerJournalCommand(program: Command): void {
 
   subprogram
     .description("Append an entry to today's journal")
-    .option('--content <text>', 'Journal entry content', validate)
+    .option(
+      '--content <text>',
+      'Journal entry content (use [[id:<remId>]] for exact references)',
+      validate
+    )
     .option('--content-file <path>', 'Read journal entry from UTF-8 file ("-" for stdin)', validate)
     .option('--tag-ids <tagRemIds...>', 'Exact tag Rem IDs to add')
     .option('--no-timestamp', 'Omit timestamp prefix')

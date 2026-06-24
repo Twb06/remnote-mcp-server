@@ -11,8 +11,12 @@ export function registerCreateCommand(program: Command): void {
 
   subprogram
     .description('Create a new note in RemNote (title or content required)')
-    .option('--title <text>', 'Note title', validate)
-    .option('-c, --content <text>', 'Note content (markdown/flashcard supported)', validate)
+    .option('--title <text>', 'Note title (supports [[id:<remId>]] references)', validate)
+    .option(
+      '-c, --content <text>',
+      'Note content (markdown/flashcard supported; use [[id:<remId>]] for exact references)',
+      validate
+    )
     .option('--content-file <path>', 'Read note content from UTF-8 file ("-" for stdin)', validate)
     .option('--parent-id <id>', 'Parent Rem ID', validate)
     .option('--tag-ids <tagRemIds...>', 'Exact tag Rem IDs to add')

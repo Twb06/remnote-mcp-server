@@ -50,7 +50,12 @@ const SearchContentShape = {
 export const CreateNoteSchema = z
   .object({
     title: z.string().optional().describe('The title of the note'),
-    content: z.string().optional().describe('Content as child bullets (markdown supported)'),
+    content: z
+      .string()
+      .optional()
+      .describe(
+        'Content as child bullets (markdown supported, including exact references as [[id:<remId>]])'
+      ),
     parentId: z.string().optional().describe('Parent Rem ID'),
     tagRemIds: z.array(z.string()).optional().describe('Exact tag Rem IDs to apply'),
     asDocument: z
@@ -194,7 +199,10 @@ export const MoveNoteSchema = z
 export const UpdateNoteSchema = z
   .object({
     remId: z.string().describe('The Rem ID to update'),
-    title: z.string().optional().describe('New title'),
+    title: z
+      .string()
+      .optional()
+      .describe('New title (markdown supported, including exact references as [[id:<remId>]])'),
   })
   .strict()
   .refine((value) => value.title !== undefined, {
@@ -216,7 +224,11 @@ export const SetDocumentStatusSchema = z
 export const InsertChildrenSchema = z
   .object({
     parentRemId: z.string().describe('Parent Rem ID that will receive the new children'),
-    content: z.string().describe('Markdown content to insert as child Rems'),
+    content: z
+      .string()
+      .describe(
+        'Markdown content to insert as child Rems; use [[id:<remId>]] for exact Rem references'
+      ),
     position: InsertChildrenPositionSchema.describe('Where to insert the new child Rems'),
     siblingRemId: z.string().optional().describe('Sibling Rem ID required for before/after'),
   })
@@ -241,7 +253,11 @@ export const InsertChildrenSchema = z
 export const ReplaceChildrenSchema = z
   .object({
     parentRemId: z.string().describe('Parent Rem ID whose direct children will be replaced'),
-    content: z.string().describe('Markdown content to use as replacement children'),
+    content: z
+      .string()
+      .describe(
+        'Markdown content to use as replacement children; use [[id:<remId>]] for exact Rem references'
+      ),
   })
   .strict();
 
@@ -261,7 +277,11 @@ export const SetPropertyValueSchema = z.discriminatedUnion('kind', [
   z
     .object({
       kind: z.literal('text'),
-      text: z.string().describe('Plain text or markdown value to store in the property'),
+      text: z
+        .string()
+        .describe(
+          'Plain text or markdown value to store in the property; use [[id:<remId>]] for exact Rem references'
+        ),
     })
     .strict(),
   z
@@ -291,7 +311,11 @@ export const SetPropertySchema = z
 
 export const AppendJournalSchema = z
   .object({
-    content: z.string().describe("Content to append to today's daily document"),
+    content: z
+      .string()
+      .describe(
+        "Content to append to today's daily document; use [[id:<remId>]] for exact Rem references"
+      ),
     timestamp: z.boolean().default(true).describe('Include timestamp'),
     tagRemIds: z.array(z.string()).optional().describe('Exact tag Rem IDs to apply'),
   })

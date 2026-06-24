@@ -40,8 +40,8 @@ Create a new note/flashcard in RemNote with optional parent hierarchy and exact 
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `title` | string | No | The title of the note (optional if content is provided) |
-| `content` | string | No | Child content as bullet points or hierarchical markdown |
+| `title` | string | No | The title of the note (optional if content is provided); supports `[[id:<remId>]]` |
+| `content` | string | No | Child content as bullet points or hierarchical markdown; supports `[[id:<remId>]]` |
 | `parentId` | string | No | Parent Rem ID to nest this note under |
 | `tagRemIds` | string[] | No | Exact tag Rem IDs to apply |
 | `asDocument` | boolean | No | Mark the created title/root Rem as a document while preserving flashcard/concept status |
@@ -69,6 +69,11 @@ Create a note "Chapter 1" under the note with ID abc123
 **Create with tag Rem IDs:**
 ```
 Create a note "Important Meeting" with tagRemIds ["workTagRemId", "urgentTagRemId"]
+```
+
+**Create with an exact inline Rem reference:**
+```
+Create a note "Compound" with content "Component [[id:componentRemId]]"
 ```
 
 **Create the root Rem as a document:**
@@ -123,6 +128,7 @@ Returns an array of remIds containing the title (if provided) and each generated
 - Structure content with bullets (`-` or `•`) for RemNote hierarchy
 - Use `parentId` to organize notes within existing hierarchies
 - Use `tagRemIds` for production tagging workflows. Create or resolve the tag Rem first, then pass its exact Rem ID.
+- Use `[[id:<remId>]]` in markdown-capable title/content fields when a link must target an exact existing Rem.
 - Flashcards are created via markdown syntax in `content`, not separate create-note fields
 - Tag Rem IDs apply to the created root Rem when `title` is provided, or to top-level created Rems when `title` is omitted
 
@@ -454,7 +460,7 @@ Insert new child Rems under a parent without replacing existing children.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `parentRemId` | string | Yes | Parent Rem ID |
-| `content` | string | Yes | Markdown content to insert as child Rems |
+| `content` | string | Yes | Markdown content to insert as child Rems; supports `[[id:<remId>]]` |
 | `position` | `"first" \| "last" \| "before" \| "after"` | Yes | Insert position |
 | `siblingRemId` | string | For `before`/`after` | Sibling Rem ID to insert before or after |
 
@@ -465,6 +471,8 @@ Insert under tag cEZH8DJYED3RQIB7k at first:
 description: Use for Codex app/CLI/skills/ExecPlans notes.
 ```
 
+Use `[[id:<remId>]]` inside inserted markdown to create exact inline references without name lookup.
+
 ## remnote_replace_children
 
 Replace all direct children under a parent Rem. This is destructive because existing child Rem IDs are removed.
@@ -472,7 +480,7 @@ Replace all direct children under a parent Rem. This is destructive because exis
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `parentRemId` | string | Yes | Parent Rem ID whose direct children will be replaced |
-| `content` | string | Yes | Markdown replacement content; empty string clears direct children |
+| `content` | string | Yes | Markdown replacement content; empty string clears direct children; supports `[[id:<remId>]]` |
 
 Bridge policy can reject this tool when `acceptReplaceOperation=false`.
 
@@ -502,7 +510,7 @@ Set or clear a tag/table property value on a Rem using exact IDs.
 
 The bridge verifies that `propertyRemId` is a property child of `tagRemId`, adds the tag idempotently to `remId`, and
 then writes the property value. For single-select and multi-select properties, pass the option Rem ID through
-`value.kind: "rem_reference"`.
+`value.kind: "rem_reference"`. Text values also support `[[id:<remId>]]` for exact inline references.
 
 Examples:
 
@@ -532,7 +540,7 @@ Append content to today's daily document in RemNote with optional exact tag Rem 
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `content` | string | Yes | Content to append to today's daily document |
+| `content` | string | Yes | Content to append to today's daily document; supports `[[id:<remId>]]` |
 | `timestamp` | boolean | No | Include timestamp (default: true) |
 | `tagRemIds` | string[] | No | Exact tag Rem IDs to apply |
 
@@ -571,6 +579,7 @@ Returns confirmation:
 - Entries are added to today's daily document (created automatically if it doesn't exist)
 - Use `timestamp: true` (default) for timestamped entries
 - Use `timestamp: false` for plain entries
+- Use `[[id:<remId>]]` for exact inline references to existing Rems.
 - Great for logging daily activities, thoughts, or progress notes
 
 ## remnote_read_table
@@ -650,6 +659,7 @@ Use this tool when an agent needs built-in guidance for:
 - scoped branch search with `remnote_search.parentRemId`,
 - `markdown` vs `structured` content-mode decisions,
 - write/replace/document-status safety checks.
+- exact inline Rem reference writes with `[[id:<remId>]]`.
 
 ### Parameters
 
@@ -681,14 +691,15 @@ Returns a structured playbook object, including:
 - `remnote_search_by_tag` guidance - when to use default context results, `matchedRems`, `resultMode: "tagged"`, or a
   bounded `timeoutMs` fallback.
 - `writePolicy` - how to interpret `acceptWriteOperations` / `acceptReplaceOperation`, document-status writes,
-  exact-ID tag writes, and property writes.
+  exact-ID tag writes, exact inline references, and property writes.
 - `currentStatus` - live `remnote_status` snapshot when available.
 
 ### Tips
 
 - Treat this as guidance, not rigid policy.
 - Use the playbook's write guidance to choose between metadata updates, ordered child insertion, destructive replacement,
-  document-status writes, exact-ID tag writes, and property writes without overloading `remnote_update_note`.
+  document-status writes, exact-ID tag writes, exact inline references, and property writes without overloading
+  `remnote_update_note`.
 - Call `remnote_status` once per session (recommended) and before high-risk writes.
 - For whole-KB orientation, start shallow and ID-first:
   - `structured` mode, `depth: 1`, `childLimit: 500`.

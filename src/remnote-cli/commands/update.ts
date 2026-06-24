@@ -10,7 +10,7 @@ export function registerUpdateCommand(program: Command): void {
 
   subprogram
     .description('Update note metadata')
-    .option('--title <text>', 'New title', validate)
+    .option('--title <text>', 'New title (supports [[id:<remId>]] references)', validate)
     .action(async (remId: string, opts) => {
       const globalOpts = program.opts();
       const format: OutputFormat = globalOpts.text ? 'text' : 'json';

@@ -86,6 +86,7 @@ If any precondition is missing, stop and fix setup first.
 - Inline `--content` / positional `journal [content]` / positional `create [title]` are discouraged except for very
   short single-line text.
 - With markdown syntax input, all options must use flags to prevent misinterpretation of the content as command options.
+- Use `[[id:<remId>]]` inside markdown-capable write text when an inline reference must target an exact existing Rem ID.
 - `-` (stdin) is supported but discouraged by default in OpenClaw flows because command context can be less explicit.
 
 ## Compatibility Check (mandatory before real work)
@@ -157,6 +158,7 @@ If any precondition is missing, stop and fix setup first.
   - `--as-document` requires an explicit title/root Rem and preserves any concept/card status created by markdown
     syntax.
 - Update title: `remnote-cli update <rem-id> --title "New Title" --text`
+  - Titles support `[[id:<remId>]]` for exact inline Rem references.
 - Set document status on an existing Rem (dry-run first):
   - `remnote-cli set-document-status <rem-id> --document --text`
   - Apply after preview:
@@ -172,6 +174,7 @@ If any precondition is missing, stop and fix setup first.
   - `remnote-cli set-property <rem-id> --tag-id <tag-rem-id> --property-id <property-rem-id> --rem-reference-id <option-rem-id> --text`
   - `remnote-cli set-property <rem-id> --tag-id <tag-rem-id> --property-id <property-rem-id> --clear --text`
   - For select properties, pass the option Rem ID with `--rem-reference-id`.
+  - For inline references inside text values, use `[[id:<remId>]]`.
 - Replace direct children (destructive, only with explicit user intent):
   - `remnote-cli replace-children <parent-rem-id> --content-file /tmp/replacement.md --text`
   - Use an empty content file to clear all direct children.

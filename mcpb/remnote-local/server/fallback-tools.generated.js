@@ -3,17 +3,19 @@ export const FALLBACK_TOOLS = [
   {
     name: 'remnote_create_note',
     description:
-      'Create a new note in RemNote with optional content, parent, and exact tag Rem IDs. Supports hierarchical markdown in content and flashcard syntax (e.g. "- Term :: Definition"). At least one of title or content must be provided. Recommended preflight once per session: remnote_status.',
+      'Create a new note in RemNote with optional content, parent, and exact tag Rem IDs. Supports hierarchical markdown, flashcard syntax (e.g. "- Term :: Definition"), and exact inline Rem references as [[id:<remId>]]. At least one of title or content must be provided. Recommended preflight once per session: remnote_status.',
     inputSchema: {
       type: 'object',
       properties: {
         title: {
           type: 'string',
-          description: 'The title of the note (optional if content is provided)',
+          description:
+            'The title of the note (optional if content is provided). Supports exact Rem references as [[id:<remId>]].',
         },
         content: {
           type: 'string',
-          description: 'Content as plain text, child bullets or hierarchical markdown',
+          description:
+            'Content as plain text, child bullets, or hierarchical markdown. Use [[id:<remId>]] for exact Rem references.',
         },
         parentId: {
           type: 'string',
@@ -231,7 +233,8 @@ export const FALLBACK_TOOLS = [
   },
   {
     name: 'remnote_update_note',
-    description: 'Update note metadata in RemNote. Use this tool for title changes only.',
+    description:
+      'Update note metadata in RemNote. Use this tool for title changes only. The title supports exact Rem references as [[id:<remId>]].',
     inputSchema: {
       type: 'object',
       properties: {
@@ -241,7 +244,7 @@ export const FALLBACK_TOOLS = [
         },
         title: {
           type: 'string',
-          description: 'New title',
+          description: 'New title. Use [[id:<remId>]] for exact Rem references.',
         },
       },
       required: ['remId', 'title'],
@@ -332,7 +335,8 @@ export const FALLBACK_TOOLS = [
         },
         content: {
           type: 'string',
-          description: 'Markdown content to insert as child Rems',
+          description:
+            'Markdown content to insert as child Rems. Use [[id:<remId>]] for exact Rem references.',
         },
         position: {
           type: 'string',
@@ -362,7 +366,7 @@ export const FALLBACK_TOOLS = [
         content: {
           type: 'string',
           description:
-            'Markdown content to use as replacement children; empty string clears all direct children',
+            'Markdown content to use as replacement children; empty string clears all direct children. Use [[id:<remId>]] for exact Rem references.',
         },
       },
       required: ['parentRemId', 'content'],
@@ -431,7 +435,8 @@ export const FALLBACK_TOOLS = [
                 },
                 text: {
                   type: 'string',
-                  description: 'Plain text or markdown property value',
+                  description:
+                    'Plain text or markdown property value. Use [[id:<remId>]] for exact Rem references.',
                 },
               },
               required: ['kind', 'text'],
@@ -481,7 +486,8 @@ export const FALLBACK_TOOLS = [
       properties: {
         content: {
           type: 'string',
-          description: "Content to append to today's daily document (markdown supported)",
+          description:
+            "Content to append to today's daily document (markdown supported). Use [[id:<remId>]] for exact Rem references.",
         },
         timestamp: {
           type: 'boolean',

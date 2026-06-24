@@ -47,6 +47,7 @@ required call fails.
    - Confirm the playbook mentions `ancestorDepth`, `remnote_list_children`, and dry-run-first `remnote_move_note`.
    - Confirm the playbook mentions dry-run-first `remnote_set_document_status`.
    - Confirm the playbook mentions setting tag/table property values with `remnote_set_property`.
+   - Confirm the playbook mentions exact inline Rem references with `[[id:<remId>]]`.
 
 3. Resolve the shared temporary integration-test root.
    - Search for the exact title `RemNote Automation Bridge [temporary integration test data]`.
