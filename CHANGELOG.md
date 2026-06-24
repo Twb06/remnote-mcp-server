@@ -12,11 +12,15 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Add `parentRemId` to `remnote_search` input schema and `--parent-id` option to `remnote-cli search` to support scoping search within a Rem's subtree. Contributed by Twb06.
 - Add exact-ID tag/table property writes through `remnote_set_property` and `remnote-cli set-property`, supporting
   text, Rem-reference/select-option, and clear value payloads.
+- Add live MCP and CLI integration coverage for `remnote_set_property` using the `Automation Bridge Test Tag`
+  property fixture.
 
 ### Changed
 
 - Update `remnote_search` tools reference, CLI command `search` reference, and agent skill documentation to include advanced scoped search with parent ID and document cursor limitations.
 - Update `remnote_get_playbook` guidance and MCP smoke-test instructions for scoped branch search with `parentRemId`.
+- Update the MCP smoke-test prompt to validate `remnote_set_property` through the `automation-level` property fixture
+  and report the kept validation value.
 
 ### Fixed
 

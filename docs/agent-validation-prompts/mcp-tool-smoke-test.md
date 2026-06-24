@@ -24,12 +24,12 @@ This smoke test requires:
 - `remnote_update_tags`
 - `remnote_search_by_tag`
 - `remnote_append_journal`
+- `remnote_read_table`
+- `remnote_set_property`
 
 Optional/report-only tools:
 
 - `remnote_replace_children`
-- `remnote_read_table`
-- `remnote_set_property`
 
 If your client can inspect the available tool list, check it first. If not, continue and report any missing tool when a
 required call fails.
@@ -129,17 +129,40 @@ required call fails.
     - Content: `[MCP-AGENT-TEST] Journal smoke test <current ISO timestamp>`
     - Use the test tag Rem ID as `tagRemIds` if the tool supports journal tag IDs in this client.
 
-17. Optional/report-only checks:
+17. Validate property writes with `remnote_set_property`.
+    - Search for the exact title `Automation Bridge Test Tag`.
+    - If multiple exact matches exist, stop and report the duplicate tag Rem IDs.
+    - If no exact match exists, report FAIL for property-write validation because the fixture tag is missing.
+    - Keep the exact tag Rem ID as `propertyFixtureTagRemId`.
+    - Read the fixture tag/table schema with `remnote_read_table`, using `tableRemId: propertyFixtureTagRemId`.
+    - Find a column whose exact name is `automation-level`.
+    - If the property is missing, report FAIL for property-write validation because the fixture property is missing.
+    - Keep that column's `propertyId` as `automationLevelPropertyRemId`.
+    - Generate a unique random text value such as `mcp-smoke-<current ISO timestamp>-<short random suffix>`, and keep
+      it as `automationLevelValue`.
+    - Call `remnote_set_property`:
+      - `remId: <run note Rem ID>`
+      - `tagRemId: propertyFixtureTagRemId`
+      - `propertyRemId: automationLevelPropertyRemId`
+      - `value: { "kind": "text", "text": automationLevelValue }`
+    - Confirm the response returns the same `remId`, `tagRemId`, and `propertyRemId`, plus `valueKind: "text"`.
+    - Read the fixture tag/table again with `remnote_read_table`, using:
+      - `tableRemId: propertyFixtureTagRemId`
+      - `propertyFilter: ["automation-level"]`
+    - If needed, page with `offset`/`limit` until all returned rows have been checked.
+    - Confirm a row with the exact run note Rem ID appears and that its `automation-level` value equals
+      `automationLevelValue`.
+    - Do not clear the property. The kept value is part of the validation artifact.
+
+18. Optional/report-only checks:
     - If `remnote_replace_children` is available and `remnote_status.acceptReplaceOperation` is `true`, report that
       destructive replacement is enabled. Do not call it unless the user explicitly asks for destructive validation.
-    - If `remnote_read_table` is available, report that table validation requires an existing Advanced Table title or
-      Rem ID and skip it for this zero-config smoke test.
-    - If `remnote_set_property` is available, report that property-write validation requires an existing property-bearing
-      tag/table Rem plus exact property/value Rem IDs and skip it for this zero-config smoke test.
 
-18. Final response:
+19. Final response:
     - Report PASS or FAIL.
     - Include the root note Rem ID, run note Rem ID, and test tag Rem ID if created.
+    - Include `propertyFixtureTagRemId`, `automationLevelPropertyRemId`, and the kept `automationLevelValue`.
     - List every required tool and whether it was used successfully.
     - List optional/report-only tools and why they were skipped or not available.
-    - Mention that artifacts can be cleaned up by searching RemNote for `[MCP-AGENT-TEST]`.
+    - Mention that artifacts, including the note carrying the kept `automation-level` value, can be cleaned up by
+      searching RemNote for `[MCP-AGENT-TEST]`.

@@ -144,6 +144,8 @@ The direct MCP and MCPB stdio proxy suites follow the same RemNote tool workflow
    them gracefully.
 6. **Read Table** — Reads a pre-configured Advanced Table by name and Rem ID, then validates pagination, filtering,
    and not-found behavior.
+7. **Set Property** — Uses a property-bearing test tag fixture to set and verify an `automation-level` value on the
+   run's created note.
 
 The direct MCP suite also verifies the OAuth HTTP metadata and token endpoints.
 
@@ -211,8 +213,25 @@ Run the integration suite as usual:
 
 The `read_table` workflow is skipped when either field is missing or the config is invalid.
 
-### Property write validation
+## Property Write Fixture
 
 `remnote_set_property` requires a property-bearing tag or Advanced Table plus exact target, tag/table, property, and
-value Rem IDs. Zero-config integration runs do not create RemNote property schema, so property writes should be
-validated manually or through a future configured fixture, similar to `read_table`.
+value Rem IDs. The live suites validate this path through a reusable RemNote fixture instead of trying to create
+property schema through the bridge.
+
+### Setup
+
+1. Create a property-bearing tag named `Automation Bridge Test Tag`.
+2. Add a text-compatible property named `automation-level`.
+
+### Behavior
+
+The direct MCP and CLI integration suites:
+
+- search for the exact fixture tag title
+- resolve the `automation-level` property ID through `remnote_read_table` / `remnote-cli read-table`
+- set a unique text value on the run's created test note through `remnote_set_property` / `remnote-cli set-property`
+- read the fixture tag/table again and verify the note row contains the kept value
+
+The value is intentionally not cleared, so the resulting test note remains inspectable until the `[MCP-TEST]` or
+`[CLI-TEST]` artifact is deleted.

@@ -23,6 +23,7 @@ import { journalWorkflow } from './workflows/04-journal.js';
 import { errorCasesWorkflow } from './workflows/05-error-cases.js';
 import { readTableWorkflow } from './workflows/06-read-table.js';
 import { oauthWorkflow } from './workflows/07-oauth.js';
+import { setPropertyWorkflow } from './workflows/08-set-property.js';
 import type { WorkflowResult, WorkflowFn, SharedState } from './types.js';
 
 const RESET = '\x1b[0m';
@@ -362,6 +363,7 @@ async function main(): Promise<void> {
     { name: 'Journal', fn: journalWorkflow },
     { name: 'Error Cases', fn: errorCasesWorkflow },
     { name: 'Read Table', fn: readTableWorkflow },
+    { name: 'Set Property', fn: setPropertyWorkflow },
   ];
 
   try {
