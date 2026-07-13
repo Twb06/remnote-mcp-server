@@ -73,7 +73,8 @@ async function main() {
       name: 'remnote-mcp-server',
       version: packageJson.version,
     },
-    logger
+    logger,
+    config.mediaRoots
   );
 
   await httpServer.start();

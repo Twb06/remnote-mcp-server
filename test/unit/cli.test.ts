@@ -198,6 +198,21 @@ describe('CLI Argument Parsing', () => {
     });
   });
 
+  describe('Media Root Arguments', () => {
+    it('collects repeatable media roots under the public mediaRoots option', () => {
+      process.argv = [
+        'node',
+        'remnote-mcp-server',
+        '--media-root',
+        '/media/one',
+        '--media-root',
+        '/media/two',
+      ];
+
+      expect(parseCliArgs().mediaRoots).toEqual(['/media/one', '/media/two']);
+    });
+  });
+
   describe('Combined Arguments', () => {
     it('should parse multiple arguments together', () => {
       process.argv = [

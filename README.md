@@ -198,6 +198,7 @@ After installing the LaunchAgent, `remnote-mcp-server daemon status|start|stop|r
 | `remnote_search`          | Search knowledge base with full-text search, parent context, and optional tag IDs/names |
 | `remnote_search_by_tag`   | Search by exact tag Rem ID with ancestor-context resolution |
 | `remnote_read_note`       | Read note by ID with metadata, optional tag IDs/names, and markdown or structured content |
+| `remnote_get_media`       | Retrieve one validated RemNote-managed image as MCP-native image content |
 | `remnote_update_note`     | Update title |
 | `remnote_set_document_status` | Preview or set document status while preserving concept/card status |
 | `remnote_insert_children` | Insert child Rems at deterministic positions |
@@ -266,6 +267,7 @@ See the [Tools Reference](docs/guides/tools-reference.md) for more examples.
 - `REMNOTE_HTTP_PORT` - HTTP MCP server port (default: 3001)
 - `REMNOTE_HTTP_HOST` - HTTP server bind address (default: 127.0.0.1)
 - `REMNOTE_WS_PORT` - WebSocket server port (default: 3002)
+- `REMNOTE_MEDIA_ROOTS` - Allowed RemNote media roots, separated by the platform path delimiter; defaults to discovered `~/remnote/remnote-*/files` directories
 
 ### Custom Ports
 

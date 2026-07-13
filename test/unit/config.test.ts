@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { writeFileSync } from 'node:fs';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { getConfig as loadServerConfig, parseConfigToml } from '../../src/config.js';
@@ -15,6 +15,7 @@ describe('Config', () => {
     delete process.env.REMNOTE_WS_PORT;
     delete process.env.REMNOTE_HTTP_PORT;
     delete process.env.REMNOTE_HTTP_HOST;
+    delete process.env.REMNOTE_MEDIA_ROOTS;
     tempDir = await mkdtemp(join(tmpdir(), 'remnote-config-test-'));
   });
 
@@ -129,6 +130,32 @@ describe('Config', () => {
       expect(config.logFile).toBeUndefined();
       expect(config.requestLog).toBeUndefined();
       expect(config.responseLog).toBeUndefined();
+    });
+  });
+
+  describe('Media Root Configuration', () => {
+    it('auto-discovers conservative macOS RemNote files roots', async () => {
+      const filesRoot = join(tempDir, 'remnote', 'remnote-kb-123', 'files');
+      await mkdir(filesRoot, { recursive: true });
+
+      const config = getConfig({});
+
+      expect(config.mediaRoots).toEqual([filesRoot]);
+    });
+
+    it('prefers explicit CLI roots over environment roots', () => {
+      process.env.REMNOTE_MEDIA_ROOTS = `/env/a${process.platform === 'win32' ? ';' : ':'}/env/b`;
+
+      const config = getConfig({ mediaRoots: ['/cli/root'] });
+
+      expect(config.mediaRoots).toEqual(['/cli/root']);
+    });
+
+    it('loads path-delimited media roots from TOML', () => {
+      const separator = process.platform === 'win32' ? ';' : ':';
+      const parsed = parseConfigToml(`[server]\nmediaRoots = "/media/a${separator}/media/b"\n`);
+
+      expect(parsed.server?.mediaRoots).toEqual(['/media/a', '/media/b']);
     });
   });
 

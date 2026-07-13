@@ -195,8 +195,42 @@ export const FALLBACK_TOOLS = [
           type: 'number',
           description: 'Maximum character length for rendered content (default: 100000)',
         },
+        includeMediaMetadata: {
+          type: 'boolean',
+          description:
+            'Include ordered image metadata from the root Rem text and backText fields (default: false)',
+        },
       },
       required: ['remId'],
+    },
+  },
+  {
+    name: 'remnote_get_media',
+    description:
+      'Retrieve a RemNote-managed local image as MCP-native image content. First call remnote_read_note with includeMediaMetadata=true, then pass the returned remId, field, and mediaId. Requires bridge capability media.images.v1. External URL retrieval is not supported.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        remId: {
+          type: 'string',
+          description: 'Root Rem ID containing the image',
+        },
+        field: {
+          type: 'string',
+          enum: ['text', 'backText'],
+          description: 'Rich-text field containing the image',
+        },
+        mediaId: {
+          type: 'string',
+          description: 'Stable media ID returned by remnote_read_note',
+        },
+        maxInlineBytes: {
+          type: 'number',
+          description: 'Maximum bytes to inline (default 5 MiB, hard maximum 10 MiB)',
+        },
+      },
+      required: ['remId', 'field', 'mediaId'],
+      additionalProperties: false,
     },
   },
   {

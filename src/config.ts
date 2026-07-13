@@ -1,6 +1,6 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { delimiter, join } from 'node:path';
 import type { CliOptions } from './cli.js';
 
 export interface ServerConfig {
@@ -14,6 +14,7 @@ export interface ServerConfig {
   requestLog?: string;
   responseLog?: string;
   prettyLogs: boolean;
+  mediaRoots: string[];
 }
 
 export interface ConfigFileOptions {
@@ -95,6 +96,14 @@ export function getConfig(
 
   // Pretty logs in development (when using pino-pretty)
   const prettyLogs = process.stdout.isTTY === true;
+  const configuredMediaRoots = cliOptions.mediaRoots?.length
+    ? cliOptions.mediaRoots
+    : process.env.REMNOTE_MEDIA_ROOTS
+      ? process.env.REMNOTE_MEDIA_ROOTS.split(delimiter).filter(Boolean)
+      : configOptions.mediaRoots;
+  const mediaRoots = (
+    configuredMediaRoots?.length ? configuredMediaRoots : discoverDefaultMediaRoots(homeDir)
+  ).map((entry) => resolveTilde(entry, homeDir));
 
   return {
     wsPort,
@@ -107,6 +116,7 @@ export function getConfig(
     requestLog,
     responseLog,
     prettyLogs,
+    mediaRoots,
   };
 }
 
@@ -230,8 +240,25 @@ function assignConfigValue(
     case 'responseLog':
       config.server.responseLog = expectString(value, filePath, lineNumber, key);
       return;
+    case 'mediaRoots':
+      config.server.mediaRoots = expectString(value, filePath, lineNumber, key)
+        .split(delimiter)
+        .filter(Boolean);
+      return;
     default:
       throw new Error(`${filePath}:${lineNumber}: Unknown server config key "${key}"`);
+  }
+}
+
+export function discoverDefaultMediaRoots(homeDir = homedir()): string[] {
+  const remnoteRoot = join(homeDir, 'remnote');
+  try {
+    return readdirSync(remnoteRoot, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory() && entry.name.startsWith('remnote-'))
+      .map((entry) => join(remnoteRoot, entry.name, 'files'))
+      .filter((entry) => existsSync(entry));
+  } catch {
+    return [];
   }
 }
 

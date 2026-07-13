@@ -17,6 +17,7 @@ export interface CliOptions {
   logFile?: string;
   requestLog?: string;
   responseLog?: string;
+  mediaRoots?: string[];
 }
 
 const validLogLevels = ['debug', 'info', 'warn', 'error'];
@@ -83,11 +84,20 @@ export function parseCliArgs(): CliOptions {
     .option('--verbose', 'Shorthand for --log-level debug')
     .option('--log-file <path>', 'Log to file (default: console only)')
     .option('--request-log <path>', 'Log all WebSocket requests to file (JSON Lines)')
-    .option('--response-log <path>', 'Log all WebSocket responses to file (JSON Lines)');
+    .option('--response-log <path>', 'Log all WebSocket responses to file (JSON Lines)')
+    .option(
+      '--media-root <path>',
+      'Allowed RemNote managed-media root (repeatable, env: REMNOTE_MEDIA_ROOTS)',
+      (value, previous: string[] | undefined) => [...(previous ?? []), value]
+    );
 
   program.parse();
 
-  const options = program.opts<CliOptions>();
+  const parsedOptions = program.opts<CliOptions & { mediaRoot?: string[] }>();
+  const { mediaRoot, ...options } = parsedOptions;
+  if (mediaRoot?.length) {
+    options.mediaRoots = mediaRoot;
+  }
 
   // Validate port conflicts
   if (options.wsPort && options.httpPort && options.wsPort === options.httpPort) {
