@@ -4,7 +4,7 @@ Complete installation instructions for the RemNote MCP Server.
 
 ## Prerequisites
 
-- **Node.js** >= 20.19.0
+- **Node.js** >= 22.13.0 (Node.js 24 LTS recommended)
 - **RemNote app** (desktop or web browser)
 - **RemNote Automation Bridge plugin** - Install from [GitHub](https://github.com/robert7/remnote-mcp-bridge) -
   registration in the RemNote marketplace is pending approval
@@ -251,11 +251,11 @@ remnote-cli search "MCP Test" --text
 **Solution:**
 ```bash
 node --version
-# Ensure >= 20.19.0
+# Ensure >= 22.13.0
 
 # Update Node.js using nvm:
-nvm install 18
-nvm use 18
+nvm install 24
+nvm use 24
 ```
 
 ### Permission Errors (npm install -g)

@@ -8,6 +8,9 @@ on:
 
 jobs:
   quality:
-    uses: robert7/workflows/.github/workflows/node-ci.yml@v0.3.0
+    uses: robert7/workflows/.github/workflows/node-ci.yml@9b0544fccadffeadad23ac555f5861f41a98e61f
+    with:
+      node_versions: '["22.13.0", "24"]'
+      coverage_node_version: '24'
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}

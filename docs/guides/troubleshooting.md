@@ -59,11 +59,11 @@ remnote-mcp-server --version
    ```bash
    # Check version
    node --version
-   # Development tooling requires >= 20.19.0
+   # Development tooling requires >= 22.13.0
 
    # Update Node.js
-   nvm install 20.19.0
-   nvm use 20.19.0
+   nvm install 24
+   nvm use 24
    ```
 
 3. **Missing dependencies**
