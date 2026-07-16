@@ -30,13 +30,7 @@ export interface DaemonCommand {
 }
 
 export type DaemonAction =
-  | 'start'
-  | 'stop'
-  | 'restart'
-  | 'status'
-  | 'logs'
-  | 'install-launchd'
-  | 'uninstall-launchd';
+  'start' | 'stop' | 'restart' | 'status' | 'logs' | 'install-launchd' | 'uninstall-launchd';
 
 export interface DaemonState {
   pid: number;
