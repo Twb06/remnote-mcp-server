@@ -21,6 +21,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Ignore Python bytecode caches and remove previously tracked cache artifacts.
+- Link the canonical cross-repo pull request validation and adoption workflow for maintainers and coding agents.
 - Update `remnote_search` tools reference, CLI command `search` reference, and agent skill documentation to include advanced scoped search with parent ID and document cursor limitations.
 - Update `remnote_get_playbook` guidance and MCP smoke-test instructions for scoped branch search with `parentRemId`.
 - Update the MCP smoke-test prompt to validate `remnote_set_property` through the `automation-level` property fixture

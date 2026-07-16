@@ -7,3 +7,5 @@ coverage/
 *.local.md
 .agents
 .clawpatch
+__pycache__/
+*.py[cod]
