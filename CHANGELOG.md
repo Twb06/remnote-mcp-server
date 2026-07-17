@@ -36,8 +36,9 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Replace integration-test table/media IDs and `REMNOTE_TEST_MEDIA_*` variables with preflight resolution of the fixed
-  `Automation Bridge Test Tag` and `Automation Bridge Test Media` fixture names across MCP, MCPB, CLI, and smoke tests;
-  document the media fixture as an exact-title flashcard with a locally imported image on its back.
+  `Automation Bridge Test Advanced Table`, `Automation Bridge Test Tag`, and `Automation Bridge Test Media` fixture
+  names across MCP, MCPB, CLI, and smoke tests. Validate the standalone table's numeric `Salary` column and predefined
+  rows, and document all fixture setup with RemNote screenshots.
 - Continue all MCP, MCPB, and CLI live suites when persistent fixtures are missing or an earlier transport fails,
   listing every unavailable fixture and skipping only dependent workflows before returning the aggregate status.
 - Use shared workflow `v0.4.0` for the Node.js 22 and 24 CI matrix.

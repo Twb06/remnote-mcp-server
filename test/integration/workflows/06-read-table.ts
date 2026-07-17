@@ -1,8 +1,8 @@
 /**
  * Workflow 06: Read Table
  *
- * Tests read_table against the shared property-bearing tag fixture. The
- * fixture preflight derives its Rem ID from the conventional exact title.
+ * Tests read_table against the standalone Advanced Table fixture. The fixture
+ * preflight derives its Rem ID from the conventional exact title.
  */
 
 import {
@@ -12,7 +12,11 @@ import {
   assertIsArray,
   assertTruthy,
 } from '../assertions.js';
-import { PROPERTY_FIXTURE_TITLE } from '../../helpers/integration-fixtures.js';
+import {
+  TABLE_FIXTURE_MIN_ROWS,
+  TABLE_FIXTURE_NUMERIC_PROPERTY,
+  TABLE_FIXTURE_TITLE,
+} from '../../helpers/integration-fixtures.js';
 import type { WorkflowContext, WorkflowResult, SharedState, StepResult } from '../types';
 
 /** Expected structure of read_table response */
@@ -31,24 +35,24 @@ export async function readTableWorkflow(
 ): Promise<WorkflowResult> {
   const steps: StepResult[] = [];
 
-  const fixture = state.fixtures?.property;
+  const fixture = state.fixtures?.table;
   if (!fixture) {
     return {
       name: 'Read Table',
       steps: [
         {
-          label: `Skipped — fixture "${PROPERTY_FIXTURE_TITLE}" unavailable`,
+          label: `Skipped — fixture "${TABLE_FIXTURE_TITLE}" unavailable`,
           passed: false,
           durationMs: 0,
           error:
-            state.fixtureIssues?.find((issue) => issue.fixture === 'property')?.error ??
-            'Property integration fixture was not initialized',
+            state.fixtureIssues?.find((issue) => issue.fixture === 'table')?.error ??
+            'Advanced Table integration fixture was not initialized',
         },
       ],
       skipped: true,
     };
   }
-  const tableName = PROPERTY_FIXTURE_TITLE;
+  const tableName = TABLE_FIXTURE_TITLE;
   const tableRemId = fixture.tableRemId;
 
   let baseline: ReadTableResponse | null = null;
@@ -74,6 +78,28 @@ export async function readTableWorkflow(
       assertTruthy(result.tableId, 'tableId should not be empty');
       assertTruthy(result.tableName, 'tableName should not be empty');
       assertEqual(result.tableId, tableRemId, 'title lookup should resolve preflight table ID');
+      assertTruthy(
+        result.totalRows >= TABLE_FIXTURE_MIN_ROWS,
+        `table should contain at least ${TABLE_FIXTURE_MIN_ROWS} rows`
+      );
+
+      const numericColumn = result.columns.find(
+        (column) => column.name === TABLE_FIXTURE_NUMERIC_PROPERTY
+      );
+      assertTruthy(numericColumn, `table should contain ${TABLE_FIXTURE_NUMERIC_PROPERTY}`);
+      assertEqual(numericColumn?.type, 'number', 'fixture property type');
+      assertEqual(
+        numericColumn?.propertyId,
+        fixture.numericPropertyRemId,
+        'fixture numeric property ID'
+      );
+      for (const row of result.rows.slice(0, TABLE_FIXTURE_MIN_ROWS)) {
+        const value = row.values[fixture.numericPropertyRemId];
+        assertTruthy(
+          typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value)),
+          `${TABLE_FIXTURE_NUMERIC_PROPERTY} values should be numeric`
+        );
+      }
 
       if (result.columns.length > 0) {
         const firstCol = result.columns[0] as unknown as Record<string, unknown>;
@@ -144,7 +170,9 @@ export async function readTableWorkflow(
   if (baseline && baseline.columns.length > 0) {
     const start = Date.now();
     try {
-      const selectedColumn = baseline.columns[0];
+      const selectedColumn = baseline.columns.find(
+        (column) => column.propertyId === fixture.numericPropertyRemId
+      )!;
       const result = (await ctx.client.callTool('remnote_read_table', {
         tableTitle: tableName,
         propertyFilter: [selectedColumn.name],

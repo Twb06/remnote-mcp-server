@@ -142,9 +142,10 @@ The direct MCP and MCPB stdio proxy suites follow the same RemNote tool workflow
 4. **Journal** — Appends entries to today's daily document with and without timestamps.
 5. **Error Cases** — Sends invalid inputs (nonexistent IDs, missing required fields) and verifies the server handles
    them gracefully.
-6. **Read Table** — Reads the shared property-bearing test tag by its conventional title and derived Rem ID, then
-   validates pagination, filtering, and not-found behavior.
-7. **Set Property** — Uses the same fixture to set and verify an `automation-level` value on the run's created note.
+6. **Read Table** — Reads the standalone Advanced Table fixture by its conventional title and derived Rem ID, then
+   validates its numeric column, predefined rows, pagination, filtering, and not-found behavior.
+7. **Set Property** — Uses the property-bearing tag fixture to set and verify an `automation-level` value on the run's
+   created note.
 8. **Managed Media** — Reads image metadata, retrieves MCP-native bytes, rejects a stale ID, and verifies CLI file
    output through the conventionally named managed-media fixture.
 
@@ -180,26 +181,43 @@ Tag coverage:
 
 ## Persistent Integration Fixtures
 
-The bridge cannot create property schemas or upload managed image files, so each development knowledge base needs two
-persistent fixtures. Their exact titles are the configuration: no Rem IDs, test environment variables, or separate
-JSON test config are required.
+The bridge cannot create table/property schemas or upload managed image files, so each development knowledge base needs
+three persistent fixtures. Their exact titles are the configuration: no Rem IDs, test environment variables, or
+separate JSON test config are required.
 
 ### Setup
 
-1. Create a property-bearing tag named `Automation Bridge Test Tag`.
-2. Add a text-compatible property named `automation-level`.
-3. Create a flashcard whose front is the exact plain-text title `Automation Bridge Test Media`.
-4. Drag or upload a local PNG, JPEG, GIF, or WebP file into the back of that card. Keep the front text-only so exact-title
+The fixtures may share a parent note for convenient maintenance, but the parent title and location are not part of the
+contract. Keep exactly one Rem with each required fixture title.
+
+![Persistent integration fixture overview](../images/integration-testing-05-persistent-fixtures-overview.jpg)
+
+1. Create a tag named `Automation Bridge Test Tag`.
+2. Add a text-compatible property named `automation-level` to that tag. The property-write tests use this tag as their
+   schema and verify the value through its generated table view.
+
+![Automation Bridge Test Tag with automation-level property](../images/integration-testing-06-test-tag-property.jpg)
+
+3. Create a standalone Advanced Table named `Automation Bridge Test Advanced Table`.
+4. Add a numeric property named `Salary` and at least two rows. Give each row a name and a numeric `Salary` value so the
+   tests can verify the numeric schema, row values, filtering, limits, and offsets.
+
+![Automation Bridge Test Advanced Table with numeric Salary values](../images/integration-testing-07-advanced-table-fixture.jpg)
+
+5. Create a flashcard whose front is the exact plain-text title `Automation Bridge Test Media`.
+6. Drag or upload a local PNG, JPEG, GIF, or WebP file into the back of that card. Keep the front text-only so exact-title
    search remains stable, and avoid remote URLs or web-image embeds because they are not RemNote-managed local media.
 
-Keep exactly one Rem with each fixture title. Before creating temporary test content, every live runner resolves these
-titles independently and derives the tag/table/property/media IDs and media field. Missing, duplicated, or malformed
-fixtures are listed together; only their dependent workflows are skipped, so unrelated coverage still runs.
+Before creating temporary test content, every live runner resolves these titles independently and derives the
+tag/table/property/media IDs and media field. Missing, duplicated, or malformed fixtures are listed together; only
+their dependent workflows are skipped, so unrelated coverage still runs.
 
 ### Behavior
 
 The direct MCP and CLI integration suites:
 
+- read the standalone Advanced Table by exact title and derived Rem ID, require numeric `Salary` values and multiple
+  rows, and validate filtering and pagination
 - read the exact fixture tag title as a table and derive its Rem ID and `automation-level` property ID
 - set a unique text value on the run's created test note through `remnote_set_property` / `remnote-cli set-property`
 - read the fixture tag/table again and verify the note row contains the kept value

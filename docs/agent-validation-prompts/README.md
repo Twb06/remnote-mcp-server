@@ -16,8 +16,9 @@ RemNote Automation Bridge [temporary integration test data]
 ```
 
 The prompt creates test artifacts with the `[MCP-AGENT-TEST]` prefix so they can be found and removed manually later.
-Property and managed-media checks use the persistent fixtures `Automation Bridge Test Tag` and
-`Automation Bridge Test Media`, whose setup is documented in the integration-testing guide.
+Table, property, and managed-media checks use the persistent fixtures `Automation Bridge Test Advanced Table`,
+`Automation Bridge Test Tag`, and `Automation Bridge Test Media`, whose setup is documented in the integration-testing
+guide.
 
 ## Example Successful Run
 

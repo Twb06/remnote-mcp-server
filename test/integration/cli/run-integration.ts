@@ -26,6 +26,7 @@ import { mediaWorkflow } from './workflows/09-media.js';
 import {
   MEDIA_FIXTURE_TITLE,
   PROPERTY_FIXTURE_TITLE,
+  TABLE_FIXTURE_TITLE,
   resolvePersistentIntegrationFixtures,
 } from '../../helpers/integration-fixtures.js';
 import type { WorkflowResult, WorkflowFn, SharedState } from './types.js';
@@ -332,6 +333,11 @@ async function main(): Promise<void> {
     state.fixtures = resolution.fixtures;
     state.fixtureIssues = resolution.issues;
     console.log('Persistent fixture preflight:');
+    if (resolution.fixtures.table) {
+      console.log(
+        `  ${GREEN}✓${RESET} "${TABLE_FIXTURE_TITLE}" (${resolution.fixtures.table.tableRemId})`
+      );
+    }
     if (resolution.fixtures.property) {
       console.log(
         `  ${GREEN}✓${RESET} "${PROPERTY_FIXTURE_TITLE}" (${resolution.fixtures.property.tableRemId})`

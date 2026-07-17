@@ -37,12 +37,14 @@ required call fails.
 
 ## Required Persistent Fixtures
 
+- Exactly one standalone Advanced Table titled `Automation Bridge Test Advanced Table`, with a numeric property named
+  `Salary` and at least two named rows containing numeric `Salary` values.
 - Exactly one property-bearing tag titled `Automation Bridge Test Tag`, with a text-compatible property named
   `automation-level`.
 - Exactly one flashcard with the plain-text front `Automation Bridge Test Media` and at least one locally imported
   RemNote-managed image on its back. The front must remain text-only for stable exact-title lookup.
 
-Resolve both by exact title and derive all Rem, property, field, and media IDs. Do not ask the user to provide IDs.
+Resolve all three by exact title and derive all Rem, property, field, and media IDs. Do not ask the user to provide IDs.
 
 ## Test Flow
 
@@ -113,6 +115,11 @@ Resolve both by exact title and derive all Rem, property, field, and media IDs. 
    - Confirm the response previews old/new parent data.
    - Read or list the run note again and confirm `moveCandidateRemId` is still a direct child, proving dry-run did not
      change the Rem parent.
+
+Search for the exact title `Automation Bridge Test Advanced Table`. Stop and report missing or duplicate fixtures.
+Read the single match with `remnote_read_table` first by `tableTitle` and then by its derived `tableRemId`. Confirm it
+has a numeric `Salary` column and at least two rows with numeric values. Use `propertyFilter: ["Salary"]`, `limit`, and
+`offset` to verify filtering and pagination without relying on a configured Rem ID.
 
 Search for the exact title `Automation Bridge Test Media`. Stop and report missing or duplicate fixtures. Read the
 single match with `includeMediaMetadata=true`, select its first ordered RemNote-managed local image, and call
@@ -189,7 +196,8 @@ content and matching structured metadata.
 19. Final response:
     - Report PASS or FAIL.
     - Include the root note Rem ID, run note Rem ID, and test tag Rem ID if created.
-    - Include `propertyFixtureTagRemId`, `automationLevelPropertyRemId`, and the kept `automationLevelValue`.
+    - Include the Advanced Table Rem ID, `propertyFixtureTagRemId`, `automationLevelPropertyRemId`, and the kept
+      `automationLevelValue`.
     - List every required tool and whether it was used successfully.
     - List optional/report-only tools and why they were skipped or not available.
     - Mention that artifacts, including the note carrying the kept `automation-level` value, can be cleaned up by

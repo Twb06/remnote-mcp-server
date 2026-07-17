@@ -2,22 +2,48 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   MEDIA_FIXTURE_TITLE,
   PROPERTY_FIXTURE_TITLE,
+  TABLE_FIXTURE_TITLE,
   resolvePersistentIntegrationFixtures,
   type PersistentFixtureReader,
 } from '../helpers/integration-fixtures.js';
 
+function makeAdvancedTable(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    tableId: 'table-1',
+    columns: [{ name: 'Salary', propertyId: 'salary-1', type: 'number' }],
+    rows: [
+      { remId: 'row-1', name: 'Andrea', values: { 'salary-1': '300' } },
+      { remId: 'row-2', name: 'Jozef', values: { 'salary-1': '500' } },
+    ],
+    totalRows: 2,
+    ...overrides,
+  };
+}
+
+function makePropertyTable(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    tableId: 'tag-1',
+    columns: [{ name: 'automation-level', propertyId: 'property-1', type: 'text' }],
+    totalRows: 0,
+    ...overrides,
+  };
+}
+
 function makeReader(overrides: Partial<PersistentFixtureReader> = {}): PersistentFixtureReader {
   return {
-    readTableByRemId: vi.fn().mockResolvedValue({
-      tableId: 'tag-1',
-      columns: [{ name: 'automation-level', propertyId: 'property-1', type: 'text' }],
-    }),
+    readTableByRemId: vi
+      .fn()
+      .mockImplementation((remId: string) =>
+        Promise.resolve(remId === 'table-1' ? makeAdvancedTable() : makePropertyTable())
+      ),
     searchByTitle: vi.fn().mockImplementation((title: string) =>
       Promise.resolve({
         results: [
-          title === PROPERTY_FIXTURE_TITLE
-            ? { remId: 'tag-1', title: PROPERTY_FIXTURE_TITLE }
-            : { remId: 'media-rem-1', title: MEDIA_FIXTURE_TITLE },
+          title === TABLE_FIXTURE_TITLE
+            ? { remId: 'table-1', title: TABLE_FIXTURE_TITLE }
+            : title === PROPERTY_FIXTURE_TITLE
+              ? { remId: 'tag-1', title: PROPERTY_FIXTURE_TITLE }
+              : { remId: 'media-rem-1', title: MEDIA_FIXTURE_TITLE },
         ],
       })
     ),
@@ -40,6 +66,7 @@ describe('resolvePersistentIntegrationFixtures', () => {
 
     await expect(resolvePersistentIntegrationFixtures(reader)).resolves.toEqual({
       fixtures: {
+        table: { tableRemId: 'table-1', numericPropertyRemId: 'salary-1' },
         property: { tableRemId: 'tag-1', propertyRemId: 'property-1' },
         media: {
           mediaRemId: 'media-rem-1',
@@ -49,7 +76,9 @@ describe('resolvePersistentIntegrationFixtures', () => {
       },
       issues: [],
     });
+    expect(reader.readTableByRemId).toHaveBeenCalledWith('table-1');
     expect(reader.readTableByRemId).toHaveBeenCalledWith('tag-1');
+    expect(reader.searchByTitle).toHaveBeenCalledWith(TABLE_FIXTURE_TITLE);
     expect(reader.searchByTitle).toHaveBeenCalledWith(PROPERTY_FIXTURE_TITLE);
     expect(reader.searchByTitle).toHaveBeenCalledWith(MEDIA_FIXTURE_TITLE);
     expect(reader.readNoteWithMedia).toHaveBeenCalledWith('media-rem-1');
@@ -57,12 +86,19 @@ describe('resolvePersistentIntegrationFixtures', () => {
 
   it('reports a malformed property fixture while preserving media resolution', async () => {
     const reader = makeReader({
-      readTableByRemId: vi.fn().mockResolvedValue({ tableId: 'tag-1', columns: [] }),
+      readTableByRemId: vi
+        .fn()
+        .mockImplementation((remId: string) =>
+          Promise.resolve(
+            remId === 'table-1' ? makeAdvancedTable() : makePropertyTable({ columns: [] })
+          )
+        ),
     });
 
     const result = await resolvePersistentIntegrationFixtures(reader);
 
     expect(result.fixtures.property).toBeUndefined();
+    expect(result.fixtures.table?.tableRemId).toBe('table-1');
     expect(result.fixtures.media?.mediaId).toBe('media-1');
     expect(result.issues).toEqual([
       expect.objectContaining({
@@ -72,14 +108,67 @@ describe('resolvePersistentIntegrationFixtures', () => {
     ]);
   });
 
+  it('reports a malformed Advanced Table while preserving other fixtures', async () => {
+    const reader = makeReader({
+      readTableByRemId: vi.fn().mockImplementation((remId: string) =>
+        Promise.resolve(
+          remId === 'table-1'
+            ? makeAdvancedTable({
+                columns: [{ name: 'Salary', propertyId: 'salary-1', type: 'text' }],
+              })
+            : makePropertyTable()
+        )
+      ),
+    });
+
+    const result = await resolvePersistentIntegrationFixtures(reader);
+
+    expect(result.fixtures.table).toBeUndefined();
+    expect(result.fixtures.property?.propertyRemId).toBe('property-1');
+    expect(result.fixtures.media?.mediaId).toBe('media-1');
+    expect(result.issues).toEqual([
+      expect.objectContaining({
+        fixture: 'table',
+        error: expect.stringContaining('must have a numeric "Salary" property'),
+      }),
+    ]);
+  });
+
+  it('requires multiple Advanced Table rows with numeric values', async () => {
+    const reader = makeReader({
+      readTableByRemId: vi.fn().mockImplementation((remId: string) =>
+        Promise.resolve(
+          remId === 'table-1'
+            ? makeAdvancedTable({
+                rows: [{ remId: 'row-1', name: 'Andrea', values: { 'salary-1': 'not-a-number' } }],
+                totalRows: 1,
+              })
+            : makePropertyTable()
+        )
+      ),
+    });
+
+    const result = await resolvePersistentIntegrationFixtures(reader);
+
+    expect(result.fixtures.table).toBeUndefined();
+    expect(result.issues[0]).toEqual(
+      expect.objectContaining({
+        fixture: 'table',
+        error: expect.stringContaining('must have at least 2 rows'),
+      })
+    );
+  });
+
   it('reports a missing media fixture while preserving property resolution', async () => {
     const reader = makeReader({
       searchByTitle: vi.fn().mockImplementation((title: string) =>
         Promise.resolve({
           results:
-            title === PROPERTY_FIXTURE_TITLE
-              ? [{ remId: 'tag-1', title: PROPERTY_FIXTURE_TITLE }]
-              : [],
+            title === TABLE_FIXTURE_TITLE
+              ? [{ remId: 'table-1', title: TABLE_FIXTURE_TITLE }]
+              : title === PROPERTY_FIXTURE_TITLE
+                ? [{ remId: 'tag-1', title: PROPERTY_FIXTURE_TITLE }]
+                : [],
         })
       ),
     });
@@ -103,12 +192,14 @@ describe('resolvePersistentIntegrationFixtures', () => {
       searchByTitle: vi.fn().mockImplementation((title: string) =>
         Promise.resolve({
           results:
-            title === PROPERTY_FIXTURE_TITLE
-              ? [{ remId: 'tag-1', title: PROPERTY_FIXTURE_TITLE }]
-              : [
-                  { remId: 'media-rem-1', title: MEDIA_FIXTURE_TITLE },
-                  { remId: 'media-rem-2', title: `  ${MEDIA_FIXTURE_TITLE.toUpperCase()}  ` },
-                ],
+            title === TABLE_FIXTURE_TITLE
+              ? [{ remId: 'table-1', title: TABLE_FIXTURE_TITLE }]
+              : title === PROPERTY_FIXTURE_TITLE
+                ? [{ remId: 'tag-1', title: PROPERTY_FIXTURE_TITLE }]
+                : [
+                    { remId: 'media-rem-1', title: MEDIA_FIXTURE_TITLE },
+                    { remId: 'media-rem-2', title: `  ${MEDIA_FIXTURE_TITLE.toUpperCase()}  ` },
+                  ],
         })
       ),
     });
@@ -148,6 +239,6 @@ describe('resolvePersistentIntegrationFixtures', () => {
     const result = await resolvePersistentIntegrationFixtures(reader);
 
     expect(result.fixtures).toEqual({});
-    expect(result.issues.map((issue) => issue.fixture)).toEqual(['property', 'media']);
+    expect(result.issues.map((issue) => issue.fixture)).toEqual(['table', 'property', 'media']);
   });
 });
