@@ -142,10 +142,12 @@ The direct MCP and MCPB stdio proxy suites follow the same RemNote tool workflow
 4. **Journal** — Appends entries to today's daily document with and without timestamps.
 5. **Error Cases** — Sends invalid inputs (nonexistent IDs, missing required fields) and verifies the server handles
    them gracefully.
-6. **Read Table** — Reads a pre-configured Advanced Table by name and Rem ID, then validates pagination, filtering,
-   and not-found behavior.
-7. **Set Property** — Uses a property-bearing test tag fixture to set and verify an `automation-level` value on the
-   run's created note.
+6. **Read Table** — Reads the standalone Advanced Table fixture by its conventional title and derived Rem ID, then
+   validates its numeric column, predefined rows, pagination, filtering, and not-found behavior.
+7. **Set Property** — Uses the property-bearing tag fixture to set and verify an `automation-level` value on the run's
+   created note.
+8. **Managed Media** — Reads image metadata, retrieves MCP-native bytes, rejects a stale ID, and verifies CLI file
+   output through the conventionally named managed-media fixture.
 
 The direct MCP suite also verifies the OAuth HTTP metadata and token endpoints.
 
@@ -177,61 +179,61 @@ Tag coverage:
 - They also verify exact-ID tag add/remove flows through both `remnote_search_by_tag` and direct `remnote_read_note`
   readback.
 
-## Read Table Configuration
+## Persistent Integration Fixtures
 
-The `read_table` workflow requires a pre-existing Advanced Table in RemNote. This keeps the coverage read-only while
-still validating the shared bridge-consumer contract.
-
-### Setup
-
-1. Create an Advanced Table in RemNote with at least one row and one column.
-2. Record the table's exact name and `remId`.
-3. Create or edit the config file at:
-
-   **Windows:** `C:\Users\<your-username>\.remnote-mcp-bridge\remnote-mcp-bridge.json`
-
-   **macOS/Linux:** `~/.remnote-mcp-bridge/remnote-mcp-bridge.json`
-
-4. Add the integration test configuration:
-
-```json
-{
-  "integrationTest": {
-    "tableName": "Your Table Name",
-    "tableRemId": "abc123def"
-  }
-}
-```
-
-### Running
-
-Run the integration suite as usual:
-
-```bash
-./run-integration-test.sh
-```
-
-The `read_table` workflow is skipped when either field is missing or the config is invalid.
-
-## Property Write Fixture
-
-`remnote_set_property` requires a property-bearing tag or Advanced Table plus exact target, tag/table, property, and
-value Rem IDs. The live suites validate this path through a reusable RemNote fixture instead of trying to create
-property schema through the bridge.
+The bridge cannot create table/property schemas or upload managed image files, so each development knowledge base needs
+three persistent fixtures. Their exact titles are the configuration: no Rem IDs, test environment variables, or
+separate JSON test config are required.
 
 ### Setup
 
-1. Create a property-bearing tag named `Automation Bridge Test Tag`.
-2. Add a text-compatible property named `automation-level`.
+The fixtures may share a parent note for convenient maintenance, but the parent title and location are not part of the
+contract. Keep exactly one Rem with each required fixture title.
+
+![Persistent integration fixtures with an optional Advanced Table wrapper](../images/integration-testing-05-persistent-fixtures-overview.jpg)
+
+1. Create a tag named `Automation Bridge Test Tag`.
+2. Add a text-compatible property named `automation-level` to that tag. The property-write tests use this tag as their
+   schema and verify the value through its generated table view.
+
+![Automation Bridge Test Tag with automation-level property](../images/integration-testing-06-test-tag-property.jpg)
+
+3. Create the property-bearing table/tag named `Automation Bridge Advanced Table`.
+4. Add a numeric property named `Salary` and at least two named rows with finite numeric `Salary` values. Empty or
+   unrelated extra rows are allowed; the tests ignore them while validating the numeric schema, row values, filtering,
+   limits, and offsets.
+
+You may optionally create a document named `Automation Bridge Test Advanced Table` to organize or display the table.
+That document is only a wrapper: the tests resolve the actual `Automation Bridge Advanced Table` property-bearing Rem
+by normalized exact title and never use the wrapper's Rem ID.
+
+![Optional wrapper displaying the required Automation Bridge Advanced Table](../images/integration-testing-07-advanced-table-fixture.jpg)
+
+5. Create a flashcard whose front is the exact plain-text title `Automation Bridge Test Media`.
+6. Drag or upload a local PNG, JPEG, GIF, or WebP file into the back of that card. Keep the front text-only so exact-title
+   search remains stable, and avoid remote URLs or web-image embeds because they are not RemNote-managed local media.
+
+Before creating temporary test content, every live runner resolves these titles independently and derives the
+tag/table/property/media IDs and media field. Missing, duplicated, or malformed fixtures are listed together; only
+their dependent workflows are skipped, so unrelated coverage still runs.
 
 ### Behavior
 
 The direct MCP and CLI integration suites:
 
-- search for the exact fixture tag title
-- resolve the `automation-level` property ID through `remnote_read_table` / `remnote-cli read-table`
+- read `Automation Bridge Advanced Table` by normalized exact title and derived Rem ID, require at least two named rows
+  with finite numeric `Salary` values while tolerating unrelated/empty rows, and validate filtering and pagination
+- read the exact fixture tag title as a table and derive its Rem ID and `automation-level` property ID
 - set a unique text value on the run's created test note through `remnote_set_property` / `remnote-cli set-property`
 - read the fixture tag/table again and verify the note row contains the kept value
+- search for the exact media fixture title, select its first ordered managed-local image, and verify retrieval through
+  MCP, MCPB, and CLI paths
+
+When `--suite all` is used, direct MCP, MCPB, and CLI all run even if an earlier transport fails or skips a fixture-
+dependent workflow. The wrapper returns nonzero after all transports finish when any suite is failed or incomplete.
 
 The value is intentionally not cleared, so the resulting test note remains inspectable until the `[MCP-TEST]` or
 `[CLI-TEST]` artifact is deleted.
+
+Managed-media roots are independent server runtime configuration. Existing `~/remnote/remnote-*/files` roots are
+discovered automatically; custom layouts belong in `[server].mediaRoots` in `~/.remnote-mcp-server/config.toml`.

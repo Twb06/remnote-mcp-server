@@ -11,6 +11,7 @@ export const BRIDGE_ACTION_TO_TOOL: Readonly<Record<string, string>> = {
   search: 'remnote_search',
   search_by_tag: 'remnote_search_by_tag',
   read_note: 'remnote_read_note',
+  get_media: 'remnote_get_media',
   list_children: 'remnote_list_children',
   move_note: 'remnote_move_note',
   update_note: 'remnote_update_note',
@@ -24,7 +25,7 @@ export const BRIDGE_ACTION_TO_TOOL: Readonly<Record<string, string>> = {
   read_table: 'remnote_read_table',
 };
 
-type ToolContent = Array<{ type: string; text?: string }>;
+type ToolContent = Array<{ type: string; text?: string; data?: string; mimeType?: string }>;
 
 /**
  * Short-lived MCP client used by CLI commands to call remnote-mcp-server.
@@ -51,6 +52,26 @@ export class McpServerClient {
 
     if (result.isError) {
       throw new Error(this.extractText(result));
+    }
+
+    if (action === 'get_media') {
+      const content = result.content as ToolContent | undefined;
+      const image = content?.find(
+        (item) =>
+          item.type === 'image' &&
+          typeof item.data === 'string' &&
+          typeof item.mimeType === 'string'
+      );
+      if (!image) {
+        throw new Error('MCP server returned media metadata without MCP-native image content');
+      }
+      const metadata =
+        result.structuredContent &&
+        typeof result.structuredContent === 'object' &&
+        !Array.isArray(result.structuredContent)
+          ? result.structuredContent
+          : {};
+      return { ...metadata, data: image.data, mimeType: image.mimeType };
     }
 
     const parsed = this.parseResult(result);

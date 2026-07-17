@@ -1,20 +1,16 @@
 /**
  * Workflow 07: Read Table
  *
- * Tests the read-table CLI command by reading an Advanced Table configured
- * via integration test config.
- *
- * Prerequisites:
- * - Config file must exist at $HOME/.remnote-mcp-bridge/remnote-mcp-bridge.json
- * - Must contain both integrationTest.tableName and integrationTest.tableRemId
+ * Tests read-table against the standalone Advanced Table fixture. The fixture
+ * preflight derives its Rem ID from the conventional exact title.
  */
 
 import { assertContains, assertEqual, assertTruthy } from '../assertions.js';
 import {
-  hasTableConfig,
-  getIntegrationTestConfig,
-  getTableConfigWarning,
-} from '../../../helpers/integration-config.js';
+  TABLE_FIXTURE_MIN_ROWS,
+  TABLE_FIXTURE_NUMERIC_PROPERTY,
+  TABLE_FIXTURE_TITLE,
+} from '../../../helpers/integration-fixtures.js';
 import type { CliTestClient } from '../cli-test-client.js';
 import type { WorkflowResult, SharedState, StepResult } from '../types';
 
@@ -35,30 +31,29 @@ interface ReadTableResponse {
 
 export async function readTableWorkflow(
   ctx: CliContext,
-  _state: SharedState
+  state: SharedState
 ): Promise<WorkflowResult> {
   const steps: StepResult[] = [];
 
-  // Check if table config exists - skip test if not configured
-  if (!hasTableConfig()) {
+  const fixture = state.fixtures?.table;
+  if (!fixture) {
     return {
       name: 'Read Table',
-      steps: [{ label: getTableConfigWarning(), passed: true, durationMs: 0 }],
+      steps: [
+        {
+          label: `Skipped — fixture "${TABLE_FIXTURE_TITLE}" unavailable`,
+          passed: false,
+          durationMs: 0,
+          error:
+            state.fixtureIssues?.find((issue) => issue.fixture === 'table')?.error ??
+            'Advanced Table integration fixture was not initialized',
+        },
+      ],
       skipped: true,
     };
   }
-
-  const config = getIntegrationTestConfig()!;
-  const tableName = config.tableName;
-  const tableRemId = config.tableRemId;
-
-  if (!tableName || !tableRemId) {
-    return {
-      name: 'Read Table',
-      steps: [{ label: getTableConfigWarning(), passed: true, durationMs: 0 }],
-      skipped: true,
-    };
-  }
+  const tableName = TABLE_FIXTURE_TITLE;
+  const tableRemId = fixture.tableRemId;
 
   let baseline: ReadTableResponse | null = null;
 
@@ -100,6 +95,36 @@ export async function readTableWorkflow(
       assertEqual(data.rowsReturned, data.rows.length, 'rowsReturned should match rows length');
       assertTruthy(data.tableId, 'tableId should not be empty');
       assertTruthy(data.tableName, 'tableName should not be empty');
+      assertEqual(data.tableId, tableRemId, 'title lookup should resolve preflight table ID');
+      assertTruthy(
+        data.totalRows >= TABLE_FIXTURE_MIN_ROWS,
+        `table should contain at least ${TABLE_FIXTURE_MIN_ROWS} rows`
+      );
+
+      const numericColumn = data.columns.find(
+        (column) => column.name === TABLE_FIXTURE_NUMERIC_PROPERTY
+      );
+      assertTruthy(numericColumn, `table should contain ${TABLE_FIXTURE_NUMERIC_PROPERTY}`);
+      assertEqual(numericColumn?.type, 'number', 'fixture property type');
+      assertEqual(
+        numericColumn?.propertyId,
+        fixture.numericPropertyRemId,
+        'fixture numeric property ID'
+      );
+      const validRows = data.rows.filter((row) => {
+        const value = row.values[fixture.numericPropertyRemId];
+        return (
+          typeof row.name === 'string' &&
+          row.name.trim() !== '' &&
+          typeof value === 'string' &&
+          value.trim() !== '' &&
+          Number.isFinite(Number(value))
+        );
+      });
+      assertTruthy(
+        validRows.length >= TABLE_FIXTURE_MIN_ROWS,
+        `table should contain at least ${TABLE_FIXTURE_MIN_ROWS} named rows with finite numeric ${TABLE_FIXTURE_NUMERIC_PROPERTY} values`
+      );
 
       baseline = data;
       steps.push({
@@ -117,8 +142,8 @@ export async function readTableWorkflow(
     }
   }
 
-  // Step 2: read-table by Rem ID when configured
-  if (tableRemId) {
+  // Step 2: read-table by the Rem ID derived during preflight.
+  {
     const start = Date.now();
     try {
       const result = await ctx.cli.run(['read-table', '--rem-id', tableRemId]);
@@ -163,7 +188,9 @@ export async function readTableWorkflow(
   if (baseline && baseline.columns.length > 0) {
     const start = Date.now();
     try {
-      const selectedColumn = baseline.columns[0];
+      const selectedColumn = baseline.columns.find(
+        (column) => column.propertyId === fixture.numericPropertyRemId
+      )!;
       const result = await ctx.cli.run([
         'read-table',
         '--title',

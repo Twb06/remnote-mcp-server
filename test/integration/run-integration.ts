@@ -24,6 +24,13 @@ import { errorCasesWorkflow } from './workflows/05-error-cases.js';
 import { readTableWorkflow } from './workflows/06-read-table.js';
 import { oauthWorkflow } from './workflows/07-oauth.js';
 import { setPropertyWorkflow } from './workflows/08-set-property.js';
+import { mediaWorkflow } from './workflows/09-media.js';
+import {
+  MEDIA_FIXTURE_TITLE,
+  PROPERTY_FIXTURE_TITLE,
+  TABLE_FIXTURE_TITLE,
+  resolvePersistentIntegrationFixtures,
+} from '../helpers/integration-fixtures.js';
 import type { WorkflowResult, WorkflowFn, SharedState } from './types.js';
 
 const RESET = '\x1b[0m';
@@ -335,6 +342,42 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  {
+    const resolution = await resolvePersistentIntegrationFixtures({
+      readTableByRemId: (remId, limit) =>
+        client.callTool('remnote_read_table', { tableRemId: remId, limit }),
+      searchByTitle: (title) =>
+        client.callTool('remnote_search', { query: title, limit: 150, contentMode: 'none' }),
+      readNoteWithMedia: (remId) =>
+        client.callTool('remnote_read_note', {
+          remId,
+          contentMode: 'none',
+          includeMediaMetadata: true,
+        }),
+    });
+    state.fixtures = resolution.fixtures;
+    state.fixtureIssues = resolution.issues;
+    console.log('Persistent fixture preflight:');
+    if (resolution.fixtures.table) {
+      console.log(
+        `  ${GREEN}✓${RESET} "${TABLE_FIXTURE_TITLE}" (${resolution.fixtures.table.tableRemId})`
+      );
+    }
+    if (resolution.fixtures.property) {
+      console.log(
+        `  ${GREEN}✓${RESET} "${PROPERTY_FIXTURE_TITLE}" (${resolution.fixtures.property.tableRemId})`
+      );
+    }
+    if (resolution.fixtures.media) {
+      console.log(
+        `  ${GREEN}✓${RESET} "${MEDIA_FIXTURE_TITLE}" (${resolution.fixtures.media.mediaRemId})`
+      );
+    }
+    for (const issue of resolution.issues) {
+      console.log(`  ${YELLOW}SKIP${RESET} "${issue.title}": ${issue.error}`);
+    }
+  }
+
   try {
     const parentResolution = await ensureIntegrationParentNote(client, state);
     if (parentResolution.status === 'reused') {
@@ -364,6 +407,7 @@ async function main(): Promise<void> {
     { name: 'Error Cases', fn: errorCasesWorkflow },
     { name: 'Read Table', fn: readTableWorkflow },
     { name: 'Set Property', fn: setPropertyWorkflow },
+    { name: 'Managed Media', fn: mediaWorkflow },
   ];
 
   try {

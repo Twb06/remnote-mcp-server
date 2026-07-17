@@ -16,6 +16,7 @@ This smoke test requires:
 - `remnote_search`
 - `remnote_create_note`
 - `remnote_read_note`
+- `remnote_get_media`
 - `remnote_list_children`
 - `remnote_update_note`
 - `remnote_set_document_status`
@@ -34,6 +35,19 @@ Optional/report-only tools:
 If your client can inspect the available tool list, check it first. If not, continue and report any missing tool when a
 required call fails.
 
+## Required Persistent Fixtures
+
+- Exactly one property-bearing table/tag titled `Automation Bridge Advanced Table`, with a numeric property named
+  `Salary` and at least two named rows containing finite numeric `Salary` values. Empty or unrelated extra rows are
+  allowed. A document titled `Automation Bridge Test Advanced Table` may wrap or display this table but is optional and
+  is not the fixture.
+- Exactly one property-bearing tag titled `Automation Bridge Test Tag`, with a text-compatible property named
+  `automation-level`.
+- Exactly one flashcard with the plain-text front `Automation Bridge Test Media` and at least one locally imported
+  RemNote-managed image on its back. The front must remain text-only for stable exact-title lookup.
+
+Resolve all three by exact title and derive all Rem, property, field, and media IDs. Do not ask the user to provide IDs.
+
 ## Test Flow
 
 1. Call `remnote_status`.
@@ -48,6 +62,7 @@ required call fails.
    - Confirm the playbook mentions dry-run-first `remnote_set_document_status`.
    - Confirm the playbook mentions setting tag/table property values with `remnote_set_property`.
    - Confirm the playbook mentions exact inline Rem references with `[[id:<remId>]]`.
+   - Confirm the playbook describes the `media.images.v1` image retrieval workflow.
 
 3. Resolve the shared temporary integration-test root.
    - Search for the exact title `RemNote Automation Bridge [temporary integration test data]`.
@@ -102,6 +117,18 @@ required call fails.
    - Confirm the response previews old/new parent data.
    - Read or list the run note again and confirm `moveCandidateRemId` is still a direct child, proving dry-run did not
      change the Rem parent.
+
+Search for the normalized exact title `Automation Bridge Advanced Table`. Ignore the optional
+`Automation Bridge Test Advanced Table` wrapper/document and stop only for missing or duplicate exact table fixtures.
+Read the single table match with `remnote_read_table` first by `tableTitle` and then by its derived `tableRemId`. Confirm
+it has a numeric `Salary` column and at least two named rows with finite numeric values, tolerating unrelated or empty
+extra rows. Use `propertyFilter: ["Salary"]`, `limit`, and `offset` to verify filtering and pagination without relying on
+a configured Rem ID.
+
+Search for the exact title `Automation Bridge Test Media`. Stop and report missing or duplicate fixtures. Read the
+single match with `includeMediaMetadata=true`, select its first ordered RemNote-managed local image, and call
+`remnote_get_media` with the derived `remId`, `field`, and `mediaId`. Confirm the result contains MCP-native image
+content and matching structured metadata.
 
 11. Create a test tag note under the same root note.
    - Title: `[MCP-AGENT-TEST] tag <current ISO timestamp>`
@@ -173,7 +200,8 @@ required call fails.
 19. Final response:
     - Report PASS or FAIL.
     - Include the root note Rem ID, run note Rem ID, and test tag Rem ID if created.
-    - Include `propertyFixtureTagRemId`, `automationLevelPropertyRemId`, and the kept `automationLevelValue`.
+    - Include the Advanced Table Rem ID, `propertyFixtureTagRemId`, `automationLevelPropertyRemId`, and the kept
+      `automationLevelValue`.
     - List every required tool and whether it was used successfully.
     - List optional/report-only tools and why they were skipped or not available.
     - Mention that artifacts, including the note carrying the kept `automation-level` value, can be cleaned up by

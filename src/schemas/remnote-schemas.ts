@@ -143,6 +143,25 @@ export const ReadNoteSchema = z
       .max(200000)
       .default(100000)
       .describe('Maximum character length for rendered content'),
+    includeMediaMetadata: z
+      .boolean()
+      .default(false)
+      .describe('Include ordered image metadata from the root Rem text and backText fields'),
+  })
+  .strict();
+
+export const GetMediaSchema = z
+  .object({
+    remId: z.string().min(1).describe('Root Rem ID containing the image'),
+    field: z.enum(['text', 'backText']).describe('Rich-text field containing the image'),
+    mediaId: z.string().min(1).describe('Stable media ID returned by remnote_read_note'),
+    maxInlineBytes: z
+      .number()
+      .int()
+      .min(1)
+      .max(10 * 1024 * 1024)
+      .default(5 * 1024 * 1024)
+      .describe('Maximum image bytes to inline (default 5 MiB, hard maximum 10 MiB)'),
   })
   .strict();
 

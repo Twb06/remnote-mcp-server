@@ -126,6 +126,7 @@ verbose = false
 logFile = "~/.remnote-mcp-server/server.log"
 requestLog = "~/.remnote-mcp-server/requests.jsonl"
 responseLog = "~/.remnote-mcp-server/responses.jsonl"
+mediaRoots = "~/remnote/remnote-primary/files"
 
 [daemon]
 logFile = "~/.remnote-mcp-server/remnote-mcp-server.log"
@@ -144,7 +145,7 @@ remnote-mcp-server daemon install-launchd --config ~/tmp/remnote-debug.toml
 **Precedence (highest to lowest):**
 
 1. CLI flags
-2. Environment variables (`REMNOTE_HTTP_PORT`, `REMNOTE_HTTP_HOST`, `REMNOTE_WS_PORT`)
+2. Environment variables (`REMNOTE_HTTP_PORT`, `REMNOTE_HTTP_HOST`, `REMNOTE_WS_PORT`, `REMNOTE_MEDIA_ROOTS`)
 3. `~/.remnote-mcp-server/config.toml`
 4. Built-in defaults
 
@@ -202,6 +203,15 @@ plugin settings.
 
 - Port 3002 is already in use
 - Running multiple server instances
+
+### --media-root
+
+Add an allowed RemNote managed-media directory. Repeat the flag for multiple knowledge bases. Explicit roots replace
+automatic discovery and are confined to exact basename lookups.
+
+```bash
+remnote-mcp-server --media-root ~/remnote/remnote-primary/files
+```
 
 ## Logging Options
 
@@ -345,6 +355,7 @@ Port and HTTP host options can be set via environment variables as an alternativ
 | `REMNOTE_HTTP_PORT` | `--http-port` | 3001 |
 | `REMNOTE_HTTP_HOST` | `--http-host` | 127.0.0.1 |
 | `REMNOTE_WS_PORT` | `--ws-port` | 3002 |
+| `REMNOTE_MEDIA_ROOTS` | repeatable `--media-root` | discovered `~/remnote/remnote-*/files` roots |
 
 **Precedence (highest to lowest):**
 

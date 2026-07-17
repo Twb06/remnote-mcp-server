@@ -22,6 +22,7 @@ export class WebSocketServer {
   private responseLogger: Logger | null = null;
   private serverVersion: string;
   private bridgeVersion: string | null = null;
+  private bridgeCapabilities = new Set<string>();
   private clientAccepted = false;
   private helloTimeout: NodeJS.Timeout | null = null;
   private pendingRequests = new Map<
@@ -109,6 +110,7 @@ export class WebSocketServer {
           if (this.client === ws) {
             this.client = null;
             this.bridgeVersion = null;
+            this.bridgeCapabilities.clear();
             this.clientAccepted = false;
             this.clearHelloTimeout();
           }
@@ -138,6 +140,7 @@ export class WebSocketServer {
         this.client.close();
         this.client = null;
         this.bridgeVersion = null;
+        this.bridgeCapabilities.clear();
         this.clientAccepted = false;
         this.clearHelloTimeout();
       }
@@ -233,6 +236,14 @@ export class WebSocketServer {
     return this.bridgeVersion;
   }
 
+  getBridgeCapabilities(): string[] {
+    return [...this.bridgeCapabilities];
+  }
+
+  hasBridgeCapability(capability: string): boolean {
+    return this.bridgeCapabilities.has(capability);
+  }
+
   getServerVersion(): string {
     return this.serverVersion;
   }
@@ -270,6 +281,13 @@ export class WebSocketServer {
         }
 
         this.bridgeVersion = message.version;
+        this.bridgeCapabilities = new Set(
+          Array.isArray(message.capabilities)
+            ? message.capabilities.filter(
+                (capability): capability is string => typeof capability === 'string'
+              )
+            : []
+        );
         this.clientAccepted = true;
         this.clearHelloTimeout();
         this.logger.info({ bridgeVersion: message.version }, 'Bridge identified');

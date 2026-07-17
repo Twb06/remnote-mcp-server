@@ -4,12 +4,16 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   registerAllTools,
   CREATE_NOTE_TOOL,
   SEARCH_TOOL,
   SEARCH_BY_TAG_TOOL,
   READ_NOTE_TOOL,
+  GET_MEDIA_TOOL,
   UPDATE_NOTE_TOOL,
   SET_DOCUMENT_STATUS_TOOL,
   LIST_CHILDREN_TOOL,
@@ -282,6 +286,12 @@ describe('Tool Definitions', () => {
     expect(READ_NOTE_TOOL.name).toBe('remnote_read_note');
   });
 
+  it('should advertise native image retrieval inputs', () => {
+    expect(GET_MEDIA_TOOL.name).toBe('remnote_get_media');
+    expect(GET_MEDIA_TOOL.inputSchema.required).toEqual(['remId', 'field', 'mediaId']);
+    expect(GET_MEDIA_TOOL.outputSchema.required).toContain('sizeBytes');
+  });
+
   it('should have required remId field for READ_NOTE_TOOL', () => {
     expect(READ_NOTE_TOOL.inputSchema.required).toContain('remId');
   });
@@ -435,14 +445,14 @@ describe('Tool Registration', () => {
     expect(mockServer.hasHandler(ListToolsRequestSchema)).toBe(true);
   });
 
-  it('should return all 16 tools in list', async () => {
+  it('should return all 17 tools in list', async () => {
     registerAllTools(mockServer as never, mockWsServer as never, createMockLogger());
 
     const result = (await mockServer.callHandler(ListToolsRequestSchema, {})) as {
       tools: unknown[];
     };
 
-    expect(result.tools).toHaveLength(16);
+    expect(result.tools).toHaveLength(17);
   });
 
   it('should include all tool names in list', async () => {
@@ -457,6 +467,7 @@ describe('Tool Registration', () => {
     expect(names).toContain('remnote_search');
     expect(names).toContain('remnote_search_by_tag');
     expect(names).toContain('remnote_read_note');
+    expect(names).toContain('remnote_get_media');
     expect(names).toContain('remnote_update_note');
     expect(names).toContain('remnote_set_document_status');
     expect(names).toContain('remnote_insert_children');
@@ -467,6 +478,106 @@ describe('Tool Registration', () => {
     expect(names).toContain('remnote_get_playbook');
     expect(names).toContain('remnote_status');
     expect(names).toContain('remnote_read_table');
+  });
+});
+
+describe('Tool Handlers - get_media', () => {
+  it('returns native image content without duplicating base64 in text or structured content', async () => {
+    const mediaRoot = await mkdtemp(join(tmpdir(), 'remnote-tool-media-'));
+    const imageBytes = Buffer.from('89504e470d0a1a0a00000000', 'hex');
+    await writeFile(join(mediaRoot, 'opaque.png'), imageBytes);
+    const base64 = imageBytes.toString('base64');
+    const mockServer = new MockMCPServer();
+    const mockWsServer = {
+      hasBridgeCapability: vi.fn().mockReturnValue(true),
+      sendRequest: vi.fn().mockResolvedValue({
+        remId: 'rem-1',
+        mediaId: 'media_1234',
+        kind: 'image',
+        field: 'text',
+        elementIndex: 1,
+        imageIndex: 0,
+        source: 'remnote_managed_local',
+        localToken: 'opaque.png',
+      }),
+    };
+    registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never, [
+      mediaRoot,
+    ]);
+
+    try {
+      const result = (await mockServer.callHandler(CallToolRequestSchema, {
+        params: {
+          name: 'remnote_get_media',
+          arguments: { remId: 'rem-1', field: 'text', mediaId: 'media_1234' },
+        },
+      })) as {
+        content: Array<{ type: string; data?: string; mimeType?: string; text?: string }>;
+        structuredContent: Record<string, unknown>;
+        isError?: boolean;
+      };
+
+      expect(result.isError).toBeUndefined();
+      expect(result.content[0]).toEqual({ type: 'image', data: base64, mimeType: 'image/png' });
+      expect(result.content[1].type).toBe('text');
+      expect(result.content[1].text).not.toContain(base64);
+      expect(JSON.stringify(result.structuredContent)).not.toContain(base64);
+      expect(mockWsServer.sendRequest).toHaveBeenCalledWith('get_media_locator', {
+        remId: 'rem-1',
+        field: 'text',
+        mediaId: 'media_1234',
+      });
+    } finally {
+      await rm(mediaRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('fails loudly when the bridge lacks the image capability', async () => {
+    const mockServer = new MockMCPServer();
+    const mockWsServer = {
+      hasBridgeCapability: vi.fn().mockReturnValue(false),
+      sendRequest: vi.fn(),
+    };
+    registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never);
+
+    const result = (await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_get_media',
+        arguments: { remId: 'rem-1', field: 'text', mediaId: 'media_1234' },
+      },
+    })) as { content: Array<{ text: string }>; isError: boolean };
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('Bridge capability/version mismatch');
+    expect(mockWsServer.sendRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects a locator whose identity does not match the request', async () => {
+    const mockServer = new MockMCPServer();
+    const mockWsServer = {
+      hasBridgeCapability: vi.fn().mockReturnValue(true),
+      sendRequest: vi.fn().mockResolvedValue({
+        remId: 'different-rem',
+        mediaId: 'media_1234',
+        kind: 'image',
+        field: 'text',
+        elementIndex: 0,
+        imageIndex: 0,
+        source: 'remnote_managed_local',
+        localToken: 'opaque.png',
+      }),
+    };
+    registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never);
+
+    const result = (await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_get_media',
+        arguments: { remId: 'rem-1', field: 'text', mediaId: 'media_1234' },
+      },
+    })) as { content: Array<{ text: string }>; isError: boolean };
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('request identity mismatch');
   });
 });
 
@@ -791,6 +902,7 @@ describe('Tool Handlers - read_note', () => {
       maxContentLength: 100000,
       ancestorDepth: 0,
       view: 'standard',
+      includeMediaMetadata: false,
     });
   });
 
@@ -807,6 +919,7 @@ describe('Tool Handlers - read_note', () => {
       maxContentLength: 100000, // default
       ancestorDepth: 0,
       view: 'standard',
+      includeMediaMetadata: false,
     });
   });
 
@@ -826,6 +939,7 @@ describe('Tool Handlers - read_note', () => {
       maxContentLength: 100000,
       ancestorDepth: 0,
       view: 'standard',
+      includeMediaMetadata: false,
     });
   });
 
@@ -1247,6 +1361,7 @@ describe('Tool Handlers - status', () => {
       connected: true,
       serverVersion: '0.5.1',
       ...sampleStatusResult,
+      capabilities: [],
     });
   });
 
@@ -1316,7 +1431,7 @@ describe('Tool Handlers - get_playbook', () => {
       params: { name: 'remnote_get_playbook', arguments: {} },
     })) as ToolSuccessResult;
 
-    expect(result.structuredContent?.playbookVersion).toBe('1.7.0');
+    expect(result.structuredContent?.playbookVersion).toBe('1.8.0');
     expect(Array.isArray(result.structuredContent?.decisionTree)).toBe(true);
     expect((result.structuredContent?.decisionTree as unknown[])?.length).toBeGreaterThan(0);
     expect(result.structuredContent?.decisionTree).toContain(
@@ -1339,6 +1454,9 @@ describe('Tool Handlers - get_playbook', () => {
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need to search within a specific branch? Use remnote_search with parentRemId; keep the same parentRemId when continuing with nextCursor.'
+    );
+    expect(result.structuredContent?.decisionTree).toContain(
+      'Need an embedded RemNote-managed image? Confirm media.images.v1, call remnote_read_note with includeMediaMetadata=true, then call remnote_get_media with the returned remId, field, and mediaId.'
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need hierarchy placement context? Add ancestorDepth, typically 5, to search/read/search_by_tag/list_children; ancestors are direct-parent first.'

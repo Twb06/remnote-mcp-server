@@ -37,6 +37,10 @@
       "description": "Read a specific note from RemNote by its Rem ID. For hierarchy traversal, prefer contentMode=\"structured\" and start shallow (depth=1, childLimit=500), then deepen only selected branches. Request ancestorDepth when placement context matters."
     },
     {
+      "name": "remnote_get_media",
+      "description": "Retrieve a RemNote-managed local image as MCP-native image content. First call remnote_read_note with includeMediaMetadata=true, then pass the returned remId, field, and mediaId. Requires bridge capability media.images.v1. External URL retrieval is not supported."
+    },
+    {
       "name": "remnote_list_children",
       "description": "List direct child Rems under a parent without rendering a subtree. Use for cheap hierarchy traversal; page with nextCursor when hasMore is true."
     },

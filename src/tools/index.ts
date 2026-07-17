@@ -5,6 +5,7 @@ import { CreateNoteSchema } from '../schemas/remnote-schemas.js';
 import { SearchSchema } from '../schemas/remnote-schemas.js';
 import { SearchByTagSchema } from '../schemas/remnote-schemas.js';
 import { ReadNoteSchema } from '../schemas/remnote-schemas.js';
+import { GetMediaSchema } from '../schemas/remnote-schemas.js';
 import { UpdateNoteSchema } from '../schemas/remnote-schemas.js';
 import { SetDocumentStatusSchema } from '../schemas/remnote-schemas.js';
 import { ListChildrenSchema } from '../schemas/remnote-schemas.js';
@@ -17,6 +18,9 @@ import { AppendJournalSchema } from '../schemas/remnote-schemas.js';
 import { ReadTableSchema } from '../schemas/remnote-schemas.js';
 import { checkVersionCompatibility } from '../version-compat.js';
 import type { Logger } from '../logger.js';
+import { parseMediaLocator, resolveManagedImage } from '../media.js';
+
+const MEDIA_CAPABILITY = 'media.images.v1';
 
 const NAVIGATION_PRESET = {
   contentMode: 'structured',
@@ -487,6 +491,11 @@ export const READ_NOTE_TOOL = {
         type: 'number',
         description: 'Maximum character length for rendered content (default: 100000)',
       },
+      includeMediaMetadata: {
+        type: 'boolean',
+        description:
+          'Include ordered image metadata from the root Rem text and backText fields (default: false)',
+      },
     },
     required: ['remId'],
   },
@@ -615,7 +624,91 @@ export const READ_NOTE_TOOL = {
           },
         },
       },
+      media: {
+        type: 'array',
+        description:
+          'Ordered root-Rem image metadata from text followed by backText when includeMediaMetadata is true',
+        items: {
+          type: 'object',
+          properties: {
+            mediaId: { type: 'string' },
+            kind: { type: 'string', enum: ['image'] },
+            field: { type: 'string', enum: ['text', 'backText'] },
+            elementIndex: { type: 'number' },
+            imageIndex: { type: 'number' },
+            imgId: { type: 'string' },
+            title: { type: 'string' },
+            dimensions: {
+              type: 'object',
+              properties: { width: { type: 'number' }, height: { type: 'number' } },
+              required: ['width', 'height'],
+            },
+            mimeType: { type: 'string' },
+            source: { type: 'string', enum: ['remnote_managed_local'] },
+          },
+          required: ['mediaId', 'kind', 'field', 'elementIndex', 'imageIndex'],
+        },
+      },
     },
+  },
+};
+
+export const GET_MEDIA_TOOL = {
+  name: 'remnote_get_media',
+  description:
+    'Retrieve a RemNote-managed local image as MCP-native image content. First call remnote_read_note with includeMediaMetadata=true, then pass the returned remId, field, and mediaId. Requires bridge capability media.images.v1. External URL retrieval is not supported.',
+  inputSchema: {
+    type: 'object' as const,
+    properties: {
+      remId: { type: 'string', description: 'Root Rem ID containing the image' },
+      field: {
+        type: 'string',
+        enum: ['text', 'backText'],
+        description: 'Rich-text field containing the image',
+      },
+      mediaId: {
+        type: 'string',
+        description: 'Stable media ID returned by remnote_read_note',
+      },
+      maxInlineBytes: {
+        type: 'number',
+        description: 'Maximum bytes to inline (default 5 MiB, hard maximum 10 MiB)',
+      },
+    },
+    required: ['remId', 'field', 'mediaId'],
+    additionalProperties: false,
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      remId: { type: 'string' },
+      mediaId: { type: 'string' },
+      kind: { type: 'string', enum: ['image'] },
+      field: { type: 'string', enum: ['text', 'backText'] },
+      elementIndex: { type: 'number' },
+      imageIndex: { type: 'number' },
+      imgId: { type: 'string' },
+      title: { type: 'string' },
+      dimensions: {
+        type: 'object',
+        properties: { width: { type: 'number' }, height: { type: 'number' } },
+        required: ['width', 'height'],
+      },
+      mimeType: { type: 'string' },
+      source: { type: 'string', enum: ['remnote_managed_local'] },
+      sizeBytes: { type: 'number' },
+    },
+    required: [
+      'remId',
+      'mediaId',
+      'kind',
+      'field',
+      'elementIndex',
+      'imageIndex',
+      'mimeType',
+      'source',
+      'sizeBytes',
+    ],
   },
 };
 
@@ -1057,6 +1150,11 @@ export const STATUS_TOOL = {
       connected: { type: 'boolean', description: 'Whether bridge plugin is currently connected' },
       serverVersion: { type: 'string', description: 'MCP server version' },
       pluginVersion: { type: 'string', description: 'Connected bridge plugin version' },
+      capabilities: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Bridge protocol capabilities advertised during handshake',
+      },
       version_warning: {
         type: 'string',
         description: 'Compatibility warning when server/bridge versions differ',
@@ -1224,6 +1322,7 @@ export const ALL_TOOLS = [
   SEARCH_TOOL,
   SEARCH_BY_TAG_TOOL,
   READ_NOTE_TOOL,
+  GET_MEDIA_TOOL,
   LIST_CHILDREN_TOOL,
   UPDATE_NOTE_TOOL,
   SET_DOCUMENT_STATUS_TOOL,
@@ -1238,13 +1337,19 @@ export const ALL_TOOLS = [
   READ_TABLE_TOOL,
 ] as const;
 
-export function registerAllTools(server: Server, wsServer: WebSocketServer, logger: Logger) {
+export function registerAllTools(
+  server: Server,
+  wsServer: WebSocketServer,
+  logger: Logger,
+  mediaRoots: string[] = []
+) {
   const toolLogger = logger.child({ context: 'tools' });
 
   async function buildStatusResult(): Promise<Record<string, unknown>> {
     const connected = wsServer.isConnected();
     const serverVersion = wsServer.getServerVersion();
     const bridgeVersion = wsServer.getBridgeVersion();
+    const bridgeCapabilities = wsServer.getBridgeCapabilities?.() ?? [];
 
     if (!connected) {
       return { connected: false, serverVersion, message: 'RemNote plugin not connected' };
@@ -1266,6 +1371,7 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
       connected: true,
       serverVersion,
       ...statusObj,
+      capabilities: bridgeCapabilities,
       ...(versionWarning ? { version_warning: versionWarning } : {}),
     };
   }
@@ -1279,6 +1385,14 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
 
     try {
       let result;
+      let nativeToolResult:
+        | {
+            structuredContent: Record<string, unknown>;
+            content: Array<
+              { type: 'image'; data: string; mimeType: string } | { type: 'text'; text: string }
+            >;
+          }
+        | undefined;
 
       switch (toolName) {
         case 'remnote_create_note': {
@@ -1303,6 +1417,46 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
         case 'remnote_read_note': {
           const args = ReadNoteSchema.parse(request.params.arguments);
           result = await wsServer.sendRequest('read_note', args);
+          break;
+        }
+
+        case 'remnote_get_media': {
+          const args = GetMediaSchema.parse(request.params.arguments);
+          if (!wsServer.hasBridgeCapability(MEDIA_CAPABILITY)) {
+            throw new Error(
+              `Bridge capability/version mismatch: connected bridge does not advertise ${MEDIA_CAPABILITY}`
+            );
+          }
+          const locator = parseMediaLocator(
+            await wsServer.sendRequest('get_media_locator', {
+              remId: args.remId,
+              field: args.field,
+              mediaId: args.mediaId,
+            })
+          );
+          if (
+            locator.remId !== args.remId ||
+            locator.field !== args.field ||
+            locator.mediaId !== args.mediaId
+          ) {
+            throw new Error(
+              'Invalid media locator payload received from bridge: request identity mismatch'
+            );
+          }
+          const media = await resolveManagedImage(locator, mediaRoots, args.maxInlineBytes);
+          const metadata = {
+            ...media.metadata,
+            mimeType: media.mimeType,
+            sizeBytes: media.sizeBytes,
+          };
+          nativeToolResult = {
+            structuredContent: metadata,
+            content: [
+              { type: 'image', data: media.data, mimeType: media.mimeType },
+              { type: 'text', text: JSON.stringify(metadata) },
+            ],
+          };
+          result = metadata;
           break;
         }
 
@@ -1373,17 +1527,18 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
           }
 
           result = {
-            playbookVersion: '1.7.0',
+            playbookVersion: '1.8.0',
             summary:
-              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, request nearby ancestors when hierarchy context matters, choose compact/full output views, and apply safe exact-ID writes including inline [[id:<remId>]] references, tag property values, and dry-run-first document status changes.',
+              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, retrieve managed images through capability-gated metadata, choose compact/full output views, and apply safe exact-ID writes including inline [[id:<remId>]] references, tag property values, and dry-run-first document status changes.',
             recommendedStatusCheck: {
               tool: 'remnote_status',
               cadence: 'recommended once per session and before risky writes',
               rationale:
-                'status exposes connection health, version compatibility warnings, and write-policy gates',
+                'status exposes connection health, version compatibility warnings, write-policy gates, and bridge capabilities',
             },
             decisionTree: [
               'Need connection/capability context? Call remnote_status first.',
+              'Need an embedded RemNote-managed image? Confirm media.images.v1, call remnote_read_note with includeMediaMetadata=true, then call remnote_get_media with the returned remId, field, and mediaId.',
               'Need to orient across the KB? Use remnote_search with contentMode="structured", view="compact", depth=1, childLimit=500.',
               'Need broad search enumeration? Continue remnote_search or remnote_search_by_tag with nextCursor while hasMore is true.',
               'Need to search within a specific branch? Use remnote_search with parentRemId; keep the same parentRemId when continuing with nextCursor.',
@@ -1465,6 +1620,10 @@ export function registerAllTools(server: Server, wsServer: WebSocketServer, logg
         },
         'Tool completed'
       );
+
+      if (nativeToolResult) {
+        return nativeToolResult;
+      }
 
       return {
         structuredContent: result as { [key: string]: unknown },

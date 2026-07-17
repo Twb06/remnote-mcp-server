@@ -22,6 +22,7 @@ export interface BridgeResponse {
 export interface HelloMessage {
   type: 'hello';
   version: string;
+  capabilities?: string[];
 }
 
 export interface CompanionInfoMessage {

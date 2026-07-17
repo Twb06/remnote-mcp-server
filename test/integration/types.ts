@@ -3,6 +3,10 @@
  */
 
 import type { IntegrationTestClient } from './mcp-test-client.js';
+import type {
+  PersistentFixtureIssue,
+  PersistentIntegrationFixtures,
+} from '../helpers/integration-fixtures.js';
 
 /** Result of a single test step within a workflow. */
 export interface StepResult {
@@ -28,6 +32,8 @@ export interface WorkflowContext {
 
 /** Shared state passed between workflows for cross-workflow dependencies. */
 export interface SharedState {
+  fixtures?: PersistentIntegrationFixtures;
+  fixtureIssues?: PersistentFixtureIssue[];
   integrationParentRemId?: string;
   integrationParentTitle?: string;
   searchByTagTag?: string;

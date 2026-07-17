@@ -102,13 +102,41 @@ run_mcpb_suite() {
   npm run test:integration:mcpb -- "${runner_args[@]}"
 }
 
+run_all_suites() {
+  local aggregate_exit_code=0
+  local suite_exit_code
+
+  set +e
+  run_mcp_suite
+  suite_exit_code=$?
+  if (( suite_exit_code != 0 )); then
+    aggregate_exit_code=1
+  fi
+  echo ""
+
+  run_mcpb_suite
+  suite_exit_code=$?
+  if (( suite_exit_code != 0 )); then
+    aggregate_exit_code=1
+  fi
+  echo ""
+
+  run_cli_suite
+  suite_exit_code=$?
+  if (( suite_exit_code != 0 )); then
+    aggregate_exit_code=1
+  fi
+  set -e
+
+  if (( aggregate_exit_code != 0 )); then
+    echo "One or more integration suites failed or were incomplete." >&2
+  fi
+  return "${aggregate_exit_code}"
+}
+
 case "${suite}" in
   all)
-    run_mcp_suite
-    echo ""
-    run_mcpb_suite
-    echo ""
-    run_cli_suite
+    run_all_suites
     ;;
   mcp)
     run_mcp_suite

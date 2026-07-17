@@ -14,7 +14,7 @@ Most commands require a running `remnote-mcp-server`:
 remnote-mcp-server
 ```
 
-Bridge actions (`create`, `search`, `search-by-tag`, `read`, `list-children`, `move-note`, `update`,
+Bridge actions (`create`, `search`, `search-by-tag`, `read`, `get-media`, `list-children`, `move-note`, `update`,
 `set-document-status`, `insert-children`, `replace-children`, `update-tags`, `set-property`, `journal`, `read-table`,
 `status`) also require RemNote with the RemNote Automation Bridge plugin connected to that MCP server.
 
@@ -207,6 +207,7 @@ remnote-cli read <rem-id> [options]
 | `--ancestor-depth <n>`     | `0`        | Parent Rems to include, parent-first |
 | `--child-limit <n>`        | `100`      | Max children per hierarchy level     |
 | `--max-content-length <n>` | `100000`   | Max rendered content character count |
+| `--include-media-metadata` | false      | Include root image IDs for get-media |
 
 Behavior rules:
 
@@ -225,6 +226,19 @@ remnote-cli read abc123def
 remnote-cli read abc123def --content-mode none --depth 2 --child-limit 30 --max-content-length 5000 --text
 remnote-cli read abc123def --content-mode structured --depth 2 --child-limit 30
 ```
+
+## get-media
+
+Save one RemNote-managed image to a local file:
+
+```bash
+remnote-cli get-media <rem-id> --field <text|backText> --media-id <id> --output <path>
+```
+
+Discover the required IDs with `remnote-cli read <rem-id> --include-media-metadata`. Existing destinations are
+protected; pass `--force` only when overwriting is intentional. `--max-inline-bytes` can lower or raise the per-call
+limit up to the server's 10 MiB hard maximum. JSON/text output reports metadata and the absolute saved path, never the
+base64 payload.
 
 ## read-table
 

@@ -29,7 +29,8 @@ export class HttpMcpServer {
     host: string,
     wsServer: WebSocketServer,
     serverInfo: ServerInfo,
-    logger: Logger
+    logger: Logger,
+    private readonly mediaRoots: string[] = []
   ) {
     this.port = port;
     this.host = host;
@@ -184,7 +185,7 @@ export class HttpMcpServer {
     });
 
     // Register all tools with the shared WebSocket server
-    registerAllTools(server, this.wsServer, this.logger);
+    registerAllTools(server, this.wsServer, this.logger, this.mediaRoots);
 
     // Connect server to transport
     await server.connect(transport);

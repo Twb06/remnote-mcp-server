@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-function setupIntegrationWrapperSandbox() {
+function setupIntegrationWrapperSandbox(failingSuite?: 'mcp' | 'mcpb' | 'cli') {
   const tempRoot = mkdtempSync(join(tmpdir(), 'remnote-mcp-server-integration-wrapper-'));
   const binDir = join(tempRoot, 'bin');
   mkdirSync(binDir, { recursive: true });
@@ -28,8 +28,14 @@ cmd="$*"
 if [[ "$cmd" == "run build" ]]; then
   exit 0
 fi
-if [[ "$cmd" == "run test:integration:mcp -- "* ]] || [[ "$cmd" == "run test:integration:mcpb -- "* ]] || [[ "$cmd" == "run test:integration:cli -- "* ]]; then
-  exit 0
+if [[ "$cmd" == "run test:integration:mcp -- "* ]]; then
+  exit ${failingSuite === 'mcp' ? 7 : 0}
+fi
+if [[ "$cmd" == "run test:integration:mcpb -- "* ]]; then
+  exit ${failingSuite === 'mcpb' ? 8 : 0}
+fi
+if [[ "$cmd" == "run test:integration:cli -- "* ]]; then
+  exit ${failingSuite === 'cli' ? 9 : 0}
 fi
 echo "unexpected npm invocation: $cmd" >&2
 exit 1
@@ -80,6 +86,23 @@ describe('run-integration-test.sh', () => {
     expect(commandLog).toContain('run build');
     expect(commandLog).not.toContain('run test:integration:mcp');
     expect(commandLog).toContain('run test:integration:cli -- --yes');
+  });
+
+  it('runs every suite before returning failure for an incomplete all-suite run', () => {
+    const sandbox = setupIntegrationWrapperSandbox('mcp');
+
+    const result = spawnSync('bash', [sandbox.scriptPath, '--yes'], {
+      cwd: resolve(process.cwd()),
+      encoding: 'utf-8',
+      env: sandbox.env,
+    });
+
+    const commandLog = readFileSync(sandbox.commandLogPath, 'utf-8');
+    expect(result.status).toBe(1);
+    expect(commandLog).toContain('run test:integration:mcp -- --yes');
+    expect(commandLog).toContain('run test:integration:mcpb -- --yes');
+    expect(commandLog).toContain('run test:integration:cli -- --yes');
+    expect(result.stderr).toContain('failed or were incomplete');
   });
 
   it('can run only the MCPB suite', () => {

@@ -35,6 +35,7 @@ export function registerReadCommand(program: Command): void {
     .option('--ancestor-depth <n>', 'Number of parent Rems to include, direct parent first')
     .option('--child-limit <n>', 'Maximum children per level (default: 100)')
     .option('--max-content-length <n>', 'Maximum content character length (default: 100000)')
+    .option('--include-media-metadata', 'Include ordered root image metadata for get-media')
     .action(async (remId: string, opts) => {
       const globalOpts = program.opts();
       const format: OutputFormat = globalOpts.text ? 'text' : 'json';
@@ -50,6 +51,7 @@ export function registerReadCommand(program: Command): void {
         if (opts.ancestorDepth) payload.ancestorDepth = parseInt(opts.ancestorDepth, 10);
         if (opts.childLimit) payload.childLimit = parseInt(opts.childLimit, 10);
         if (opts.maxContentLength) payload.maxContentLength = parseInt(opts.maxContentLength, 10);
+        if (opts.includeMediaMetadata) payload.includeMediaMetadata = true;
 
         const result = await client.execute('read_note', payload);
         console.log(
@@ -87,6 +89,18 @@ export function registerReadCommand(program: Command): void {
               lines.push(`Tags: ${formattedTags}`);
             }
             if (r.cardDirection) lines.push(`Card: ${r.cardDirection}`);
+            if (Array.isArray(r.media) && r.media.length > 0) {
+              lines.push(`Media: ${r.media.length}`);
+              for (const item of r.media) {
+                if (!item || typeof item !== 'object') continue;
+                const media = item as Record<string, unknown>;
+                lines.push(
+                  `  - ${String(media.kind)} ${String(media.field)} ${String(media.mediaId)}${
+                    typeof media.mimeType === 'string' ? ` (${media.mimeType})` : ''
+                  }`
+                );
+              }
+            }
             if (r.contentProperties) {
               const cp = r.contentProperties as Record<string, unknown>;
               lines.push(

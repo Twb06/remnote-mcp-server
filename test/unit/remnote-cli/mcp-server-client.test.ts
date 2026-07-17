@@ -139,6 +139,36 @@ describe('McpServerClient', () => {
     });
   });
 
+  it('preserves MCP-native image content for get_media', async () => {
+    mocks.callTool.mockResolvedValue({
+      structuredContent: { mediaId: 'media_1234', sizeBytes: 8 },
+      content: [
+        { type: 'image', data: 'iVBORw0KGgo=', mimeType: 'image/png' },
+        { type: 'text', text: '{"mediaId":"media_1234","sizeBytes":8}' },
+      ],
+    });
+
+    const client = new McpServerClient('http://127.0.0.1:3001');
+    await expect(client.execute('get_media', { mediaId: 'media_1234' })).resolves.toEqual({
+      mediaId: 'media_1234',
+      sizeBytes: 8,
+      data: 'iVBORw0KGgo=',
+      mimeType: 'image/png',
+    });
+  });
+
+  it('rejects get_media responses without MCP-native image content', async () => {
+    mocks.callTool.mockResolvedValue({
+      structuredContent: { mediaId: 'media_1234', sizeBytes: 8 },
+      content: [{ type: 'text', text: '{"mediaId":"media_1234","sizeBytes":8}' }],
+    });
+
+    const client = new McpServerClient('http://127.0.0.1:3001');
+    await expect(client.execute('get_media', { mediaId: 'media_1234' })).rejects.toThrow(
+      'without MCP-native image content'
+    );
+  });
+
   it('adds a status warning when CLI and MCP server versions mismatch', async () => {
     mocks.callTool.mockResolvedValue({
       structuredContent: { connected: true, serverVersion: MISMATCH_SERVER_VERSION },

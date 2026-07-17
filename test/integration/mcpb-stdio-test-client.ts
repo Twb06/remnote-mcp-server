@@ -4,9 +4,11 @@
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { ToolError, type IntegrationTestClient } from './mcp-test-client.js';
-
-type ToolResult = Awaited<ReturnType<Client['callTool']>>;
+import {
+  ToolError,
+  type IntegrationTestClient,
+  type IntegrationToolResult,
+} from './mcp-test-client.js';
 
 export class McpbStdioTestClient implements IntegrationTestClient {
   private client: Client | null = null;
@@ -36,13 +38,23 @@ export class McpbStdioTestClient implements IntegrationTestClient {
       throw new Error('McpbStdioTestClient: not connected. Call connect() first.');
     }
 
-    const result = await this.client.callTool({ name, arguments: args });
+    const result = await this.callToolRaw(name, args);
     if (result.isError) {
       const text = this.extractText(result);
       throw new ToolError(`Tool "${name}" returned error: ${text}`, text);
     }
 
     return this.parseResult(result);
+  }
+
+  async callToolRaw(
+    name: string,
+    args: Record<string, unknown> = {}
+  ): Promise<IntegrationToolResult> {
+    if (!this.client) {
+      throw new Error('McpbStdioTestClient: not connected. Call connect() first.');
+    }
+    return (await this.client.callTool({ name, arguments: args })) as IntegrationToolResult;
   }
 
   async callToolExpectError(name: string, args: Record<string, unknown> = {}): Promise<string> {
@@ -87,15 +99,13 @@ export class McpbStdioTestClient implements IntegrationTestClient {
     this.client = null;
   }
 
-  private extractText(result: ToolResult): string {
-    const content = result.content as Array<{ type: string; text?: string }>;
-    if (content && content.length > 0 && content[0].text) {
-      return content[0].text;
-    }
+  private extractText(result: IntegrationToolResult): string {
+    const text = result.content?.find((item) => item.type === 'text' && item.text)?.text;
+    if (text) return text;
     return JSON.stringify(result);
   }
 
-  private parseResult(result: ToolResult): Record<string, unknown> {
+  private parseResult(result: IntegrationToolResult): Record<string, unknown> {
     if (
       result.structuredContent &&
       typeof result.structuredContent === 'object' &&
