@@ -190,7 +190,7 @@ separate JSON test config are required.
 The fixtures may share a parent note for convenient maintenance, but the parent title and location are not part of the
 contract. Keep exactly one Rem with each required fixture title.
 
-![Persistent integration fixture overview](../images/integration-testing-05-persistent-fixtures-overview.jpg)
+![Persistent integration fixtures with an optional Advanced Table wrapper](../images/integration-testing-05-persistent-fixtures-overview.jpg)
 
 1. Create a tag named `Automation Bridge Test Tag`.
 2. Add a text-compatible property named `automation-level` to that tag. The property-write tests use this tag as their
@@ -198,11 +198,16 @@ contract. Keep exactly one Rem with each required fixture title.
 
 ![Automation Bridge Test Tag with automation-level property](../images/integration-testing-06-test-tag-property.jpg)
 
-3. Create a standalone Advanced Table named `Automation Bridge Test Advanced Table`.
-4. Add a numeric property named `Salary` and at least two rows. Give each row a name and a numeric `Salary` value so the
-   tests can verify the numeric schema, row values, filtering, limits, and offsets.
+3. Create the property-bearing table/tag named `Automation Bridge Advanced Table`.
+4. Add a numeric property named `Salary` and at least two named rows with finite numeric `Salary` values. Empty or
+   unrelated extra rows are allowed; the tests ignore them while validating the numeric schema, row values, filtering,
+   limits, and offsets.
 
-![Automation Bridge Test Advanced Table with numeric Salary values](../images/integration-testing-07-advanced-table-fixture.jpg)
+You may optionally create a document named `Automation Bridge Test Advanced Table` to organize or display the table.
+That document is only a wrapper: the tests resolve the actual `Automation Bridge Advanced Table` property-bearing Rem
+by normalized exact title and never use the wrapper's Rem ID.
+
+![Optional wrapper displaying the required Automation Bridge Advanced Table](../images/integration-testing-07-advanced-table-fixture.jpg)
 
 5. Create a flashcard whose front is the exact plain-text title `Automation Bridge Test Media`.
 6. Drag or upload a local PNG, JPEG, GIF, or WebP file into the back of that card. Keep the front text-only so exact-title
@@ -216,8 +221,8 @@ their dependent workflows are skipped, so unrelated coverage still runs.
 
 The direct MCP and CLI integration suites:
 
-- read the standalone Advanced Table by exact title and derived Rem ID, require numeric `Salary` values and multiple
-  rows, and validate filtering and pagination
+- read `Automation Bridge Advanced Table` by normalized exact title and derived Rem ID, require at least two named rows
+  with finite numeric `Salary` values while tolerating unrelated/empty rows, and validate filtering and pagination
 - read the exact fixture tag title as a table and derive its Rem ID and `automation-level` property ID
 - set a unique text value on the run's created test note through `remnote_set_property` / `remnote-cli set-property`
 - read the fixture tag/table again and verify the note row contains the kept value

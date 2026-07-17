@@ -93,13 +93,20 @@ export async function readTableWorkflow(
         fixture.numericPropertyRemId,
         'fixture numeric property ID'
       );
-      for (const row of result.rows.slice(0, TABLE_FIXTURE_MIN_ROWS)) {
+      const validRows = result.rows.filter((row) => {
         const value = row.values[fixture.numericPropertyRemId];
-        assertTruthy(
-          typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value)),
-          `${TABLE_FIXTURE_NUMERIC_PROPERTY} values should be numeric`
+        return (
+          typeof row.name === 'string' &&
+          row.name.trim() !== '' &&
+          typeof value === 'string' &&
+          value.trim() !== '' &&
+          Number.isFinite(Number(value))
         );
-      }
+      });
+      assertTruthy(
+        validRows.length >= TABLE_FIXTURE_MIN_ROWS,
+        `table should contain at least ${TABLE_FIXTURE_MIN_ROWS} named rows with finite numeric ${TABLE_FIXTURE_NUMERIC_PROPERTY} values`
+      );
 
       if (result.columns.length > 0) {
         const firstCol = result.columns[0] as unknown as Record<string, unknown>;

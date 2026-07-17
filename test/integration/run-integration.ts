@@ -344,8 +344,8 @@ async function main(): Promise<void> {
 
   {
     const resolution = await resolvePersistentIntegrationFixtures({
-      readTableByRemId: (remId) =>
-        client.callTool('remnote_read_table', { tableRemId: remId, limit: 1 }),
+      readTableByRemId: (remId, limit) =>
+        client.callTool('remnote_read_table', { tableRemId: remId, limit }),
       searchByTitle: (title) =>
         client.callTool('remnote_search', { query: title, limit: 150, contentMode: 'none' }),
       readNoteWithMedia: (remId) =>

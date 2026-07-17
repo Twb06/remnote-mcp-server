@@ -323,8 +323,8 @@ async function main(): Promise<void> {
 
   {
     const resolution = await resolvePersistentIntegrationFixtures({
-      readTableByRemId: (remId) =>
-        cli.runExpectSuccess(['read-table', '--rem-id', remId, '--limit', '1']),
+      readTableByRemId: (remId, limit) =>
+        cli.runExpectSuccess(['read-table', '--rem-id', remId, '--limit', String(limit)]),
       searchByTitle: (title) =>
         cli.runExpectSuccess(['search', title, '--limit', '150', '--content-mode', 'none']),
       readNoteWithMedia: (remId) =>

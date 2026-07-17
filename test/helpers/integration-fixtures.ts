@@ -1,8 +1,9 @@
 export const PROPERTY_FIXTURE_TITLE = 'Automation Bridge Test Tag';
 export const PROPERTY_FIXTURE_NAME = 'automation-level';
-export const TABLE_FIXTURE_TITLE = 'Automation Bridge Test Advanced Table';
+export const TABLE_FIXTURE_TITLE = 'Automation Bridge Advanced Table';
 export const TABLE_FIXTURE_NUMERIC_PROPERTY = 'Salary';
 export const TABLE_FIXTURE_MIN_ROWS = 2;
+export const TABLE_FIXTURE_VALIDATION_LIMIT = 150;
 export const MEDIA_FIXTURE_TITLE = 'Automation Bridge Test Media';
 
 export interface PersistentIntegrationFixtures {
@@ -36,10 +37,10 @@ async function resolveTableFixture(
   );
   let tableValue: unknown;
   try {
-    tableValue = await reader.readTableByRemId(tableRemId);
+    tableValue = await reader.readTableByRemId(tableRemId, TABLE_FIXTURE_VALIDATION_LIMIT);
   } catch (error) {
     throw new Error(
-      `Required integration fixture "${TABLE_FIXTURE_TITLE}" is not a readable Advanced Table. Create it with a numeric "${TABLE_FIXTURE_NUMERIC_PROPERTY}" property and at least ${TABLE_FIXTURE_MIN_ROWS} rows, then rerun the suite.`,
+      `Required integration fixture "${TABLE_FIXTURE_TITLE}" is not a readable Advanced Table. Create it with a numeric "${TABLE_FIXTURE_NUMERIC_PROPERTY}" property and at least ${TABLE_FIXTURE_MIN_ROWS} named rows containing finite numeric values, then rerun the suite.`,
       { cause: error }
     );
   }
@@ -68,28 +69,22 @@ async function resolveTableFixture(
       `Fixture "${TABLE_FIXTURE_TITLE}" must have a numeric "${TABLE_FIXTURE_NUMERIC_PROPERTY}" property.`
     );
   }
-  if (table.totalRows < TABLE_FIXTURE_MIN_ROWS) {
+  const numericPropertyRemId = numericProperty.propertyId as string;
+  const validRows = (table.rows as Array<Record<string, unknown>>).filter((row) => {
+    if (typeof row.name !== 'string' || row.name.trim() === '') return false;
+    if (!row.values || typeof row.values !== 'object' || Array.isArray(row.values)) return false;
+    const value = (row.values as Record<string, unknown>)[numericPropertyRemId];
+    return typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value));
+  });
+  if (validRows.length < TABLE_FIXTURE_MIN_ROWS) {
     throw new Error(
-      `Fixture "${TABLE_FIXTURE_TITLE}" must have at least ${TABLE_FIXTURE_MIN_ROWS} rows; found ${table.totalRows}.`
-    );
-  }
-
-  const sampleRow = (table.rows as Array<Record<string, unknown>>)[0];
-  const sampleValues = sampleRow && asRecord(sampleRow.values, 'Advanced Table sample row values');
-  const sampleValue = sampleValues?.[numericProperty.propertyId as string];
-  if (
-    typeof sampleValue !== 'string' ||
-    sampleValue.trim() === '' ||
-    !Number.isFinite(Number(sampleValue))
-  ) {
-    throw new Error(
-      `Fixture "${TABLE_FIXTURE_TITLE}" rows must contain numeric "${TABLE_FIXTURE_NUMERIC_PROPERTY}" values.`
+      `Fixture "${TABLE_FIXTURE_TITLE}" must have at least ${TABLE_FIXTURE_MIN_ROWS} named rows with finite numeric "${TABLE_FIXTURE_NUMERIC_PROPERTY}" values; found ${validRows.length}. Empty or unrelated rows are ignored.`
     );
   }
 
   return {
     tableRemId,
-    numericPropertyRemId: numericProperty.propertyId as string,
+    numericPropertyRemId,
   };
 }
 
@@ -99,7 +94,7 @@ export interface PersistentFixtureResolution {
 }
 
 export interface PersistentFixtureReader {
-  readTableByRemId(remId: string): Promise<unknown>;
+  readTableByRemId(remId: string, limit: number): Promise<unknown>;
   searchByTitle(title: string): Promise<unknown>;
   readNoteWithMedia(remId: string): Promise<unknown>;
 }
@@ -152,7 +147,7 @@ async function resolvePropertyFixture(
   );
   let tableValue: unknown;
   try {
-    tableValue = await reader.readTableByRemId(tableRemId);
+    tableValue = await reader.readTableByRemId(tableRemId, 1);
   } catch (error) {
     throw new Error(
       `Required integration fixture "${PROPERTY_FIXTURE_TITLE}" is missing or is not a property-bearing tag/table. Create it with a text-compatible "${PROPERTY_FIXTURE_NAME}" property and rerun the suite.`,
