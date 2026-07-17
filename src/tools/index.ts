@@ -336,11 +336,12 @@ export const SEARCH_TOOL = {
                   },
                   children: {
                     type: 'array',
-                    description: 'Nested child nodes (same shape recursively)',
+                    description:
+                      'Nested child nodes (same shape recursively; omitted for leaf nodes)',
                     items: { type: 'object' },
                   },
                 },
-                required: ['remId', 'title', 'headline', 'remType', 'children'],
+                required: ['remId', 'title', 'headline', 'remType'],
               },
             },
             contentProperties: {
@@ -599,11 +600,11 @@ export const READ_NOTE_TOOL = {
             },
             children: {
               type: 'array',
-              description: 'Nested child nodes (same shape recursively)',
+              description: 'Nested child nodes (same shape recursively; omitted for leaf nodes)',
               items: { type: 'object' },
             },
           },
-          required: ['remId', 'title', 'headline', 'remType', 'children'],
+          required: ['remId', 'title', 'headline', 'remType'],
         },
       },
       contentProperties: {
