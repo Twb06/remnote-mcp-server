@@ -26,6 +26,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Use shared workflow `v0.4.0` for the Node.js 22 and 24 CI matrix.
+- Require Node.js `22.13.0` or newer, use Node.js 24 LTS for local development, and validate both Node.js 22 and 24 in
+  CI now that Node.js 20 is end-of-life.
+- Ignore Python bytecode caches and remove previously tracked cache artifacts.
+- Link the canonical cross-repo pull request validation and adoption workflow for maintainers and coding agents.
 - Update `remnote_search` tools reference, CLI command `search` reference, and agent skill documentation to include advanced scoped search with parent ID and document cursor limitations.
 - Update `remnote_get_playbook` guidance and MCP smoke-test instructions for scoped branch search with `parentRemId`.
 - Update the MCP smoke-test prompt to validate `remnote_set_property` through the `automation-level` property fixture
@@ -33,6 +38,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Make Node.js environment checks reject malformed versions cleanly and report a missing `.nvmrc` without leaking
+  shell errors.
 - Reject empty `parentRemId` values for `remnote_search` instead of treating them as unscoped search.
 
 ## [0.16.0] - 2026-06-05

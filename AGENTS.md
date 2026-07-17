@@ -96,6 +96,9 @@ Primary docs for deeper context:
 
 ## Development and Verification
 
+For maintainer review of one or more server/bridge pull requests, follow the canonical workflow at
+`../remnote-mcp-bridge/docs/workflows/pr-validation-and-adoption.md` before modifying or merging the contribution.
+
 If Node/npm is unavailable in shell:
 
 ```bash
