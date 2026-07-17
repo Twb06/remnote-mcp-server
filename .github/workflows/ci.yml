@@ -8,7 +8,7 @@ on:
 
 jobs:
   quality:
-    uses: robert7/workflows/.github/workflows/node-ci.yml@9b0544fccadffeadad23ac555f5861f41a98e61f
+    uses: robert7/workflows/.github/workflows/node-ci.yml@v0.4.0
     with:
       node_versions: '["22.13.0", "24"]'
       coverage_node_version: '24'

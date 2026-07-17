@@ -21,6 +21,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Use shared workflow `v0.4.0` for the Node.js 22 and 24 CI matrix.
 - Require Node.js `22.13.0` or newer, use Node.js 24 LTS for local development, and validate both Node.js 22 and 24 in
   CI now that Node.js 20 is end-of-life.
 - Ignore Python bytecode caches and remove previously tracked cache artifacts.
