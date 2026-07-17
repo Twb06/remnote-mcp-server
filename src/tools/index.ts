@@ -18,7 +18,7 @@ import { AppendJournalSchema } from '../schemas/remnote-schemas.js';
 import { ReadTableSchema } from '../schemas/remnote-schemas.js';
 import { checkVersionCompatibility } from '../version-compat.js';
 import type { Logger } from '../logger.js';
-import { resolveManagedImage, type MediaLocator } from '../media.js';
+import { parseMediaLocator, resolveManagedImage } from '../media.js';
 
 const MEDIA_CAPABILITY = 'media.images.v1';
 
@@ -677,6 +677,38 @@ export const GET_MEDIA_TOOL = {
     },
     required: ['remId', 'field', 'mediaId'],
     additionalProperties: false,
+  },
+  outputSchema: {
+    type: 'object' as const,
+    properties: {
+      remId: { type: 'string' },
+      mediaId: { type: 'string' },
+      kind: { type: 'string', enum: ['image'] },
+      field: { type: 'string', enum: ['text', 'backText'] },
+      elementIndex: { type: 'number' },
+      imageIndex: { type: 'number' },
+      imgId: { type: 'string' },
+      title: { type: 'string' },
+      dimensions: {
+        type: 'object',
+        properties: { width: { type: 'number' }, height: { type: 'number' } },
+        required: ['width', 'height'],
+      },
+      mimeType: { type: 'string' },
+      source: { type: 'string', enum: ['remnote_managed_local'] },
+      sizeBytes: { type: 'number' },
+    },
+    required: [
+      'remId',
+      'mediaId',
+      'kind',
+      'field',
+      'elementIndex',
+      'imageIndex',
+      'mimeType',
+      'source',
+      'sizeBytes',
+    ],
   },
 };
 
@@ -1353,6 +1385,14 @@ export function registerAllTools(
 
     try {
       let result;
+      let nativeToolResult:
+        | {
+            structuredContent: Record<string, unknown>;
+            content: Array<
+              { type: 'image'; data: string; mimeType: string } | { type: 'text'; text: string }
+            >;
+          }
+        | undefined;
 
       switch (toolName) {
         case 'remnote_create_note': {
@@ -1387,24 +1427,37 @@ export function registerAllTools(
               `Bridge capability/version mismatch: connected bridge does not advertise ${MEDIA_CAPABILITY}`
             );
           }
-          const locator = (await wsServer.sendRequest('get_media_locator', {
-            remId: args.remId,
-            field: args.field,
-            mediaId: args.mediaId,
-          })) as MediaLocator;
+          const locator = parseMediaLocator(
+            await wsServer.sendRequest('get_media_locator', {
+              remId: args.remId,
+              field: args.field,
+              mediaId: args.mediaId,
+            })
+          );
+          if (
+            locator.remId !== args.remId ||
+            locator.field !== args.field ||
+            locator.mediaId !== args.mediaId
+          ) {
+            throw new Error(
+              'Invalid media locator payload received from bridge: request identity mismatch'
+            );
+          }
           const media = await resolveManagedImage(locator, mediaRoots, args.maxInlineBytes);
           const metadata = {
             ...media.metadata,
             mimeType: media.mimeType,
             sizeBytes: media.sizeBytes,
           };
-          return {
+          nativeToolResult = {
             structuredContent: metadata,
             content: [
               { type: 'image', data: media.data, mimeType: media.mimeType },
               { type: 'text', text: JSON.stringify(metadata) },
             ],
           };
+          result = metadata;
+          break;
         }
 
         case 'remnote_list_children': {
@@ -1474,17 +1527,18 @@ export function registerAllTools(
           }
 
           result = {
-            playbookVersion: '1.7.0',
+            playbookVersion: '1.8.0',
             summary:
-              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, request nearby ancestors when hierarchy context matters, choose compact/full output views, and apply safe exact-ID writes including inline [[id:<remId>]] references, tag property values, and dry-run-first document status changes.',
+              'Use this playbook to check RemNote connection and write gates, navigate by remId with paged search/read/list workflows, retrieve managed images through capability-gated metadata, choose compact/full output views, and apply safe exact-ID writes including inline [[id:<remId>]] references, tag property values, and dry-run-first document status changes.',
             recommendedStatusCheck: {
               tool: 'remnote_status',
               cadence: 'recommended once per session and before risky writes',
               rationale:
-                'status exposes connection health, version compatibility warnings, and write-policy gates',
+                'status exposes connection health, version compatibility warnings, write-policy gates, and bridge capabilities',
             },
             decisionTree: [
               'Need connection/capability context? Call remnote_status first.',
+              'Need an embedded RemNote-managed image? Confirm media.images.v1, call remnote_read_note with includeMediaMetadata=true, then call remnote_get_media with the returned remId, field, and mediaId.',
               'Need to orient across the KB? Use remnote_search with contentMode="structured", view="compact", depth=1, childLimit=500.',
               'Need broad search enumeration? Continue remnote_search or remnote_search_by_tag with nextCursor while hasMore is true.',
               'Need to search within a specific branch? Use remnote_search with parentRemId; keep the same parentRemId when continuing with nextCursor.',
@@ -1566,6 +1620,10 @@ export function registerAllTools(
         },
         'Tool completed'
       );
+
+      if (nativeToolResult) {
+        return nativeToolResult;
+      }
 
       return {
         structuredContent: result as { [key: string]: unknown },

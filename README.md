@@ -267,7 +267,8 @@ See the [Tools Reference](docs/guides/tools-reference.md) for more examples.
 - `REMNOTE_HTTP_PORT` - HTTP MCP server port (default: 3001)
 - `REMNOTE_HTTP_HOST` - HTTP server bind address (default: 127.0.0.1)
 - `REMNOTE_WS_PORT` - WebSocket server port (default: 3002)
-- `REMNOTE_MEDIA_ROOTS` - Allowed RemNote media roots, separated by the platform path delimiter; defaults to discovered `~/remnote/remnote-*/files` directories
+- `REMNOTE_MEDIA_ROOTS` - Allowed RemNote media roots, separated by the platform path delimiter; defaults to discovered
+  `~/remnote/remnote-*/files` directories. Equivalent repeatable CLI flag: `--media-root`.
 
 ### Custom Ports
 

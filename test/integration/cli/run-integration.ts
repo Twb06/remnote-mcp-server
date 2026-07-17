@@ -22,6 +22,7 @@ import { journalWorkflow } from './workflows/05-journal.js';
 import { errorCasesWorkflow } from './workflows/06-error-cases.js';
 import { readTableWorkflow } from './workflows/07-read-table.js';
 import { setPropertyWorkflow } from './workflows/08-set-property.js';
+import { mediaWorkflow } from './workflows/09-media.js';
 import type { WorkflowResult, WorkflowFn, SharedState } from './types.js';
 
 const RESET = '\x1b[0m';
@@ -342,6 +343,7 @@ async function main(): Promise<void> {
     { name: 'Error Cases', fn: errorCasesWorkflow },
     { name: 'Read Table', fn: readTableWorkflow },
     { name: 'Set Property', fn: setPropertyWorkflow },
+    { name: 'Managed Media', fn: mediaWorkflow },
   ];
 
   for (let i = 0; i < workflows.length; i++) {

@@ -123,6 +123,8 @@ If any precondition is missing, stop and fix setup first.
 - Search notes: `remnote-cli search "query"` (use `--parent-id <parent-rem-id>` to scope search within a Rem's subtree)
 - Search by exact tag Rem ID: `remnote-cli search-by-tag --tag-id <tag-rem-id>`
 - Read note by Rem ID: `remnote-cli read <rem-id>`
+- Discover embedded image IDs: `remnote-cli read <rem-id> --include-media-metadata`
+- Save a managed image: `remnote-cli get-media <rem-id> --field <text|backText> --media-id <media-id> --output <path>`
 - Read Advanced Table by title or Rem ID:
   - `remnote-cli read-table --title "Projects"`
   - `remnote-cli read-table --rem-id <table-rem-id>`

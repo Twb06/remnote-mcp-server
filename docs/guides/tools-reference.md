@@ -19,6 +19,7 @@ JSON in a top-level `content` text block for compatibility with older clients an
 | `remnote_search` | Search knowledge base | Finding existing notes, exploring topics |
 | `remnote_search_by_tag` | Search by exact tag Rem ID | Finding ancestor context for tagged notes |
 | `remnote_read_note` | Read note content | Retrieving details, reading hierarchies |
+| `remnote_get_media` | Retrieve managed image content | Fetching an embedded RemNote image by stable metadata ID |
 | `remnote_list_children` | List direct child Rems | Cheap branch traversal without subtree rendering |
 | `remnote_update_note` | Update note metadata | Renaming |
 | `remnote_set_document_status` | Set document status | Dry-run-first document marking without removing concept/card status |
@@ -147,6 +148,7 @@ Search your RemNote knowledge base with full-text search.
 | `contentMode` | string | No | Content mode: `none` (default), `markdown`, or `structured` |
 | `view` | string | No | Output detail level: `compact`, `standard` (default), or `full` |
 | `ancestorDepth` | number | No | Number of parent Rems to include, direct parent first |
+| `includeMediaMetadata` | boolean | No | Include ordered root image metadata for follow-up retrieval |
 | `depth` | number | No | Max child depth for rendered content (0-10, default: 1) |
 | `parentRemId` | string | No | Non-empty Rem ID to scope search within this Rem's subtree |
 
@@ -364,6 +366,22 @@ instead of markdown `content`.
 - Use `depth: 1-3` for common hierarchies
 - Use `depth: 4-10` for deep nested structures
 - Higher depth may be slower for large hierarchies
+
+## remnote_get_media
+
+Retrieve one RemNote-managed PNG, JPEG, GIF, or WebP image as MCP-native image content. External URLs are deliberately
+excluded. First call `remnote_read_note` with `includeMediaMetadata: true`, then pass the returned `remId`, `field`, and
+`mediaId`. The connected bridge must advertise `media.images.v1`.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `remId` | string | Yes | Rem containing the image |
+| `field` | string | Yes | `text` or `backText` |
+| `mediaId` | string | Yes | Stable ID returned by `remnote_read_note` |
+| `maxInlineBytes` | number | No | Per-call byte limit; defaults to 5 MiB and cannot exceed 10 MiB |
+
+The result includes one MCP `image` content block and structured metadata without duplicating base64 in text. Stale
+IDs, ambiguous files, unsafe paths, unsupported formats, and files that change during retrieval fail closed.
 
 ## remnote_update_note
 

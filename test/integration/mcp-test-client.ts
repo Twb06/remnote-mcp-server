@@ -9,8 +9,15 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 export interface IntegrationTestClient {
   connect(baseUrl: string): Promise<void>;
   callTool(name: string, args?: Record<string, unknown>): Promise<Record<string, unknown>>;
+  callToolRaw(name: string, args?: Record<string, unknown>): Promise<IntegrationToolResult>;
   callToolExpectError(name: string, args?: Record<string, unknown>): Promise<string>;
   close(): Promise<void>;
+}
+
+export interface IntegrationToolResult {
+  content?: Array<{ type: string; text?: string; data?: string; mimeType?: string }>;
+  structuredContent?: Record<string, unknown>;
+  isError?: boolean;
 }
 
 export class McpTestClient implements IntegrationTestClient {
@@ -40,7 +47,7 @@ export class McpTestClient implements IntegrationTestClient {
       throw new Error('McpTestClient: not connected. Call connect() first.');
     }
 
-    const result = await this.client.callTool({ name, arguments: args });
+    const result = await this.callToolRaw(name, args);
 
     // Check for MCP-level error flag
     if (result.isError) {
@@ -49,6 +56,16 @@ export class McpTestClient implements IntegrationTestClient {
     }
 
     return this.parseResult(result);
+  }
+
+  async callToolRaw(
+    name: string,
+    args: Record<string, unknown> = {}
+  ): Promise<IntegrationToolResult> {
+    if (!this.client) {
+      throw new Error('McpTestClient: not connected. Call connect() first.');
+    }
+    return (await this.client.callTool({ name, arguments: args })) as IntegrationToolResult;
   }
 
   /**
@@ -104,15 +121,14 @@ export class McpTestClient implements IntegrationTestClient {
     this.transport = null;
   }
 
-  private extractText(result: Awaited<ReturnType<Client['callTool']>>): string {
-    const content = result.content as Array<{ type: string; text?: string }>;
-    if (content && content.length > 0 && content[0].text) {
-      return content[0].text;
-    }
+  private extractText(result: IntegrationToolResult): string {
+    const text = result.content?.find((item) => item.type === 'text' && item.text)?.text;
+    if (text) return text;
     return JSON.stringify(result);
   }
 
-  private parseResult(result: Awaited<ReturnType<Client['callTool']>>): Record<string, unknown> {
+  private parseResult(result: IntegrationToolResult): Record<string, unknown> {
+    if (result.structuredContent) return result.structuredContent;
     const text = this.extractText(result);
     try {
       return JSON.parse(text) as Record<string, unknown>;

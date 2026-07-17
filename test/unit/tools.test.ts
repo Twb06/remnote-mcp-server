@@ -289,6 +289,7 @@ describe('Tool Definitions', () => {
   it('should advertise native image retrieval inputs', () => {
     expect(GET_MEDIA_TOOL.name).toBe('remnote_get_media');
     expect(GET_MEDIA_TOOL.inputSchema.required).toEqual(['remId', 'field', 'mediaId']);
+    expect(GET_MEDIA_TOOL.outputSchema.required).toContain('sizeBytes');
   });
 
   it('should have required remId field for READ_NOTE_TOOL', () => {
@@ -490,6 +491,7 @@ describe('Tool Handlers - get_media', () => {
     const mockWsServer = {
       hasBridgeCapability: vi.fn().mockReturnValue(true),
       sendRequest: vi.fn().mockResolvedValue({
+        remId: 'rem-1',
         mediaId: 'media_1234',
         kind: 'image',
         field: 'text',
@@ -548,6 +550,34 @@ describe('Tool Handlers - get_media', () => {
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('Bridge capability/version mismatch');
     expect(mockWsServer.sendRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects a locator whose identity does not match the request', async () => {
+    const mockServer = new MockMCPServer();
+    const mockWsServer = {
+      hasBridgeCapability: vi.fn().mockReturnValue(true),
+      sendRequest: vi.fn().mockResolvedValue({
+        remId: 'different-rem',
+        mediaId: 'media_1234',
+        kind: 'image',
+        field: 'text',
+        elementIndex: 0,
+        imageIndex: 0,
+        source: 'remnote_managed_local',
+        localToken: 'opaque.png',
+      }),
+    };
+    registerAllTools(mockServer as never, mockWsServer as never, createMockLogger() as never);
+
+    const result = (await mockServer.callHandler(CallToolRequestSchema, {
+      params: {
+        name: 'remnote_get_media',
+        arguments: { remId: 'rem-1', field: 'text', mediaId: 'media_1234' },
+      },
+    })) as { content: Array<{ text: string }>; isError: boolean };
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('request identity mismatch');
   });
 });
 
@@ -1401,7 +1431,7 @@ describe('Tool Handlers - get_playbook', () => {
       params: { name: 'remnote_get_playbook', arguments: {} },
     })) as ToolSuccessResult;
 
-    expect(result.structuredContent?.playbookVersion).toBe('1.7.0');
+    expect(result.structuredContent?.playbookVersion).toBe('1.8.0');
     expect(Array.isArray(result.structuredContent?.decisionTree)).toBe(true);
     expect((result.structuredContent?.decisionTree as unknown[])?.length).toBeGreaterThan(0);
     expect(result.structuredContent?.decisionTree).toContain(
@@ -1424,6 +1454,9 @@ describe('Tool Handlers - get_playbook', () => {
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need to search within a specific branch? Use remnote_search with parentRemId; keep the same parentRemId when continuing with nextCursor.'
+    );
+    expect(result.structuredContent?.decisionTree).toContain(
+      'Need an embedded RemNote-managed image? Confirm media.images.v1, call remnote_read_note with includeMediaMetadata=true, then call remnote_get_media with the returned remId, field, and mediaId.'
     );
     expect(result.structuredContent?.decisionTree).toContain(
       'Need hierarchy placement context? Add ancestorDepth, typically 5, to search/read/search_by_tag/list_children; ancestors are direct-parent first.'

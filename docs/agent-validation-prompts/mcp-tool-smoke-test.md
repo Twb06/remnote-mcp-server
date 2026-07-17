@@ -16,6 +16,7 @@ This smoke test requires:
 - `remnote_search`
 - `remnote_create_note`
 - `remnote_read_note`
+- `remnote_get_media`
 - `remnote_list_children`
 - `remnote_update_note`
 - `remnote_set_document_status`
@@ -48,6 +49,7 @@ required call fails.
    - Confirm the playbook mentions dry-run-first `remnote_set_document_status`.
    - Confirm the playbook mentions setting tag/table property values with `remnote_set_property`.
    - Confirm the playbook mentions exact inline Rem references with `[[id:<remId>]]`.
+   - Confirm the playbook describes the `media.images.v1` image retrieval workflow.
 
 3. Resolve the shared temporary integration-test root.
    - Search for the exact title `RemNote Automation Bridge [temporary integration test data]`.
@@ -102,6 +104,10 @@ required call fails.
    - Confirm the response previews old/new parent data.
    - Read or list the run note again and confirm `moveCandidateRemId` is still a direct child, proving dry-run did not
      change the Rem parent.
+
+If a known fixture Rem containing a RemNote-managed image is available, also read it with `includeMediaMetadata=true`
+and call `remnote_get_media` with one returned `remId`, `field`, and `mediaId`. Confirm the result contains MCP-native
+image content and matching structured metadata. Report this check as skipped when no fixture is available.
 
 11. Create a test tag note under the same root note.
    - Title: `[MCP-AGENT-TEST] tag <current ISO timestamp>`

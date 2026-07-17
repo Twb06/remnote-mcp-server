@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi, type MockInstance } from 'vitest';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { McpServerClient } from '../../../src/remnote-cli/client/mcp-server-client.js';
@@ -15,8 +15,8 @@ async function createTempContentFile(content: string): Promise<string> {
   return path;
 }
 
-async function runCommand(args: string[]): Promise<MockInstance> {
-  const executeSpy = vi.spyOn(McpServerClient.prototype, 'execute').mockResolvedValue({ ok: true });
+async function runCommand(args: string[], result: unknown = { ok: true }): Promise<MockInstance> {
+  const executeSpy = vi.spyOn(McpServerClient.prototype, 'execute').mockResolvedValue(result);
   const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
   const program = createProgram('0.1.0-test');
 
@@ -135,6 +135,48 @@ describe('command bridge action mapping', () => {
       depth: 5,
       contentMode: 'structured',
     });
+    executeSpy.mockRestore();
+  });
+
+  it('requests media metadata from read', async () => {
+    const executeSpy = await runCommand(['read', 'abc123', '--include-media-metadata']);
+    expect(executeSpy).toHaveBeenCalledWith('read_note', {
+      remId: 'abc123',
+      depth: 5,
+      includeMediaMetadata: true,
+    });
+    executeSpy.mockRestore();
+  });
+
+  it('maps get-media and writes image bytes to the requested path', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'remnote-cli-media-'));
+    tempDirs.push(dir);
+    const outputPath = join(dir, 'image.png');
+    const data = Buffer.from('89504e470d0a1a0a', 'hex').toString('base64');
+    const executeSpy = await runCommand(
+      [
+        'get-media',
+        'abc123',
+        '--field',
+        'text',
+        '--media-id',
+        'media_1234',
+        '--output',
+        outputPath,
+        '--max-inline-bytes',
+        '1024',
+        '--force',
+      ],
+      { data, mimeType: 'image/png', sizeBytes: 8, mediaId: 'media_1234' }
+    );
+
+    expect(executeSpy).toHaveBeenCalledWith('get_media', {
+      remId: 'abc123',
+      field: 'text',
+      mediaId: 'media_1234',
+      maxInlineBytes: 1024,
+    });
+    expect(await readFile(outputPath)).toEqual(Buffer.from(data, 'base64'));
     executeSpy.mockRestore();
   });
 

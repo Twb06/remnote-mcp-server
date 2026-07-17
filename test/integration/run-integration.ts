@@ -24,6 +24,7 @@ import { errorCasesWorkflow } from './workflows/05-error-cases.js';
 import { readTableWorkflow } from './workflows/06-read-table.js';
 import { oauthWorkflow } from './workflows/07-oauth.js';
 import { setPropertyWorkflow } from './workflows/08-set-property.js';
+import { mediaWorkflow } from './workflows/09-media.js';
 import type { WorkflowResult, WorkflowFn, SharedState } from './types.js';
 
 const RESET = '\x1b[0m';
@@ -364,6 +365,7 @@ async function main(): Promise<void> {
     { name: 'Error Cases', fn: errorCasesWorkflow },
     { name: 'Read Table', fn: readTableWorkflow },
     { name: 'Set Property', fn: setPropertyWorkflow },
+    { name: 'Managed Media', fn: mediaWorkflow },
   ];
 
   try {

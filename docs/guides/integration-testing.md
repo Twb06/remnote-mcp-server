@@ -112,6 +112,8 @@ Successful runs print a workflow summary and remind you how to clean up the crea
 |---|---|---|
 | `REMNOTE_MCP_URL` | `http://127.0.0.1:3001` | MCP server base URL |
 | `MCP_TEST_DELAY` | `2000` | Delay (ms) after creating notes before searching |
+| `REMNOTE_TEST_MEDIA_REM_ID` | unset | Existing Rem containing a RemNote-managed image; required for media workflow |
+| `REMNOTE_TEST_MEDIA_FIELD` | `text` | Image field fixture: `text` or `backText` |
 
 The CLI suite uses the same variables.
 
@@ -146,6 +148,9 @@ The direct MCP and MCPB stdio proxy suites follow the same RemNote tool workflow
    and not-found behavior.
 7. **Set Property** — Uses a property-bearing test tag fixture to set and verify an `automation-level` value on the
    run's created note.
+8. **Managed Media** — Reads image metadata, retrieves MCP-native bytes, rejects a stale ID, and verifies CLI file
+   output. Because the bridge has no media-upload action, prepare this read-only fixture manually and set
+   `REMNOTE_TEST_MEDIA_REM_ID` before the final MCP, MCPB, and CLI run.
 
 The direct MCP suite also verifies the OAuth HTTP metadata and token endpoints.
 

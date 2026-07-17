@@ -117,6 +117,22 @@ describe('RemNoteLocalProxy', () => {
     expect(client.callTool).toHaveBeenCalledWith({ name: 'remnote_status', arguments: {} });
   });
 
+  it('preserves MCP-native image blocks without base64 duplication', async () => {
+    const callToolResult = {
+      structuredContent: { mediaId: 'media_1234', mimeType: 'image/png', sizeBytes: 8 },
+      content: [
+        { type: 'image', data: 'iVBORw0KGgo=', mimeType: 'image/png' },
+        { type: 'text', text: '{"mediaId":"media_1234","sizeBytes":8}' },
+      ],
+    };
+    const { createClient } = createMockClient({ callToolResult });
+    const proxy = new RemNoteLocalProxy({ createClient });
+
+    await expect(
+      proxy.callTool({ name: 'remnote_get_media', arguments: { mediaId: 'media_1234' } })
+    ).resolves.toEqual(callToolResult);
+  });
+
   it('returns a clear MCP tool error when a tool call cannot reach the local server', async () => {
     const { createClient } = createMockClient({ connectError: new Error('ECONNREFUSED') });
     const proxy = new RemNoteLocalProxy({ mcpUrl: 'http://localhost:3001/mcp', createClient });

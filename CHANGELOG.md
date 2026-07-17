@@ -10,10 +10,14 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Add opt-in image metadata to `remnote_read_note` and capability-gated `remnote_get_media` retrieval for
-  RemNote-managed PNG, JPEG, GIF, and WebP images using MCP-native image content.
+  RemNote-managed PNG, JPEG, GIF, and WebP images using MCP-native image content. Contributed by Charles
+  (`@charleseze356`).
 - Add confined media-root discovery/configuration through repeatable `--media-root`, `REMNOTE_MEDIA_ROOTS`, and
   `[server].mediaRoots`, with symlink/traversal checks, unique-match resolution, MIME sniffing, and 5 MiB default /
-  10 MiB hard inline limits.
+  10 MiB hard inline limits. Contributed by Charles (`@charleseze356`).
+- Add `remnote-cli read --include-media-metadata` and overwrite-safe `remnote-cli get-media --output` parity for
+  discovering and saving managed images.
+
 - Add `parentRemId` to `remnote_search` input schema and `--parent-id` option to `remnote-cli search` to support scoping search within a Rem's subtree. Contributed by Twb06.
 - Add exact-ID tag/table property writes through `remnote_set_property` and `remnote-cli set-property`, supporting
   text, Rem-reference/select-option, and clear value payloads.
@@ -23,6 +27,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   `remnote-cli`, and `remnote_get_playbook`.
 - Add live MCP, MCPB, CLI, and smoke-prompt coverage for exact inline Rem reference tokens in create, update, insert,
   replace, journal, and text property write paths.
+
+### Security
+
+- Validate bridge media locators at runtime and read matched files through bounded handles so symlink replacement,
+  stale identity, malformed payloads, and files changing during retrieval fail closed.
 
 ### Changed
 

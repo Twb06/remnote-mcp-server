@@ -25,6 +25,7 @@ describe('managed image resolution', () => {
 
   function locator(localToken = 'image.png'): MediaLocator {
     return {
+      remId: 'rem-1',
       mediaId: 'media_1234',
       kind: 'image',
       field: 'text',
@@ -85,5 +86,24 @@ describe('managed image resolution', () => {
     await expect(
       resolveManagedImage(locator(), [rootA], HARD_MAX_INLINE_BYTES + 1)
     ).rejects.toThrow('maxInlineBytes must be an integer');
+  });
+
+  it.each([
+    null,
+    {},
+    { localToken: 7, kind: 'image', source: 'remnote_managed_local' },
+    { ...locator(), unexpected: true },
+  ])('rejects malformed bridge locator payloads without TypeErrors', async (value) => {
+    await expect(resolveManagedImage(value, [rootA])).rejects.toThrow(
+      'Invalid media locator payload received from bridge'
+    );
+  });
+
+  it('accepts decoded basename tokens containing spaces', async () => {
+    await writeFile(join(rootA, 'Screenshot 2026.png'), PNG);
+
+    const result = await resolveManagedImage(locator('Screenshot 2026.png'), [rootA]);
+
+    expect(result.sizeBytes).toBe(PNG.length);
   });
 });
