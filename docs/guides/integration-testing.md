@@ -188,12 +188,13 @@ JSON test config are required.
 
 1. Create a property-bearing tag named `Automation Bridge Test Tag`.
 2. Add a text-compatible property named `automation-level`.
-3. Create a regular Rem named `Automation Bridge Test Media`.
-4. Paste at least one image into that Rem's text or back text so RemNote stores it as managed local media.
+3. Create a flashcard whose front is the exact plain-text title `Automation Bridge Test Media`.
+4. Drag or upload a local PNG, JPEG, GIF, or WebP file into the back of that card. Keep the front text-only so exact-title
+   search remains stable, and avoid remote URLs or web-image embeds because they are not RemNote-managed local media.
 
 Keep exactly one Rem with each fixture title. Before creating temporary test content, every live runner resolves these
-titles, derives the tag/table/property/media IDs and media field, and fails with setup guidance when a fixture is
-missing, duplicated, or malformed.
+titles independently and derives the tag/table/property/media IDs and media field. Missing, duplicated, or malformed
+fixtures are listed together; only their dependent workflows are skipped, so unrelated coverage still runs.
 
 ### Behavior
 
@@ -204,6 +205,9 @@ The direct MCP and CLI integration suites:
 - read the fixture tag/table again and verify the note row contains the kept value
 - search for the exact media fixture title, select its first ordered managed-local image, and verify retrieval through
   MCP, MCPB, and CLI paths
+
+When `--suite all` is used, direct MCP, MCPB, and CLI all run even if an earlier transport fails or skips a fixture-
+dependent workflow. The wrapper returns nonzero after all transports finish when any suite is failed or incomplete.
 
 The value is intentionally not cleared, so the resulting test note remains inspectable until the `[MCP-TEST]` or
 `[CLI-TEST]` artifact is deleted.

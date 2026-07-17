@@ -39,11 +39,15 @@ describe('resolvePersistentIntegrationFixtures', () => {
     const reader = makeReader();
 
     await expect(resolvePersistentIntegrationFixtures(reader)).resolves.toEqual({
-      tableRemId: 'tag-1',
-      propertyRemId: 'property-1',
-      mediaRemId: 'media-rem-1',
-      mediaField: 'backText',
-      mediaId: 'media-1',
+      fixtures: {
+        property: { tableRemId: 'tag-1', propertyRemId: 'property-1' },
+        media: {
+          mediaRemId: 'media-rem-1',
+          mediaField: 'backText',
+          mediaId: 'media-1',
+        },
+      },
+      issues: [],
     });
     expect(reader.readTableByRemId).toHaveBeenCalledWith('tag-1');
     expect(reader.searchByTitle).toHaveBeenCalledWith(PROPERTY_FIXTURE_TITLE);
@@ -51,17 +55,24 @@ describe('resolvePersistentIntegrationFixtures', () => {
     expect(reader.readNoteWithMedia).toHaveBeenCalledWith('media-rem-1');
   });
 
-  it('rejects a property fixture without automation-level', async () => {
+  it('reports a malformed property fixture while preserving media resolution', async () => {
     const reader = makeReader({
       readTableByRemId: vi.fn().mockResolvedValue({ tableId: 'tag-1', columns: [] }),
     });
 
-    await expect(resolvePersistentIntegrationFixtures(reader)).rejects.toThrow(
-      'must have a text-compatible "automation-level" property'
-    );
+    const result = await resolvePersistentIntegrationFixtures(reader);
+
+    expect(result.fixtures.property).toBeUndefined();
+    expect(result.fixtures.media?.mediaId).toBe('media-1');
+    expect(result.issues).toEqual([
+      expect.objectContaining({
+        fixture: 'property',
+        error: expect.stringContaining('must have a text-compatible "automation-level" property'),
+      }),
+    ]);
   });
 
-  it('rejects a missing named media fixture', async () => {
+  it('reports a missing media fixture while preserving property resolution', async () => {
     const reader = makeReader({
       searchByTitle: vi.fn().mockImplementation((title: string) =>
         Promise.resolve({
@@ -73,12 +84,21 @@ describe('resolvePersistentIntegrationFixtures', () => {
       ),
     });
 
-    await expect(resolvePersistentIntegrationFixtures(reader)).rejects.toThrow(
-      `Required integration fixture "${MEDIA_FIXTURE_TITLE}" was not found`
-    );
+    const result = await resolvePersistentIntegrationFixtures(reader);
+
+    expect(result.fixtures.property?.tableRemId).toBe('tag-1');
+    expect(result.fixtures.media).toBeUndefined();
+    expect(result.issues).toEqual([
+      expect.objectContaining({
+        fixture: 'media',
+        error: expect.stringContaining(
+          `Required integration fixture "${MEDIA_FIXTURE_TITLE}" was not found`
+        ),
+      }),
+    ]);
   });
 
-  it('rejects duplicate exact media fixture titles', async () => {
+  it('reports duplicate exact media fixture titles', async () => {
     const reader = makeReader({
       searchByTitle: vi.fn().mockImplementation((title: string) =>
         Promise.resolve({
@@ -93,20 +113,41 @@ describe('resolvePersistentIntegrationFixtures', () => {
       ),
     });
 
-    await expect(resolvePersistentIntegrationFixtures(reader)).rejects.toThrow(
-      'media-rem-1, media-rem-2'
+    const result = await resolvePersistentIntegrationFixtures(reader);
+
+    expect(result.fixtures.media).toBeUndefined();
+    expect(result.issues[0]).toEqual(
+      expect.objectContaining({ fixture: 'media', error: expect.stringContaining('media-rem-1') })
     );
+    expect(result.issues[0].error).toContain('media-rem-2');
   });
 
-  it('rejects a media fixture without managed local image metadata', async () => {
+  it('reports a media fixture without managed local image metadata', async () => {
     const reader = makeReader({
       readNoteWithMedia: vi.fn().mockResolvedValue({
         media: [{ mediaId: 'remote-1', field: 'text', source: 'remote' }],
       }),
     });
 
-    await expect(resolvePersistentIntegrationFixtures(reader)).rejects.toThrow(
-      'must contain at least one RemNote-managed local image'
+    const result = await resolvePersistentIntegrationFixtures(reader);
+
+    expect(result.fixtures.media).toBeUndefined();
+    expect(result.issues[0]).toEqual(
+      expect.objectContaining({
+        fixture: 'media',
+        error: expect.stringContaining('must contain at least one RemNote-managed local image'),
+      })
     );
+  });
+
+  it('lists every missing persistent fixture in one resolution', async () => {
+    const reader = makeReader({
+      searchByTitle: vi.fn().mockResolvedValue({ results: [] }),
+    });
+
+    const result = await resolvePersistentIntegrationFixtures(reader);
+
+    expect(result.fixtures).toEqual({});
+    expect(result.issues.map((issue) => issue.fixture)).toEqual(['property', 'media']);
   });
 });

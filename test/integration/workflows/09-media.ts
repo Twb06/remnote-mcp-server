@@ -5,23 +5,26 @@ export async function mediaWorkflow(
   ctx: WorkflowContext,
   state: SharedState
 ): Promise<WorkflowResult> {
-  if (!state.fixtures) {
+  const fixture = state.fixtures?.media;
+  if (!fixture) {
     return {
       name: 'Managed Media',
       steps: [
         {
-          label: 'Use persistent fixture preflight result',
+          label: 'Skipped — managed-media fixture unavailable',
           passed: false,
           durationMs: 0,
-          error: 'Persistent integration fixtures were not initialized',
+          error:
+            state.fixtureIssues?.find((issue) => issue.fixture === 'media')?.error ??
+            'Managed-media integration fixture was not initialized',
         },
       ],
-      skipped: false,
+      skipped: true,
     };
   }
 
   const steps: StepResult[] = [];
-  const { mediaRemId, mediaField, mediaId: expectedMediaId } = state.fixtures;
+  const { mediaRemId, mediaField, mediaId: expectedMediaId } = fixture;
   let mediaId: string | undefined;
 
   {

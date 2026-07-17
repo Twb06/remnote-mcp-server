@@ -3,11 +3,26 @@ export const PROPERTY_FIXTURE_NAME = 'automation-level';
 export const MEDIA_FIXTURE_TITLE = 'Automation Bridge Test Media';
 
 export interface PersistentIntegrationFixtures {
-  tableRemId: string;
-  propertyRemId: string;
-  mediaRemId: string;
-  mediaField: 'text' | 'backText';
-  mediaId: string;
+  property?: {
+    tableRemId: string;
+    propertyRemId: string;
+  };
+  media?: {
+    mediaRemId: string;
+    mediaField: 'text' | 'backText';
+    mediaId: string;
+  };
+}
+
+export interface PersistentFixtureIssue {
+  fixture: 'property' | 'media';
+  title: string;
+  error: string;
+}
+
+export interface PersistentFixtureResolution {
+  fixtures: PersistentIntegrationFixtures;
+  issues: PersistentFixtureIssue[];
 }
 
 export interface PersistentFixtureReader {
@@ -55,10 +70,9 @@ function resolveExactTitleRemId(value: unknown, title: string): string {
   return matches[0].remId as string;
 }
 
-/** Resolve and validate persistent fixtures before live tests create temporary content. */
-export async function resolvePersistentIntegrationFixtures(
+async function resolvePropertyFixture(
   reader: PersistentFixtureReader
-): Promise<PersistentIntegrationFixtures> {
+): Promise<NonNullable<PersistentIntegrationFixtures['property']>> {
   const tableRemId = resolveExactTitleRemId(
     await reader.searchByTitle(PROPERTY_FIXTURE_TITLE),
     PROPERTY_FIXTURE_TITLE
@@ -93,6 +107,15 @@ export async function resolvePersistentIntegrationFixtures(
     );
   }
 
+  return {
+    tableRemId,
+    propertyRemId: property.propertyId as string,
+  };
+}
+
+async function resolveMediaFixture(
+  reader: PersistentFixtureReader
+): Promise<NonNullable<PersistentIntegrationFixtures['media']>> {
   const mediaSearch = await reader.searchByTitle(MEDIA_FIXTURE_TITLE);
   const mediaRemId = resolveExactTitleRemId(mediaSearch, MEDIA_FIXTURE_TITLE);
   const mediaNote = asRecord(
@@ -115,10 +138,38 @@ export async function resolvePersistentIntegrationFixtures(
   }
 
   return {
-    tableRemId,
-    propertyRemId: property.propertyId as string,
     mediaRemId,
     mediaField: selected.field as 'text' | 'backText',
     mediaId: selected.mediaId as string,
   };
+}
+
+/** Resolve persistent fixtures independently so unrelated live workflows can continue. */
+export async function resolvePersistentIntegrationFixtures(
+  reader: PersistentFixtureReader
+): Promise<PersistentFixtureResolution> {
+  const fixtures: PersistentIntegrationFixtures = {};
+  const issues: PersistentFixtureIssue[] = [];
+
+  try {
+    fixtures.property = await resolvePropertyFixture(reader);
+  } catch (error) {
+    issues.push({
+      fixture: 'property',
+      title: PROPERTY_FIXTURE_TITLE,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  try {
+    fixtures.media = await resolveMediaFixture(reader);
+  } catch (error) {
+    issues.push({
+      fixture: 'media',
+      title: MEDIA_FIXTURE_TITLE,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  return { fixtures, issues };
 }

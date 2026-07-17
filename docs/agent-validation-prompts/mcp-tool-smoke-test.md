@@ -39,8 +39,8 @@ required call fails.
 
 - Exactly one property-bearing tag titled `Automation Bridge Test Tag`, with a text-compatible property named
   `automation-level`.
-- Exactly one Rem titled `Automation Bridge Test Media`, containing at least one RemNote-managed local image in its
-  text or back text.
+- Exactly one flashcard with the plain-text front `Automation Bridge Test Media` and at least one locally imported
+  RemNote-managed image on its back. The front must remain text-only for stable exact-title lookup.
 
 Resolve both by exact title and derive all Rem, property, field, and media IDs. Do not ask the user to provide IDs.
 

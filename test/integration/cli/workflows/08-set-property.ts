@@ -103,24 +103,27 @@ export async function setPropertyWorkflow(
     };
   }
 
-  if (!state.fixtures) {
+  const fixture = state.fixtures?.property;
+  if (!fixture) {
     return {
       name: 'Set Property',
       steps: [
         {
-          label: 'Use persistent fixture preflight result',
+          label: 'Skipped — property fixture unavailable',
           passed: false,
           durationMs: 0,
-          error: 'Persistent integration fixtures were not initialized',
+          error:
+            state.fixtureIssues?.find((issue) => issue.fixture === 'property')?.error ??
+            'Property integration fixture was not initialized',
         },
       ],
-      skipped: false,
+      skipped: true,
     };
   }
 
   const targetRemId = state.noteAId;
-  const propertyFixtureTagRemId = state.fixtures.tableRemId;
-  const automationLevelPropertyRemId = state.fixtures.propertyRemId;
+  const propertyFixtureTagRemId = fixture.tableRemId;
+  const automationLevelPropertyRemId = fixture.propertyRemId;
   let automationLevelValue: string | undefined;
   let automationLevelRenderedValue: string | undefined;
 

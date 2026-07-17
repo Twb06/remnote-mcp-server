@@ -31,22 +31,25 @@ export async function readTableWorkflow(
 ): Promise<WorkflowResult> {
   const steps: StepResult[] = [];
 
-  if (!state.fixtures) {
+  const fixture = state.fixtures?.property;
+  if (!fixture) {
     return {
       name: 'Read Table',
       steps: [
         {
-          label: 'Use persistent fixture preflight result',
+          label: `Skipped — fixture "${PROPERTY_FIXTURE_TITLE}" unavailable`,
           passed: false,
           durationMs: 0,
-          error: 'Persistent integration fixtures were not initialized',
+          error:
+            state.fixtureIssues?.find((issue) => issue.fixture === 'property')?.error ??
+            'Property integration fixture was not initialized',
         },
       ],
-      skipped: false,
+      skipped: true,
     };
   }
   const tableName = PROPERTY_FIXTURE_TITLE;
-  const tableRemId = state.fixtures.tableRemId;
+  const tableRemId = fixture.tableRemId;
 
   let baseline: ReadTableResponse | null = null;
 

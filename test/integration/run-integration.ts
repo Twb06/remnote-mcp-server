@@ -341,8 +341,8 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  try {
-    state.fixtures = await resolvePersistentIntegrationFixtures({
+  {
+    const resolution = await resolvePersistentIntegrationFixtures({
       readTableByRemId: (remId) =>
         client.callTool('remnote_read_table', { tableRemId: remId, limit: 1 }),
       searchByTitle: (title) =>
@@ -354,14 +354,22 @@ async function main(): Promise<void> {
           includeMediaMetadata: true,
         }),
     });
-    console.log(
-      `Persistent fixtures: "${PROPERTY_FIXTURE_TITLE}" (${state.fixtures.tableRemId}), "${MEDIA_FIXTURE_TITLE}" (${state.fixtures.mediaRemId})`
-    );
-  } catch (e) {
-    console.error(`${RED}Persistent integration fixture preflight failed.${RESET}`);
-    console.error(`${RED}${(e as Error).message}${RESET}`);
-    await client.close();
-    process.exit(1);
+    state.fixtures = resolution.fixtures;
+    state.fixtureIssues = resolution.issues;
+    console.log('Persistent fixture preflight:');
+    if (resolution.fixtures.property) {
+      console.log(
+        `  ${GREEN}✓${RESET} "${PROPERTY_FIXTURE_TITLE}" (${resolution.fixtures.property.tableRemId})`
+      );
+    }
+    if (resolution.fixtures.media) {
+      console.log(
+        `  ${GREEN}✓${RESET} "${MEDIA_FIXTURE_TITLE}" (${resolution.fixtures.media.mediaRemId})`
+      );
+    }
+    for (const issue of resolution.issues) {
+      console.log(`  ${YELLOW}SKIP${RESET} "${issue.title}": ${issue.error}`);
+    }
   }
 
   try {

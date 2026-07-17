@@ -8,23 +8,26 @@ export async function mediaWorkflow(
   ctx: WorkflowContext,
   state: SharedState
 ): Promise<WorkflowResult> {
-  if (!state.fixtures) {
+  const fixture = state.fixtures?.media;
+  if (!fixture) {
     return {
       name: 'Managed Media',
       steps: [
         {
-          label: 'Use persistent fixture preflight result',
+          label: 'Skipped — managed-media fixture unavailable',
           passed: false,
           durationMs: 0,
-          error: 'Persistent integration fixtures were not initialized',
+          error:
+            state.fixtureIssues?.find((issue) => issue.fixture === 'media')?.error ??
+            'Managed-media integration fixture was not initialized',
         },
       ],
-      skipped: false,
+      skipped: true,
     };
   }
 
   const steps: StepResult[] = [];
-  const { mediaRemId, mediaField, mediaId } = state.fixtures;
+  const { mediaRemId, mediaField, mediaId } = fixture;
   const tempDir = await mkdtemp(join(tmpdir(), 'remnote-cli-media-integration-'));
   try {
     const readStart = Date.now();
