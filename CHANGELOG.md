@@ -32,6 +32,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Make Node.js environment checks reject malformed versions cleanly and report a missing `.nvmrc` without leaking
+  shell errors.
 - Reject empty `parentRemId` values for `remnote_search` instead of treating them as unscoped search.
 
 ## [0.16.0] - 2026-06-05

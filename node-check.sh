@@ -17,9 +17,13 @@ MIN_NODE_VERSION="22.13.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 version_is_supported() {
-  local current_version="$1"
+  local current_version="${1//$'\r'/}"
   local current_major current_minor current_patch
   local minimum_major minimum_minor minimum_patch
+
+  if [[ ! "$current_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    return 1
+  fi
 
   IFS='.' read -r current_major current_minor current_patch <<< "$current_version"
   IFS='.' read -r minimum_major minimum_minor minimum_patch <<< "$MIN_NODE_VERSION"
@@ -33,17 +37,46 @@ current_node_version() {
   node -p 'process.versions.node'
 }
 
+project_node_version() {
+  local version_file="$SCRIPT_DIR/.nvmrc"
+  local version
+
+  if [ ! -r "$version_file" ]; then
+    return 1
+  fi
+
+  IFS= read -r version < "$version_file"
+  if [ -z "$version" ]; then
+    return 1
+  fi
+
+  printf '%s' "$version"
+}
+
 activate_project_node() {
+  local project_version
+
   if [ ! -s "$HOME/.nvm/nvm.sh" ]; then
     return 1
   fi
 
+  project_version="$(project_node_version)" || return 1
   source "$HOME/.nvm/nvm.sh" &> /dev/null
-  nvm use "$(cat "$SCRIPT_DIR/.nvmrc")" &> /dev/null
+  nvm use "$project_version" &> /dev/null
 }
 
 commands_available() {
   command -v node &> /dev/null && command -v npm &> /dev/null
+}
+
+print_install_guidance() {
+  local project_version
+
+  if project_version="$(project_node_version)"; then
+    echo "Install the project version with: nvm install $project_version" >&2
+  else
+    echo "Project Node version file is missing or unreadable: $SCRIPT_DIR/.nvmrc" >&2
+  fi
 }
 
 if commands_available && version_is_supported "$(current_node_version)"; then
@@ -60,5 +93,5 @@ else
   echo "Error: Node.js >= $MIN_NODE_VERSION and npm are required." >&2
 fi
 
-echo "Install the project version with: nvm install $(cat "$SCRIPT_DIR/.nvmrc")" >&2
+print_install_guidance
 return 1 2>/dev/null || exit 1
