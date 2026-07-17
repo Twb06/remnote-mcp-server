@@ -1,12 +1,8 @@
 /**
  * Workflow 06: Read Table
  *
- * Tests the read_table functionality by reading an Advanced Table configured
- * via integration test config.
- *
- * Prerequisites:
- * - Config file must exist at $HOME/.remnote-mcp-bridge/remnote-mcp-bridge.json
- * - Must contain both integrationTest.tableName and integrationTest.tableRemId
+ * Tests read_table against the shared property-bearing tag fixture. The
+ * fixture preflight derives its Rem ID from the conventional exact title.
  */
 
 import {
@@ -16,11 +12,7 @@ import {
   assertIsArray,
   assertTruthy,
 } from '../assertions.js';
-import {
-  hasTableConfig,
-  getIntegrationTestConfig,
-  getTableConfigWarning,
-} from '../../helpers/integration-config.js';
+import { PROPERTY_FIXTURE_TITLE } from '../../helpers/integration-fixtures.js';
 import type { WorkflowContext, WorkflowResult, SharedState, StepResult } from '../types';
 
 /** Expected structure of read_table response */
@@ -35,30 +27,26 @@ interface ReadTableResponse {
 
 export async function readTableWorkflow(
   ctx: WorkflowContext,
-  _state: SharedState
+  state: SharedState
 ): Promise<WorkflowResult> {
   const steps: StepResult[] = [];
 
-  // Check if table config exists - skip test if not configured
-  if (!hasTableConfig()) {
+  if (!state.fixtures) {
     return {
       name: 'Read Table',
-      steps: [{ label: getTableConfigWarning(), passed: true, durationMs: 0 }],
-      skipped: true,
+      steps: [
+        {
+          label: 'Use persistent fixture preflight result',
+          passed: false,
+          durationMs: 0,
+          error: 'Persistent integration fixtures were not initialized',
+        },
+      ],
+      skipped: false,
     };
   }
-
-  const config = getIntegrationTestConfig()!;
-  const tableName = config.tableName;
-  const tableRemId = config.tableRemId;
-
-  if (!tableName || !tableRemId) {
-    return {
-      name: 'Read Table',
-      steps: [{ label: getTableConfigWarning(), passed: true, durationMs: 0 }],
-      skipped: true,
-    };
-  }
+  const tableName = PROPERTY_FIXTURE_TITLE;
+  const tableRemId = state.fixtures.tableRemId;
 
   let baseline: ReadTableResponse | null = null;
 
@@ -82,6 +70,7 @@ export async function readTableWorkflow(
       assertEqual(result.rowsReturned, result.rows.length, 'rowsReturned should match rows length');
       assertTruthy(result.tableId, 'tableId should not be empty');
       assertTruthy(result.tableName, 'tableName should not be empty');
+      assertEqual(result.tableId, tableRemId, 'title lookup should resolve preflight table ID');
 
       if (result.columns.length > 0) {
         const firstCol = result.columns[0] as unknown as Record<string, unknown>;
@@ -113,8 +102,8 @@ export async function readTableWorkflow(
     }
   }
 
-  // Step 2: Validate alternate lookup by Rem ID when configured
-  if (tableRemId) {
+  // Step 2: Validate alternate lookup by the ID derived during preflight.
+  {
     const start = Date.now();
     try {
       const result = (await ctx.client.callTool('remnote_read_table', {

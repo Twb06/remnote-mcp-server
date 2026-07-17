@@ -1,43 +1,45 @@
 import { assertEqual, assertTruthy } from '../assertions.js';
 import type { SharedState, StepResult, WorkflowContext, WorkflowResult } from '../types.js';
 
-const MEDIA_REM_ID = process.env.REMNOTE_TEST_MEDIA_REM_ID;
-const MEDIA_FIELD = process.env.REMNOTE_TEST_MEDIA_FIELD === 'backText' ? 'backText' : 'text';
-
 export async function mediaWorkflow(
   ctx: WorkflowContext,
-  _state: SharedState
+  state: SharedState
 ): Promise<WorkflowResult> {
-  if (!MEDIA_REM_ID) {
+  if (!state.fixtures) {
     return {
       name: 'Managed Media',
       steps: [
         {
-          label: 'Set REMNOTE_TEST_MEDIA_REM_ID to a Rem containing a managed image',
-          passed: true,
+          label: 'Use persistent fixture preflight result',
+          passed: false,
           durationMs: 0,
+          error: 'Persistent integration fixtures were not initialized',
         },
       ],
-      skipped: true,
+      skipped: false,
     };
   }
 
   const steps: StepResult[] = [];
+  const { mediaRemId, mediaField, mediaId: expectedMediaId } = state.fixtures;
   let mediaId: string | undefined;
 
   {
     const start = Date.now();
     try {
       const read = await ctx.client.callTool('remnote_read_note', {
-        remId: MEDIA_REM_ID,
+        remId: mediaRemId,
         contentMode: 'none',
         includeMediaMetadata: true,
       });
       const media = Array.isArray(read.media) ? (read.media as Array<Record<string, unknown>>) : [];
       const selected = media.find(
-        (item) => item.field === MEDIA_FIELD && item.source === 'remnote_managed_local'
+        (item) =>
+          item.field === mediaField &&
+          item.source === 'remnote_managed_local' &&
+          item.mediaId === expectedMediaId
       );
-      assertTruthy(selected, `managed ${MEDIA_FIELD} image metadata`);
+      assertTruthy(selected, `managed ${mediaField} image metadata`);
       assertTruthy(selected?.mediaId, 'mediaId');
       mediaId = selected!.mediaId as string;
       steps.push({
@@ -59,8 +61,8 @@ export async function mediaWorkflow(
     const start = Date.now();
     try {
       const result = await ctx.client.callToolRaw('remnote_get_media', {
-        remId: MEDIA_REM_ID,
-        field: MEDIA_FIELD,
+        remId: mediaRemId,
+        field: mediaField,
         mediaId,
       });
       const image = result.content?.find((item) => item.type === 'image');
@@ -86,8 +88,8 @@ export async function mediaWorkflow(
     const staleStart = Date.now();
     try {
       const errorText = await ctx.client.callToolExpectError('remnote_get_media', {
-        remId: MEDIA_REM_ID,
-        field: MEDIA_FIELD,
+        remId: mediaRemId,
+        field: mediaField,
         mediaId: `${mediaId}-stale`,
       });
       assertTruthy(errorText.includes('Stale or missing media ID'), 'stale media rejection');

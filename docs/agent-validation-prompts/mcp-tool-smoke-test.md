@@ -35,6 +35,15 @@ Optional/report-only tools:
 If your client can inspect the available tool list, check it first. If not, continue and report any missing tool when a
 required call fails.
 
+## Required Persistent Fixtures
+
+- Exactly one property-bearing tag titled `Automation Bridge Test Tag`, with a text-compatible property named
+  `automation-level`.
+- Exactly one Rem titled `Automation Bridge Test Media`, containing at least one RemNote-managed local image in its
+  text or back text.
+
+Resolve both by exact title and derive all Rem, property, field, and media IDs. Do not ask the user to provide IDs.
+
 ## Test Flow
 
 1. Call `remnote_status`.
@@ -105,9 +114,10 @@ required call fails.
    - Read or list the run note again and confirm `moveCandidateRemId` is still a direct child, proving dry-run did not
      change the Rem parent.
 
-If a known fixture Rem containing a RemNote-managed image is available, also read it with `includeMediaMetadata=true`
-and call `remnote_get_media` with one returned `remId`, `field`, and `mediaId`. Confirm the result contains MCP-native
-image content and matching structured metadata. Report this check as skipped when no fixture is available.
+Search for the exact title `Automation Bridge Test Media`. Stop and report missing or duplicate fixtures. Read the
+single match with `includeMediaMetadata=true`, select its first ordered RemNote-managed local image, and call
+`remnote_get_media` with the derived `remId`, `field`, and `mediaId`. Confirm the result contains MCP-native image
+content and matching structured metadata.
 
 11. Create a test tag note under the same root note.
    - Title: `[MCP-AGENT-TEST] tag <current ISO timestamp>`

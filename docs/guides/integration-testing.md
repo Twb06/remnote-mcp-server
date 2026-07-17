@@ -112,8 +112,6 @@ Successful runs print a workflow summary and remind you how to clean up the crea
 |---|---|---|
 | `REMNOTE_MCP_URL` | `http://127.0.0.1:3001` | MCP server base URL |
 | `MCP_TEST_DELAY` | `2000` | Delay (ms) after creating notes before searching |
-| `REMNOTE_TEST_MEDIA_REM_ID` | unset | Existing Rem containing a RemNote-managed image; required for media workflow |
-| `REMNOTE_TEST_MEDIA_FIELD` | `text` | Image field fixture: `text` or `backText` |
 
 The CLI suite uses the same variables.
 
@@ -144,13 +142,11 @@ The direct MCP and MCPB stdio proxy suites follow the same RemNote tool workflow
 4. **Journal** — Appends entries to today's daily document with and without timestamps.
 5. **Error Cases** — Sends invalid inputs (nonexistent IDs, missing required fields) and verifies the server handles
    them gracefully.
-6. **Read Table** — Reads a pre-configured Advanced Table by name and Rem ID, then validates pagination, filtering,
-   and not-found behavior.
-7. **Set Property** — Uses a property-bearing test tag fixture to set and verify an `automation-level` value on the
-   run's created note.
+6. **Read Table** — Reads the shared property-bearing test tag by its conventional title and derived Rem ID, then
+   validates pagination, filtering, and not-found behavior.
+7. **Set Property** — Uses the same fixture to set and verify an `automation-level` value on the run's created note.
 8. **Managed Media** — Reads image metadata, retrieves MCP-native bytes, rejects a stale ID, and verifies CLI file
-   output. Because the bridge has no media-upload action, prepare this read-only fixture manually and set
-   `REMNOTE_TEST_MEDIA_REM_ID` before the final MCP, MCPB, and CLI run.
+   output through the conventionally named managed-media fixture.
 
 The direct MCP suite also verifies the OAuth HTTP metadata and token endpoints.
 
@@ -182,61 +178,35 @@ Tag coverage:
 - They also verify exact-ID tag add/remove flows through both `remnote_search_by_tag` and direct `remnote_read_note`
   readback.
 
-## Read Table Configuration
+## Persistent Integration Fixtures
 
-The `read_table` workflow requires a pre-existing Advanced Table in RemNote. This keeps the coverage read-only while
-still validating the shared bridge-consumer contract.
-
-### Setup
-
-1. Create an Advanced Table in RemNote with at least one row and one column.
-2. Record the table's exact name and `remId`.
-3. Create or edit the config file at:
-
-   **Windows:** `C:\Users\<your-username>\.remnote-mcp-bridge\remnote-mcp-bridge.json`
-
-   **macOS/Linux:** `~/.remnote-mcp-bridge/remnote-mcp-bridge.json`
-
-4. Add the integration test configuration:
-
-```json
-{
-  "integrationTest": {
-    "tableName": "Your Table Name",
-    "tableRemId": "abc123def"
-  }
-}
-```
-
-### Running
-
-Run the integration suite as usual:
-
-```bash
-./run-integration-test.sh
-```
-
-The `read_table` workflow is skipped when either field is missing or the config is invalid.
-
-## Property Write Fixture
-
-`remnote_set_property` requires a property-bearing tag or Advanced Table plus exact target, tag/table, property, and
-value Rem IDs. The live suites validate this path through a reusable RemNote fixture instead of trying to create
-property schema through the bridge.
+The bridge cannot create property schemas or upload managed image files, so each development knowledge base needs two
+persistent fixtures. Their exact titles are the configuration: no Rem IDs, test environment variables, or separate
+JSON test config are required.
 
 ### Setup
 
 1. Create a property-bearing tag named `Automation Bridge Test Tag`.
 2. Add a text-compatible property named `automation-level`.
+3. Create a regular Rem named `Automation Bridge Test Media`.
+4. Paste at least one image into that Rem's text or back text so RemNote stores it as managed local media.
+
+Keep exactly one Rem with each fixture title. Before creating temporary test content, every live runner resolves these
+titles, derives the tag/table/property/media IDs and media field, and fails with setup guidance when a fixture is
+missing, duplicated, or malformed.
 
 ### Behavior
 
 The direct MCP and CLI integration suites:
 
-- search for the exact fixture tag title
-- resolve the `automation-level` property ID through `remnote_read_table` / `remnote-cli read-table`
+- read the exact fixture tag title as a table and derive its Rem ID and `automation-level` property ID
 - set a unique text value on the run's created test note through `remnote_set_property` / `remnote-cli set-property`
 - read the fixture tag/table again and verify the note row contains the kept value
+- search for the exact media fixture title, select its first ordered managed-local image, and verify retrieval through
+  MCP, MCPB, and CLI paths
 
 The value is intentionally not cleared, so the resulting test note remains inspectable until the `[MCP-TEST]` or
 `[CLI-TEST]` artifact is deleted.
+
+Managed-media roots are independent server runtime configuration. Existing `~/remnote/remnote-*/files` roots are
+discovered automatically; custom layouts belong in `[server].mediaRoots` in `~/.remnote-mcp-server/config.toml`.

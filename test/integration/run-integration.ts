@@ -25,6 +25,11 @@ import { readTableWorkflow } from './workflows/06-read-table.js';
 import { oauthWorkflow } from './workflows/07-oauth.js';
 import { setPropertyWorkflow } from './workflows/08-set-property.js';
 import { mediaWorkflow } from './workflows/09-media.js';
+import {
+  MEDIA_FIXTURE_TITLE,
+  PROPERTY_FIXTURE_TITLE,
+  resolvePersistentIntegrationFixtures,
+} from '../helpers/integration-fixtures.js';
 import type { WorkflowResult, WorkflowFn, SharedState } from './types.js';
 
 const RESET = '\x1b[0m';
@@ -333,6 +338,29 @@ async function main(): Promise<void> {
     console.error(`\n${RED}Failed to connect to MCP server at ${mcpUrl}${RESET}`);
     console.error(`${RED}${(e as Error).message}${RESET}`);
     console.error(`\nMake sure the server is running: ${BOLD}npm run dev${RESET}`);
+    process.exit(1);
+  }
+
+  try {
+    state.fixtures = await resolvePersistentIntegrationFixtures({
+      readTableByRemId: (remId) =>
+        client.callTool('remnote_read_table', { tableRemId: remId, limit: 1 }),
+      searchByTitle: (title) =>
+        client.callTool('remnote_search', { query: title, limit: 150, contentMode: 'none' }),
+      readNoteWithMedia: (remId) =>
+        client.callTool('remnote_read_note', {
+          remId,
+          contentMode: 'none',
+          includeMediaMetadata: true,
+        }),
+    });
+    console.log(
+      `Persistent fixtures: "${PROPERTY_FIXTURE_TITLE}" (${state.fixtures.tableRemId}), "${MEDIA_FIXTURE_TITLE}" (${state.fixtures.mediaRemId})`
+    );
+  } catch (e) {
+    console.error(`${RED}Persistent integration fixture preflight failed.${RESET}`);
+    console.error(`${RED}${(e as Error).message}${RESET}`);
+    await client.close();
     process.exit(1);
   }
 

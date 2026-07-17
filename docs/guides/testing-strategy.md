@@ -28,6 +28,9 @@ This suite creates real test artifacts under the shared anchor note:
 RemNote Automation Bridge [temporary integration test data]
 ```
 
+It resolves the persistent fixtures `Automation Bridge Test Tag` and `Automation Bridge Test Media` by exact title;
+their setup contract is documented in the integration guide.
+
 Canonical guide:
 
 - [Integration Testing](integration-testing.md)
