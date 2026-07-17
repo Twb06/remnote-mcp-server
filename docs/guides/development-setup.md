@@ -4,7 +4,7 @@ Instructions for contributors who want to modify, test, or develop the RemNote M
 
 ## Prerequisites
 
-- **Node.js** >= 20.19.0 for local development and code-quality commands (preferably via nvm)
+- **Node.js** >= 22.13.0 for local development and code-quality commands; `.nvmrc` selects Node.js 24 LTS
 - **git** - Version control
 - **RemNote app** with RemNote Automation Bridge plugin (for testing)
 - **Claude Code CLI** or another MCP client (for integration testing)
@@ -80,7 +80,8 @@ source ./node-check.sh && npm run dev
 ```
 
 This script ensures a Node.js version compatible with the local development toolchain is available via nvm, and will
-accept newer installed Node versions when they still satisfy the repo floor.
+accept newer installed Node versions when they still satisfy the repo floor. CI verifies both the minimum supported
+Node.js 22 line and the recommended Node.js 24 LTS line.
 
 ### Type Checking
 
