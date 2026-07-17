@@ -7,6 +7,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-07-17
+
 ### Added
 
 - Add opt-in image metadata to `remnote_read_note` and capability-gated `remnote_get_media` retrieval for
@@ -17,40 +19,22 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   10 MiB hard inline limits. Contributed by Charles (`@charleseze356`).
 - Add `remnote-cli read --include-media-metadata` and overwrite-safe `remnote-cli get-media --output` parity for
   discovering and saving managed images.
-
-- Add `parentRemId` to `remnote_search` input schema and `--parent-id` option to `remnote-cli search` to support scoping search within a Rem's subtree. Contributed by Twb06.
+- Add `parentRemId` to `remnote_search` input schema and `--parent-id` option to `remnote-cli search` for scoped
+  subtree search. Contributed by Twb06.
 - Add exact-ID tag/table property writes through `remnote_set_property` and `remnote-cli set-property`, supporting
   text, Rem-reference/select-option, and clear value payloads.
-- Add live MCP and CLI integration coverage for `remnote_set_property` using the `Automation Bridge Test Tag`
-  property fixture.
 - Add exact inline Rem reference guidance for `[[id:<remId>]]` in markdown-capable write fields across MCP tools,
   `remnote-cli`, and `remnote_get_playbook`.
-- Add live MCP, MCPB, CLI, and smoke-prompt coverage for exact inline Rem reference tokens in create, update, insert,
-  replace, journal, and text property write paths.
-
-### Security
-
-- Validate bridge media locators at runtime and read matched files through bounded handles so symlink replacement,
-  stale identity, malformed payloads, and files changing during retrieval fail closed.
 
 ### Changed
 
-- Replace integration-test table/media IDs and `REMNOTE_TEST_MEDIA_*` variables with preflight resolution of the fixed
-  `Automation Bridge Advanced Table`, `Automation Bridge Test Tag`, and `Automation Bridge Test Media` fixture names
-  across MCP, MCPB, CLI, and smoke tests. Resolve the actual property-bearing table instead of the optional
-  `Automation Bridge Test Advanced Table` wrapper, validate at least two named rows with finite numeric `Salary` values
-  while tolerating unrelated/empty rows, and document all fixture setup with RemNote screenshots.
-- Continue all MCP, MCPB, and CLI live suites when persistent fixtures are missing or an earlier transport fails,
-  listing every unavailable fixture and skipping only dependent workflows before returning the aggregate status.
-- Use shared workflow `v0.4.0` for the Node.js 22 and 24 CI matrix.
 - Require Node.js `22.13.0` or newer, use Node.js 24 LTS for local development, and validate both Node.js 22 and 24 in
   CI now that Node.js 20 is end-of-life.
-- Ignore Python bytecode caches and remove previously tracked cache artifacts.
+- Update `remnote_search` tool docs, CLI reference, agent skill guidance, `remnote_get_playbook`, and smoke-test
+  instructions for scoped search with `parentRemId` and document cursor limitations.
+- Improve live validation fixture setup and failure reporting for persistent RemNote table, tag, and media fixtures
+  across MCP, MCPB, CLI, and smoke tests.
 - Link the canonical cross-repo pull request validation and adoption workflow for maintainers and coding agents.
-- Update `remnote_search` tools reference, CLI command `search` reference, and agent skill documentation to include advanced scoped search with parent ID and document cursor limitations.
-- Update `remnote_get_playbook` guidance and MCP smoke-test instructions for scoped branch search with `parentRemId`.
-- Update the MCP smoke-test prompt to validate `remnote_set_property` through the `automation-level` property fixture
-  and report the kept validation value.
 
 ### Fixed
 
@@ -59,6 +43,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Reject empty `parentRemId` values for `remnote_search` instead of treating them as unscoped search.
 - Mark structured content node `children` arrays optional in `remnote_search` and `remnote_read_note` output schemas,
   matching bridge responses that omit `children` for leaf nodes. Contributed by Charles (`@charleseze356`).
+
+### Security
+
+- Validate bridge media locators at runtime and read matched files through bounded handles so symlink replacement,
+  stale identity, malformed payloads, and files changing during retrieval fail closed.
 
 ## [0.16.0] - 2026-06-05
 
