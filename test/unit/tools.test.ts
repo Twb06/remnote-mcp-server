@@ -29,6 +29,7 @@ import {
   ALL_TOOLS,
 } from '../../src/tools/index.js';
 import { WebSocketServer } from '../../src/websocket-server.js';
+import { AjvJsonSchemaValidator } from '@modelcontextprotocol/sdk/validation/ajv';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import {
   validCreateNoteInput,
@@ -193,6 +194,25 @@ describe('Tool Definitions', () => {
       expect(schema?.required).toEqual(['remId', 'title', 'headline', 'remType']);
       expect(schema?.required).not.toContain('children');
     }
+
+    const leaf = {
+      remId: 'leaf-rem-id',
+      title: 'Leaf',
+      headline: 'Leaf',
+      remType: 'text',
+    };
+    const validator = new AjvJsonSchemaValidator();
+
+    expect(
+      validator.getValidator(SEARCH_TOOL.outputSchema)({
+        results: [{ contentStructured: [leaf] }],
+      }).valid
+    ).toBe(true);
+    expect(
+      validator.getValidator(READ_NOTE_TOOL.outputSchema)({
+        contentStructured: [leaf],
+      }).valid
+    ).toBe(true);
   });
 
   it('should advertise cursor paging for SEARCH_TOOL and SEARCH_BY_TAG_TOOL', () => {

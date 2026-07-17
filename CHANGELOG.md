@@ -58,7 +58,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   shell errors.
 - Reject empty `parentRemId` values for `remnote_search` instead of treating them as unscoped search.
 - Mark structured content node `children` arrays optional in `remnote_search` and `remnote_read_note` output schemas,
-  matching bridge responses that omit `children` for leaf nodes.
+  matching bridge responses that omit `children` for leaf nodes. Contributed by Charles (`@charleseze356`).
 
 ## [0.16.0] - 2026-06-05
 

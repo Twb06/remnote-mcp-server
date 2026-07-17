@@ -352,7 +352,7 @@ Returns note metadata plus optional rendered child content:
 ```
 
 In `contentMode: "structured"` mode, the response includes `contentStructured` (nested child nodes with `remId`s)
-instead of markdown `content`.
+instead of markdown `content`. Leaf nodes omit `children` rather than returning an empty array.
 
 ### Tips
 
