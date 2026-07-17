@@ -5,6 +5,12 @@ import { join } from 'node:path';
 import { HARD_MAX_INLINE_BYTES, resolveManagedImage, type MediaLocator } from '../../src/media.js';
 
 const PNG = Buffer.from('89504e470d0a1a0a00000000', 'hex');
+const SUPPORTED_IMAGE_CASES = [
+  { mimeType: 'image/jpeg', data: Buffer.from('ffd8ff', 'hex') },
+  { mimeType: 'image/gif', data: Buffer.from('GIF87a', 'ascii') },
+  { mimeType: 'image/gif', data: Buffer.from('GIF89a', 'ascii') },
+  { mimeType: 'image/webp', data: Buffer.from('RIFF0000WEBP', 'ascii') },
+];
 
 describe('managed image resolution', () => {
   let tempDir: string;
@@ -46,6 +52,18 @@ describe('managed image resolution', () => {
     expect(result.metadata).not.toHaveProperty('localToken');
   });
 
+  it.each(SUPPORTED_IMAGE_CASES)(
+    'detects $mimeType from file bytes',
+    async ({ mimeType, data }) => {
+      await writeFile(join(rootA, 'image.png'), data);
+
+      const result = await resolveManagedImage(locator(), [join(tempDir, 'missing'), rootA]);
+
+      expect(result.mimeType).toBe(mimeType);
+      expect(Buffer.from(result.data, 'base64')).toEqual(data);
+    }
+  );
+
   it('rejects traversal tokens and symlinks escaping the root', async () => {
     await expect(resolveManagedImage(locator('../image.png'), [rootA])).rejects.toThrow(
       'Media path traversal rejected'
@@ -86,6 +104,12 @@ describe('managed image resolution', () => {
     await expect(
       resolveManagedImage(locator(), [rootA], HARD_MAX_INLINE_BYTES + 1)
     ).rejects.toThrow('maxInlineBytes must be an integer');
+  });
+
+  it.each([0, 1.5])('rejects invalid inline size limit %s', async (maxInlineBytes) => {
+    await expect(resolveManagedImage(locator(), [rootA], maxInlineBytes)).rejects.toThrow(
+      'maxInlineBytes must be an integer'
+    );
   });
 
   it.each([
